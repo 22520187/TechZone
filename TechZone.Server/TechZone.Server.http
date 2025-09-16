@@ -1,0 +1,6 @@
+@TechZone.Server_HostAddress = http://localhost:5288
+
+GET {{TechZone.Server_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

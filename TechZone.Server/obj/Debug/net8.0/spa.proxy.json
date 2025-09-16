@@ -1,0 +1,10 @@
+{
+"SpaProxyServer": {
+"ServerUrl": "https://localhost:62661",
+"RedirectUrl": "",
+"LaunchCommand": "npm run dev",
+"WorkingDirectory": "D:\\SE347\\TechZone\\TechZone.Server\\..\\techzone.client",
+"MaxTimeoutInSeconds": "120",
+"KeepRunning": "false"
+}
+}
