@@ -1,68 +1,312 @@
-:root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
+@import "tailwindcss";
 
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+@theme {
+  --color-primary: #50bbf5;
+  --color-secondary: #5069f5;
 
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  --color-primary-50: #e3f6fe;
+  --color-primary-100: #b9e7fc;
+  --color-primary-200: #8dd7fa;
+  --color-primary-300: #66c8f7;
+  --color-primary-400: #50bbf5;
+  --color-primary-500: #46aff2;
+  --color-primary-600: #41a1e3;
+  --color-primary-700: #3b8ecf;
+  --color-primary-800: #367dbb;
+  --color-primary-900: #2b5d99;
+
+  --color-secondary-50: #e9eafe;
+  --color-secondary-100: #c7cafb;
+  --color-secondary-200: #9fa8f9;
+  --color-secondary-300: #7486f7;
+  --color-secondary-400: #5069f5;
+  --color-secondary-500: #214cf0;
+  --color-secondary-600: #1c43e5;
+  --color-secondary-700: #0537d8;
+  --color-secondary-800: #002bcd;
+  --color-secondary-900: #0011b5;
+
+  --color-compleprimary-50: #fbe8e4;
+  --color-compleprimary-100: #fccbb4;
+  --color-compleprimary-200: #f9aa83;
+  --color-compleprimary-300: #f58a50;
+  --color-compleprimary-400: #f27225;
+  --color-compleprimary-500: #ee5c00;
+  --color-compleprimary-600: #e45600;
+  --color-compleprimary-700: #d74f00;
+  --color-compleprimary-800: #c94800;
+  --color-compleprimary-900: #b13a00;
+
+  --color-complesecond-50: #fdfee9;
+  --color-complesecond-100: #fbfac9;
+  --color-complesecond-200: #f9f6a6;
+  --color-complesecond-300: #f7f284;
+  --color-complesecond-400: #f4ee69;
+  --color-complesecond-500: #f1e951;
+  --color-complesecond-600: #f5dc50;
+  --color-complesecond-700: #f2c546;
+  --color-complesecond-800: #efae3d;
+  --color-complesecond-900: #e9892d;
+
+  --color-ebony: #222428;
+  --color-white-smoke: #f5f5f5;
+  --color-mint-cream: #f5fffa;
+  --color-seashell: #fff5ee;
+  --color-floral-white: #fffaf0;
+  --color-snow: #fffafa;
+  --color-ghost-white: #f8f8ff;
+  --color-jet: #2a2a2a;
+  --color-raisin-black: #242124;
+  --color-oxford-blue: #212437;
+  --color-card-dark: #1f2937;
+  --color-gunmetal: #1d1f21;
+
+  --color-bg: #f5f5f5;
+
+  --color-amber-light: #f8d199;
+  --color-amber-dark: #d28c1a;
+  --color-coral-dark: #e64a19;
+
+  --color-orange-50: #fff7ed;
+  --color-orange-100: #ffedd5;
+  --color-orange-200: #fed7aa;
+  --color-orange-300: #fdba74;
+  --color-orange-400: #fb923c;
+  --color-orange-500: #f97316;
+  --color-orange-600: #ea580c;
+  --color-orange-700: #c2410c;
+  --color-orange-800: #9a3412;
+  --color-orange-900: #7c2d12;
+
+  --animate-gradient: gradient 8s linear infinite;
+
+  --animate-marquee: marquee 15s linear infinite;
+
+  --animate-fadeIn: fadeIn 0.3s ease-out;
 }
 
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
-}
-a:hover {
-  color: #535bf2;
-}
-
-body {
-  margin: 0;
-  display: flex;
-  place-items: center;
-  min-width: 320px;
-  min-height: 100vh;
-}
-
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
-}
-
-button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: #1a1a1a;
-  cursor: pointer;
-  transition: border-color 0.25s;
-}
-button:hover {
-  border-color: #646cff;
-}
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
-}
-
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
+@layer utilities {
+  /* Hide scrollbar for Chrome, Safari and Opera */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
   }
-  a:hover {
-    color: #747bff;
+  /* Hide scrollbar for IE, Edge and Firefox */
+  .no-scrollbar {
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
   }
-  button {
-    background-color: #f9f9f9;
+
+  /* Hide browser's default password visibility toggle */
+  input[type="password"]::-webkit-credentials-auto-fill-button,
+  input[type="password"]::-webkit-password-toggle-button,
+  input[type="password"]::-ms-reveal {
+    display: none !important;
   }
+
+  /* Prevent Edge from showing password reveal button */
+  input[type="password"]::-ms-reveal {
+    display: none;
+  }
+
+  /* Custom Ant Design styles for auth forms */
+  .ant-form-item-label > label {
+    color: #374151 !important;
+    font-size: 14px !important;
+    font-weight: 400 !important;
+  }
+
+  .ant-input-affix-wrapper {
+    border-radius: 6px !important;
+    border-color: #e5e7eb !important;
+  }
+
+  .ant-input-affix-wrapper:focus,
+  .ant-input-affix-wrapper-focused {
+    border-color: #50bbf5 !important;
+    box-shadow: 0 0 0 2px rgba(80, 187, 245, 0.2) !important;
+  }
+
+  .ant-input {
+    border-radius: 6px !important;
+    border-color: #e5e7eb !important;
+  }
+
+  .ant-input:focus {
+    border-color: #50bbf5 !important;
+    box-shadow: 0 0 0 2px rgba(80, 187, 245, 0.2) !important;
+  }
+
+  .ant-btn-primary {
+    border-radius: 6px !important;
+  }
+
+  .translate-101 {
+    transform: translateX(101%);
+  }
+
+  @keyframes gradient {
+    0% {
+      background-position: 0% 50%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
+    100% {
+      background-position: 0% 50%;
+    }
+  }
+
+  @keyframes marquee {
+    from {
+      transform: translateX(0%);
+    }
+    to {
+      transform: translateX(-50%);
+    }
+  }
+
+  @keyframes accordionDown {
+    from {
+      height: 0;
+    }
+    to {
+      height: var(--radix-accordion-content-height);
+    }
+  }
+
+  @keyframes accordionUp {
+    from {
+      height: var(--radix-accordion-content-height);
+    }
+    to {
+      height: 0;
+    }
+  }
+
+  @keyframes fadeIn {
+    0% {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes fadeOut {
+    0% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    100% {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+  }
+
+  @keyframes scaleIn {
+    0% {
+      transform: scale(0.95);
+      opacity: 0;
+    }
+    100% {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+
+  @keyframes slideIn {
+    0% {
+      transform: translateX(-100%);
+    }
+    100% {
+      transform: translateX(0);
+    }
+  }
+
+  @keyframes slideOut {
+    0% {
+      transform: translateX(0);
+    }
+    100% {
+      transform: translateX(-100%);
+    }
+  }
+
+  .animate-accordion-down {
+    animation: accordionDown 0.2s ease-out;
+  }
+
+  .animate-accordion-up {
+    animation: accordionUp 0.2s ease-out;
+  }
+
+  .animate-fade-in {
+    animation: fadeIn 0.3s ease-out;
+  }
+
+  .animate-fade-out {
+    animation: fadeOut 0.3s ease-out;
+  }
+
+  .animate-scale-in {
+    animation: scaleIn 0.2s ease-out;
+  }
+
+  .animate-slide-in {
+    animation: slideIn 0.3s ease-out;
+  }
+
+  .animate-slide-out {
+    animation: slideOut 0.3s ease-out;
+  }
+}
+
+@layer components {
+  .sidebar-title {
+    @apply text-sm font-medium mb-3;
+  }
+  .category-item {
+    @apply text-sm py-1.5 px-2 rounded-md transition-colors hover:bg-primary-50 flex items-center gap-2 cursor-pointer;
+  }
+
+  .category-item.active {
+    @apply bg-primary/10 text-primary font-medium;
+  }
+
+  .filter-section {
+    @apply border-b pb-4 mb-4 last:border-b-0 last:mb-0 last:pb-0;
+  }
+
+  .checkbox-item {
+    @apply flex items-center gap-2 text-sm py-1.5 hover:text-primary transition-colors;
+  }
+}
+
+/* Đặt trong src/index.css hoặc global.css */
+
+/* Căn giữa header của Calendar */
+.custom-calendar .ant-picker-calendar-header {
+  text-align: center;
+  font-weight: bold;
+}
+
+/* Định dạng ngày hôm nay */
+.custom-calendar .ant-picker-cell-today .ant-picker-cell-inner {
+  border: 1px solid #1890ff;
+  border-radius: 50%;
+}
+
+/* Ngày được chọn */
+.custom-calendar .ant-picker-cell-selected .ant-picker-cell-inner {
+  background-color: #1890ff;
+  color: white;
+  border-radius: 50%;
+}
+
+/* Các thứ trong tuần */
+.custom-calendar th {
+  font-weight: bold;
+  text-align: center;
 }
