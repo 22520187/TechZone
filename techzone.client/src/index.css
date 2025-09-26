@@ -83,6 +83,16 @@
   --animate-marquee: marquee 15s linear infinite;
 
   --animate-fadeIn: fadeIn 0.3s ease-out;
+
+  /* Tech theme colors */
+  --tech-primary: 139 92 246;
+  --tech-secondary: 59 130 246;
+  --tech-accent: 34 197 94;
+  
+  /* Background colors for dark theme */
+  --color-background: #0a0a0a;
+  --color-muted: #171717;
+  --color-muted-foreground: #a3a3a3;
 }
 
 @layer utilities {
@@ -260,6 +270,77 @@
 
   .animate-slide-out {
     animation: slideOut 0.3s ease-out;
+  }
+
+  /* Tech theme animations */
+  .animate-pulse-slow {
+    animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+
+  .tech-particle {
+    animation: float 8s ease-in-out infinite;
+  }
+
+  .tech-gradient-text {
+    background: linear-gradient(135deg, rgb(var(--tech-primary)), rgb(var(--tech-secondary)), rgb(var(--tech-accent)));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Tech colors */
+  .bg-tech-primary { background-color: rgb(var(--tech-primary)); }
+  .bg-tech-secondary { background-color: rgb(var(--tech-secondary)); }
+  .bg-tech-accent { background-color: rgb(var(--tech-accent)); }
+  .text-tech-primary { color: rgb(var(--tech-primary)); }
+  .text-tech-secondary { color: rgb(var(--tech-secondary)); }
+  .text-tech-accent { color: rgb(var(--tech-accent)); }
+
+  /* Background utilities */
+  .bg-background { background-color: var(--color-background); }
+  .bg-muted { background-color: var(--color-muted); }
+  .text-muted-foreground { color: var(--color-muted-foreground); }
+
+  @keyframes float {
+    0%, 100% {
+      transform: translateY(0px) rotate(0deg);
+    }
+    33% {
+      transform: translateY(-10px) rotate(1deg);
+    }
+    66% {
+      transform: translateY(5px) rotate(-1deg);
+    }
+  }
+
+  @keyframes rotate360 {
+    0% {
+      transform: rotate(0deg);
+    }
+    100% {
+      transform: rotate(360deg);
+    }
+  }
+
+  @keyframes rotateReverse {
+    0% {
+      transform: rotate(0deg);
+    }
+    100% {
+      transform: rotate(-360deg);
+    }
+  }
+
+  .animate-rotate {
+    animation: rotate360 8s linear infinite;
+  }
+
+  .animate-rotate-reverse {
+    animation: rotateReverse 6s linear infinite;
   }
 }
 
