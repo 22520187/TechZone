@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { ShoppingCart, User, Search, Menu, X } from "lucide-react";
 import { Link } from "react-router-dom";
-
-import SearchBar from "./SearchBar";
+import SearchBar from "./Searchbar";
 import GradientText from "../../ReactBitsComponent/GradientText";
 
 const Navbar = () => {
@@ -42,7 +41,7 @@ const Navbar = () => {
     <div className="flex items-center space-x-6">
       <SearchBar />
       <Link
-        to="/account"
+        to="/auth/login"
         aria-label="Account"
         className="text-foreground hover:text-primary transition-colors"
       >

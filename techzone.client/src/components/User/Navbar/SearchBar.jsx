@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Search } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
-const SearchBar = () => {
+const Searchbar = () => {
   const navigate = useNavigate();
   const [searchValue, setSearchValue] = useState("");
   const handleSendMessage = (e) => {
@@ -28,4 +28,4 @@ const SearchBar = () => {
   );
 };
 
-export default SearchBar;
+export default Searchbar;
