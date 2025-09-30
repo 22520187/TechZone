@@ -4,6 +4,8 @@ import NotFound from "../pages/NotFound/NotFound";
 import Login from "../pages/Auth/Login";
 import SignUp from "../pages/Auth/SignUp";
 import ForgorPassword from "../pages/ForgotPassword/Forgotpassword";
+import OrderHistory from "../pages/User/Order/OrderHistory";
+import OrderDetail from "../pages/User/Order/OrderDetail";
 
 const AllUserRoutes = () => {
     return (
@@ -13,6 +15,8 @@ const AllUserRoutes = () => {
             <Route path="/auth/login" element={<Login />} />
             <Route path="/auth/signup" element={<SignUp />} />
             <Route path="/auth/forgot-password" element={<ForgorPassword />} />
+            <Route path="/order-history" element={<OrderHistory />} />
+            <Route path="/order-detail/:id" element={<OrderDetail />} />
         </Routes>
     )
 }
