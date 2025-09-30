@@ -1,11 +1,16 @@
 import React, { useState } from 'react';
+import { motion } from "framer-motion";
 import { Link, useNavigate } from 'react-router-dom';
-import { Eye, EyeOff, Mail, Lock, User, ArrowRight, Phone } from 'lucide-react';
+import { Form, Input, Button, message } from "antd";
+import TechBackground from '../../components/Auth/TechBackground';
+import { UserOutlined, LockOutlined, MailOutlined } from "@ant-design/icons";
 import GradientText from '../../components/ReactBitsComponent/GradientText';
 
 const SignUp = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [form] = Form.useForm();
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -35,224 +40,171 @@ const SignUp = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-blue-50 flex items-center justify-center p-4">
-      <div className="w-full max-w-6xl grid lg:grid-cols-2 gap-8 items-center">
-        
-        {/* Left Side - Welcome Content */}
-        <div className="hidden lg:block space-y-8 p-8">
-          <div className="space-y-6">
-            <div className="space-y-4">
-              <GradientText
-                colors={["#50bbf5", "#5069f5"]}
-                className="text-6xl font-bold"
-              >
-                TechZone
-              </GradientText>
-              <h2 className="text-4xl font-bold text-gray-800">
-                Join TechZone!
-              </h2>
-              <p className="text-xl text-gray-600 leading-relaxed">
-                Create your account and start exploring cutting-edge technology products.
-              </p>
-            </div>
-            
-            <div className="space-y-4">
-              <div className="flex items-center space-x-3 text-gray-700">
-                <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                  <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                </div>
-                <span>Free account setup</span>
-              </div>
-              <div className="flex items-center space-x-3 text-gray-700">
-                <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                  <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                </div>
-                <span>Exclusive member deals</span>
-              </div>
-              <div className="flex items-center space-x-3 text-gray-700">
-                <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                  <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                </div>
-                <span>24/7 customer support</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Right Side - SignUp Form */}
-        <div className="w-full max-w-md mx-auto">
-          <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl p-8 border border-white/20">
-            <div className="space-y-6">
-              <div className="text-center space-y-2">
-                <h1 className="text-3xl font-bold text-gray-800">Create Account</h1>
-                <p className="text-gray-600">Join us and start your tech journey</p>
-              </div>
-
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  {/* First Name */}
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-700">First Name</label>
-                    <div className="relative">
-                      <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                      <input
-                        type="text"
-                        name="firstName"
-                        value={formData.firstName}
-                        onChange={handleChange}
-                        className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 bg-white/50"
-                        placeholder="First name"
-                        required
-                      />
-                    </div>
-                  </div>
-
-                  {/* Last Name */}
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-700">Last Name</label>
-                    <div className="relative">
-                      <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                      <input
-                        type="text"
-                        name="lastName"
-                        value={formData.lastName}
-                        onChange={handleChange}
-                        className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 bg-white/50"
-                        placeholder="Last name"
-                        required
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Email Field */}
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-700">Email</label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                    <input
-                      type="email"
-                      name="email"
-                      value={formData.email}
-                      onChange={handleChange}
-                      className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 bg-white/50"
-                      placeholder="Enter your email"
-                      required
-                    />
-                  </div>
-                </div>
-
-                {/* Phone Field */}
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-700">Phone Number</label>
-                  <div className="relative">
-                    <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                    <input
-                      type="tel"
-                      name="phone"
-                      value={formData.phone}
-                      onChange={handleChange}
-                      className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 bg-white/50"
-                      placeholder="Enter your phone number"
-                      required
-                    />
-                  </div>
-                </div>
-
-                {/* Password Field */}
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-700">Password</label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                    <input
-                      type={showPassword ? "text" : "password"}
-                      name="password"
-                      value={formData.password}
-                      onChange={handleChange}
-                      className="w-full pl-10 pr-12 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 bg-white/50"
-                      placeholder="Create password"
-                      required
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
-                    >
-                      {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                    </button>
-                  </div>
-                </div>
-
-                {/* Confirm Password Field */}
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-700">Confirm Password</label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                    <input
-                      type={showConfirmPassword ? "text" : "password"}
-                      name="confirmPassword"
-                      value={formData.confirmPassword}
-                      onChange={handleChange}
-                      className="w-full pl-10 pr-12 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 bg-white/50"
-                      placeholder="Confirm password"
-                      required
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
-                    >
-                      {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                    </button>
-                  </div>
-                </div>
-
-                <div className="flex items-center space-x-2">
-                  <input 
-                    type="checkbox" 
-                    id="terms"
-                    className="rounded border-gray-300 text-primary focus:ring-primary" 
-                    required
-                  />
-                  <label htmlFor="terms" className="text-sm text-gray-600">
-                    I agree to the{' '}
-                    <Link to="/terms" className="text-primary hover:text-primary-600 font-medium">
-                      Terms of Service
-                    </Link>
-                    {' '}and{' '}
-                    <Link to="/privacy" className="text-primary hover:text-primary-600 font-medium">
-                      Privacy Policy
-                    </Link>
-                  </label>
-                </div>
-
-                <button
-                  type="submit"
-                  className="w-full bg-gradient-to-r from-primary to-secondary text-white py-3 rounded-lg hover:shadow-lg transform hover:scale-[1.02] transition-all duration-200 flex items-center justify-center space-x-2 font-medium"
-                >
-                  <span>Create Account</span>
-                  <ArrowRight className="w-5 h-5" />
-                </button>
-              </form>
-
-              <div className="text-center">
-                <p className="text-gray-600">
-                  Already have an account?{' '}
-                  <Link to="/auth/login" className="text-primary hover:text-primary-600 font-medium transition-colors">
-                    Sign in here
-                  </Link>
-                </p>
-              </div>
+    <div className="min-h-screen flex">
+      {/* Left Side - Animated Tech Background */}
+      <div className="hidden lg:flex lg:w-1/2 relative">
+        <TechBackground />
+        <div className="absolute inset-0 flex flex-col justify-center items-center p-12 z-10">
+          <div className="text-center space-y-6 max-w-md">
+            <GradientText
+              colors={["#50bbf5", "#5069f5", "#50bbf5", "#5069f5", "#50bbf5"]}
+              className="text-5xl"
+              animationSpeed={3}
+              showBorder={false}
+            >TechZone Platform</GradientText>
+            <p className="text-xl text-muted-foreground leading-relaxed">
+              Discover the latest tech essentials with ease, quality, and innovation at TechZone.
+            </p>
+            <div className="flex space-x-4 justify-center">
+              <div className="w-3 h-3 bg-tech-primary rounded-full animate-pulse" />
+              <div className="w-3 h-3 bg-tech-secondary rounded-full animate-pulse" style={{ animationDelay: '0.5s' }} />
+              <div className="w-3 h-3 bg-tech-accent rounded-full animate-pulse" style={{ animationDelay: '1s' }} />
             </div>
           </div>
         </div>
       </div>
+
+      {/* Right Side - SignUp Form */}
+      <motion.div
+        className="absolute right-20 top-1/2 transform -translate-y-1/2 w-full max-w-xl shadow-xl z-10"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.2 }}
+      >
+        <div className="relative w-full min-h-[500px] mx-auto border border-gray-300 shadow-xl rounded-3xl p-8 bg-white">
+          <div className="absolute top-4 right-4 md:top-8 md:right-8 text-sm">
+            <span className="text-gray-500">Have an Account?</span> <br />
+            <Link
+              to="/auth/login"
+              className="text-primary-600 font-medium hover:underline transition-all"
+            >
+              Sign in
+            </Link>
+          </div>
+          <motion.div
+            className="w-full"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            <h2 className="text-sm font-normal mb-1">Welcome to TechZone</h2>
+            <h1 className="text-3xl font-bold mb-6 text-primary-600">
+              Sign up
+            </h1>
+
+            <Form
+              form={form}
+              onFinish={handleSubmit}
+              layout="vertical"
+              size="middle"
+              className="w-full"
+            >
+              <Form.Item
+                name="email"
+                label="Enter your Email"
+                rules={[
+                  { required: true, message: "Please input your email!" },
+                  { type: "email", message: "Please enter a valid email!" },
+                ]}
+                className="mb-6"
+              >
+                <Input
+                  prefix={<MailOutlined className="text-gray-400" />}
+                  placeholder="Email address"
+                  className="py-3"
+                />
+              </Form.Item>
+
+              <Form.Item
+                name="username"
+                label="Enter your Username"
+                rules={[
+                  { required: true, message: "Please input your username!" },
+                  {
+                    min: 3,
+                    message: "Username must be at least 3 characters!",
+                  },
+                ]}
+                className="mb-6"
+              >
+                <Input
+                  prefix={<UserOutlined className="text-gray-400" />}
+                  placeholder="User name"
+                  className="py-3"
+                />
+              </Form.Item>
+
+              <Form.Item
+                name="password"
+                label="Enter your Password"
+                rules={[
+                  { required: true, message: "Please input your password!" },
+                  {
+                    pattern:
+                      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/,
+                    message:
+                      "Mật khẩu phải có ít nhất 8 ký tự, bao gồm chữ hoa, chữ thường, số và ký tự đặc biệt.",
+                  },
+                ]}
+                className="mb-6"
+              >
+                <Input.Password
+                  prefix={<LockOutlined className="text-gray-400" />}
+                  placeholder="Password"
+                  className="py-3"
+                  autoComplete="new-password"
+                />
+              </Form.Item>
+
+              <Form.Item
+                name="confirmPassword"
+                label="Confirm Password"
+                dependencies={["password"]}
+                rules={[
+                  { required: true, message: "Please confirm your password!" },
+                  ({ getFieldValue }) => ({
+                    validator(_, value) {
+                      if (!value || getFieldValue("password") === value) {
+                        return Promise.resolve();
+                      }
+                      return Promise.reject(new Error("Mật khẩu không khớp!"));
+                    },
+                  }),
+                ]}
+                className="mb-6"
+              >
+                <Input.Password
+                  prefix={<LockOutlined className="text-gray-400" />}
+                  placeholder="Confirm Password"
+                  className="py-3"
+                  autoComplete="new-password"
+                />
+              </Form.Item>
+
+              <motion.div
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <Form.Item>
+                  <Button
+                    type="primary"
+                    htmlType="submit"
+                    loading={isLoading}
+                    className="w-full h-12 bg-gradient-to-br from-primary to-secondary border-none hover:from-primary-600 hover:to-secondary-600 text-white font-medium mb-6"
+                    style={{
+                      background: isLoading
+                        ? undefined
+                        : "linear-gradient(135deg, #50bbf5 0%, #5069f5 100%)",
+                    }}
+                  >
+                    {isLoading ? "Sending code..." : "Sign up"}
+                  </Button>
+                </Form.Item>
+              </motion.div>
+            </Form>
+          </motion.div>
+        </div>
+      </motion.div>
     </div>
   );
 };
