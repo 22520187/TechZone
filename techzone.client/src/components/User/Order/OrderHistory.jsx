@@ -158,8 +158,7 @@ const OrderHistory = () => {
   };
 
   const handleViewDetails = (orderId) => {
-    // navigate(`/order/${orderId}`);
-    alert(`View details for order #${orderId}`);
+    navigate(`/order/${orderId}`);
   };
 
   const paginatedOrders = orders.slice(
