@@ -6,7 +6,7 @@ import { useNavigate, Link } from "react-router-dom";
 const forgotPasswordBgImage =
   "https://images.unsplash.com/photo-1721322800607-8c38375eef04?auto=format&w=800&q=75";
 
-const ForgorPassword = () => {
+const ForgotPassword = () => {
     const navigate = useNavigate();
     const [imageLoaded, setImageLoaded] = useState(false);
     const [email, setEmail] = useState("");
@@ -133,4 +133,4 @@ const ForgorPassword = () => {
       );
 };
 
-export default ForgorPassword;
+export default ForgotPassword;
