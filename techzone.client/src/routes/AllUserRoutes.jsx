@@ -3,7 +3,7 @@ import Home from "../pages/User/Home";
 import NotFound from "../pages/NotFound/NotFound";
 import Login from "../pages/Auth/Login";
 import SignUp from "../pages/Auth/SignUp";
-import ForgorPassword from "../pages/ForgotPassword/Forgotpassword";
+import ForgotPassword from "../pages/ForgotPassword/Forgotpassword";
 import OrderHistory from "../pages/User/Order/OrderHistory";
 import OrderDetail from "../pages/User/Order/OrderDetail";
 
@@ -14,9 +14,10 @@ const AllUserRoutes = () => {
             <Route path="*" element={<NotFound />} />
             <Route path="/auth/login" element={<Login />} />
             <Route path="/auth/signup" element={<SignUp />} />
-            <Route path="/auth/forgot-password" element={<ForgorPassword />} />
+            <Route path="/auth/forgot-password" element={<ForgotPassword />} />
             <Route path="/order-history" element={<OrderHistory />} />
-            <Route path="/order-detail/:id" element={<OrderDetail />} />
+            <Route path="/order/:orderId" element={<OrderDetail />} />
+            
         </Routes>
     )
 }
