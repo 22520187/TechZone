@@ -170,7 +170,7 @@ const OrderHistory = () => {
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-7xl">
-      <h1 className="text-xl font-bold mb-4 text-primary-700">ORDER HISTORY</h1>
+      <h1 className="text-xl font-bold mb-4 text-primary-600">ORDER HISTORY</h1>
 
       {orders.length === 0 ? (
         <div className="bg-gray-500 rounded-lg p-8 text-center">
