@@ -1,7 +1,12 @@
 {
   "Version": 1,
   "WorkspaceRootPath": "D:\\SE347\\TechZone\\",
-  "Documents": [],
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{AE8061F0-90D0-4B85-BB49-C07DF6813A0C}|TechZone.Server\\TechZone.Server.csproj|d:\\se347\\techzone\\techzone.server\\techzone.server.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|",
+      "RelativeMoniker": "D:0:0:{AE8061F0-90D0-4B85-BB49-C07DF6813A0C}|TechZone.Server\\TechZone.Server.csproj|solutionrelative:techzone.server\\techzone.server.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|"
+    }
+  ],
   "DocumentGroupContainers": [
     {
       "Orientation": 0,
@@ -9,7 +14,7 @@
       "DocumentGroups": [
         {
           "DockedWidth": 10,
-          "SelectedChildIndex": -1,
+          "SelectedChildIndex": 4,
           "Children": [
             {
               "$type": "Bookmark",
@@ -26,6 +31,19 @@
             {
               "$type": "Bookmark",
               "Name": "ST:128:0:{116d2292-e37d-41cd-a077-ebacac4c8cc4}"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "TechZone.Server.csproj",
+              "DocumentMoniker": "D:\\SE347\\TechZone\\TechZone.Server\\TechZone.Server.csproj",
+              "RelativeDocumentMoniker": "TechZone.Server\\TechZone.Server.csproj",
+              "ToolTip": "D:\\SE347\\TechZone\\TechZone.Server\\TechZone.Server.csproj",
+              "RelativeToolTip": "TechZone.Server\\TechZone.Server.csproj",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000758|",
+              "WhenOpened": "2025-10-06T02:50:33.846Z",
+              "EditorCaption": ""
             }
           ]
         },
