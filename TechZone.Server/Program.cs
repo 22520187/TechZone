@@ -1,5 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using TechZone.Server.Models;
+using TechZone.Server.Repositories;
+using TechZone.Server.Repositories.Implement;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -22,6 +24,16 @@ builder.Services.AddCors(options =>
                .AllowCredentials();
     });
 });
+
+builder.Services.AddScoped<ITokenService, TokenService>();
+builder.Services.AddHttpClient();  // Đăng ký IHttpClientFactory
+
+
+builder.Services.AddMemoryCache();
+
+
+
+builder.Services.AddScoped(typeof(ITechZoneRepository<>), typeof(TechZoneRepository<>));
 
 
 
