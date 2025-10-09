@@ -6,7 +6,7 @@ using TechZone.Server.Repositories.Implement;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddDbContext<TechZoneDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("TechZoneDbContext"), sqlOptions =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("TechZone"), sqlOptions =>
     {
         sqlOptions.EnableRetryOnFailure();
     }));
@@ -26,6 +26,7 @@ builder.Services.AddCors(options =>
 });
 
 builder.Services.AddScoped<ITokenService, TokenService>();
+builder.Services.AddScoped<IUserRepository, SQLUserRepository>();
 builder.Services.AddHttpClient();  // Đăng ký IHttpClientFactory
 
 
@@ -34,6 +35,7 @@ builder.Services.AddMemoryCache();
 
 
 builder.Services.AddScoped(typeof(ITechZoneRepository<>), typeof(TechZoneRepository<>));
+
 
 
 
@@ -53,6 +55,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+app.UseCors("AllowSpecificOrigins");
 
 app.UseHttpsRedirection();
 
