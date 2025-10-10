@@ -4,6 +4,8 @@ using TechZone.Server.Repositories;
 using TechZone.Server.Models.Domain;
 using TechZone.Server.Models.RequestModels;
 using TechZone.Server.Models.DTO;
+using TechZone.Server.Services;
+using System.Runtime.CompilerServices;
 
 namespace TechZone.Server.Controllers
 {
@@ -15,7 +17,9 @@ namespace TechZone.Server.Controllers
         private readonly IUserRepository userRepository = userRepository;
         private readonly ITokenService _tokenService = tokenService;
         // private readonly IMapper _mapper = mapper;
-        private readonly IMemoryCache _memoryCache = cache;
+        private readonly IMemoryCache _cache = cache;
+
+        private readonly EmailService _emailService = new EmailService();
 
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterRequests request)
@@ -156,6 +160,40 @@ namespace TechZone.Server.Controllers
                 {
                     status = "error",
                     message = ex.Message
+                });
+            }
+        }
+
+        [HttpPost("send-verification-code/{email}")]
+        public async Task<IActionResult> SendVerificationCode(string email)
+        {
+            if (string.IsNullOrEmpty(email))
+            {
+                return BadRequest(new
+                {
+                    status = "error",
+                    message = "Email is required."
+                });
+            }
+
+            try
+            {
+                var code = await _emailService.SendVerificationCodeAsync(email);
+                _cache.Set(email, code, TimeSpan.FromMinutes(5)); // Lưu mã vào cache trong 5 phút
+
+                return Ok(new
+                {
+                    status = "success",
+                    message = "Verification code sent to email."
+                });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new
+                {
+                    status = "error",
+                    message = "Failed to send verification code.",
+                    details = ex.Message
                 });
             }
         }
