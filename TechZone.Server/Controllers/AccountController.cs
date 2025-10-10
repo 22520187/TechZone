@@ -1,3 +1,4 @@
+using AutoMapper;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.AspNetCore.Mvc;
 using TechZone.Server.Repositories;
@@ -6,17 +7,18 @@ using TechZone.Server.Models.RequestModels;
 using TechZone.Server.Models.DTO;
 using TechZone.Server.Services;
 using System.Runtime.CompilerServices;
+using TechZone.Server.Models.DTO.GET;
 
 namespace TechZone.Server.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
 
-    public class AccountController(IUserRepository userRepository, IMemoryCache cache, ITokenService tokenService) : ControllerBase
+    public class AccountController(IUserRepository userRepository, IMemoryCache cache, ITokenService tokenService, IMapper mapper) : ControllerBase
     {
         private readonly IUserRepository userRepository = userRepository;
         private readonly ITokenService _tokenService = tokenService;
-        // private readonly IMapper _mapper = mapper;
+        private readonly IMapper _mapper = mapper;
         private readonly IMemoryCache _cache = cache;
 
         private readonly EmailService _emailService = new EmailService();
@@ -196,6 +198,23 @@ namespace TechZone.Server.Controllers
                     details = ex.Message
                 });
             }
+        }
+
+        [HttpGet("GetUserById/{userId}")]
+        public async Task<IActionResult> GetUserById(int userId)
+        {
+            var user = await userRepository.GetUserByIdAsync(userId);
+            if (user == null)
+            {
+                return NotFound(new
+                {
+                    status = "error",
+                    message = "User not found."
+                });
+            }
+            var userDto = _mapper.Map<UserInfoDTO>(user);
+            return Ok(userDto);
+            
         }
     }
 }
