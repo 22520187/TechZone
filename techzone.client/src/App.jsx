@@ -6,10 +6,11 @@ import "./App.css";
 import { useSelector } from "react-redux";
 import AdminLayout from "./components/Admin/Layout/AdminLayout";
 import AllAdminRoutes from "./routes/AllAdminRoutes";
+import AIChatButton from "./components/User/Chat/AIChatButton";
 
 function App() {
     // const userRole = useSelector((state) => state.auth.userRole);
-    const userRole = "admin";
+    const userRole = "user";
     // const isAuthenticated = useSelector((state) => state.auth.isAuthenticated);
     const isAuthenticated = true;
 
@@ -23,6 +24,7 @@ function App() {
                 <div className="min-h-screen bg-bg">
                     <Navbar />
                     <AllUserRoutes />
+                    <AIChatButton />
                 </div>
             )}
         </div>
