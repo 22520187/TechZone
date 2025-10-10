@@ -66,7 +66,6 @@ namespace TechZone.Server.Controllers
         }
 
         [HttpPost("ChangePassword")]
-
         public async Task<IActionResult> ChangePasswordAsync([FromBody] ChangePasswordRequest request)
         {
             if (string.IsNullOrEmpty(request.Email) || string.IsNullOrEmpty(request.CurrentPassword) || string.IsNullOrEmpty(request.NewPassword))
@@ -110,14 +109,53 @@ namespace TechZone.Server.Controllers
                     status = "success",
                     message = "Password changed successfully."
                 });
-            } 
+            }
             catch (Exception ex)
             {
-                return BadRequest( new
+                return BadRequest(new
                 {
                     status = "error",
                     message = "An error occurred while changing the password.",
                     details = ex.Message
+                });
+            }
+        }
+
+        [HttpPost("validateUser")]
+        public async Task<IActionResult> ValidateUser([FromBody] LoginRequests request)
+        {
+            if (string.IsNullOrEmpty(request.Email) || string.IsNullOrEmpty(request.Password))
+            {
+                return BadRequest(new
+                {
+                    status = "error",
+                    message = "Email, Password is not empty."
+                });
+            }
+
+            try
+            {
+                var user = await userRepository.AuthenticateAsync(request.Email, request.Password);
+                if (user == null)
+                {
+                    return NotFound(new
+                    {
+                        status = "error",
+                        message = "Email or Password is incorrect."
+                    });
+                }
+                return Ok(new
+                {
+                    status = "success",
+                    message = "User is valid."
+                });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new
+                {
+                    status = "error",
+                    message = ex.Message
                 });
             }
         }
