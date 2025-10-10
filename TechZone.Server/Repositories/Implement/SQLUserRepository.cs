@@ -58,7 +58,7 @@ namespace TechZone.Server.Repositories.Implement
                 return null;
             }
         }
-        
+
         public async Task<ICollection<string>> GetUserRole(int userId)
         {
             var result = await _context.Users
@@ -66,6 +66,19 @@ namespace TechZone.Server.Repositories.Implement
                 .Select(ur => ur.Role)
                 .ToListAsync();
             return result;
+        }
+        
+        public async Task<bool> UpdatePasswordAsync(User user, string newPassword)
+        {
+            if (user == null || string.IsNullOrEmpty(newPassword))
+                return false;
+
+            var hashedPassword = BCrypt.Net.BCrypt.HashPassword(newPassword);
+            user.PasswordHash = hashedPassword;
+
+            _context.Users.Update(user);
+            var changes = await _context.SaveChangesAsync();
+            return changes > 0;
         }
 
     }

@@ -10,5 +10,7 @@ namespace TechZone.Server.Repositories
         Task<User?> AuthenticateAsync(string email, string password);
         Task<User?> GetUserByIdAsync(int userId);
         Task<ICollection<string>> GetUserRole(int userId);
+
+        Task<bool> UpdatePasswordAsync(User user, string newPassword);
     }
 }
