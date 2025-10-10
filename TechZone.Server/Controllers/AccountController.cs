@@ -12,17 +12,16 @@ namespace TechZone.Server.Controllers
 
     public class AccountController(IUserRepository userRepository, IMemoryCache cache, ITokenService tokenService) : ControllerBase
     {
-        private readonly IUserRepository _userRepository = userRepository;
+        private readonly IUserRepository userRepository = userRepository;
         private readonly ITokenService _tokenService = tokenService;
         // private readonly IMapper _mapper = mapper;
         private readonly IMemoryCache _memoryCache = cache;
 
         [HttpPost("register")]
-
         public async Task<IActionResult> Register([FromBody] RegisterRequests request)
         {
             // Kiểm tra email đã tồn tại chưa
-            bool isEmailExits = await _userRepository.IsEmailExistsAsync(request.Email);
+            bool isEmailExits = await userRepository.IsEmailExistsAsync(request.Email);
             if (isEmailExits)
             {
                 return BadRequest(new
@@ -43,8 +42,8 @@ namespace TechZone.Server.Controllers
             return Ok(result);
         }
 
-        [HttpPost("login")]
 
+        [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginRequests request)
         {
             var user = await userRepository.AuthenticateAsync(request.Email, request.Password);
@@ -65,6 +64,62 @@ namespace TechZone.Server.Controllers
             }
             return BadRequest("Username or password incorrect");
         }
-        
+
+        [HttpPost("ChangePassword")]
+
+        public async Task<IActionResult> ChangePasswordAsync([FromBody] ChangePasswordRequest request)
+        {
+            if (string.IsNullOrEmpty(request.Email) || string.IsNullOrEmpty(request.CurrentPassword) || string.IsNullOrEmpty(request.NewPassword))
+            {
+                return BadRequest(new
+                {
+                    status = "error",
+                    message = "Email, CurrentPassword, and NewPassword are required."
+                });
+            }
+            try
+            {
+                var userToChangePassword = await userRepository.GetUserByEmailAsync(request.Email);
+
+                if (userToChangePassword == null)
+                {
+                    return NotFound(new
+                    {
+                        status = "error",
+                        message = "User not found."
+                    });
+                }
+
+                // Verify current password
+                bool isCurrentPasswordValid = BCrypt.Net.BCrypt.Verify(request.CurrentPassword, userToChangePassword.PasswordHash);
+                if (!isCurrentPasswordValid)
+                {
+                    return BadRequest(new
+                    {
+                        status = "error",
+                        message = "Current password is incorrect."
+                    });
+                }
+
+                // Hash the new password
+                var hashPassword = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
+                await userRepository.UpdatePasswordAsync(userToChangePassword, hashPassword);
+
+                return Ok(new
+                {
+                    status = "success",
+                    message = "Password changed successfully."
+                });
+            } 
+            catch (Exception ex)
+            {
+                return BadRequest( new
+                {
+                    status = "error",
+                    message = "An error occurred while changing the password.",
+                    details = ex.Message
+                });
+            }
+        }
     }
 }
