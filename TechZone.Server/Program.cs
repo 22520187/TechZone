@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using TechZone.Server.Models;
 using TechZone.Server.Repositories;
 using TechZone.Server.Repositories.Implement;
+using TechZone.Server.Mapping;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -27,15 +28,15 @@ builder.Services.AddCors(options =>
 
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IUserRepository, SQLUserRepository>();
-builder.Services.AddHttpClient();  // Đăng ký IHttpClientFactory
 
-
-builder.Services.AddMemoryCache();
 
 
 
 builder.Services.AddScoped(typeof(ITechZoneRepository<>), typeof(TechZoneRepository<>));
+builder.Services.AddHttpClient();  // Đăng ký IHttpClientFactory
 
+builder.Services.AddAutoMapper(cfg => cfg.AddProfile<AutoMapperProfile>());
+builder.Services.AddMemoryCache();
 
 
 
