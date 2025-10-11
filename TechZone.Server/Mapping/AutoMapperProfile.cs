@@ -11,6 +11,9 @@ namespace TechZone.Server.Mapping
         public AutoMapperProfile()
         {
             CreateMap<User, UserInfoDTO>().ReverseMap();
+            CreateMap<Order, OrderDTO>().ReverseMap();
+            CreateMap<OrderDetail, OrderDetailDTO>().ReverseMap();
+            CreateMap<Promotion, PromotionDTO>().ReverseMap();
         }
     }
 }
