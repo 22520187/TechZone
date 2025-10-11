@@ -8,6 +8,7 @@ using TechZone.Server.Models.DTO;
 using TechZone.Server.Services;
 using System.Runtime.CompilerServices;
 using TechZone.Server.Models.DTO.GET;
+using TechZone.Server.Models.DTO.UPDATE;
 
 namespace TechZone.Server.Controllers
 {
@@ -17,7 +18,7 @@ namespace TechZone.Server.Controllers
     public class AccountController(IUserRepository userRepository, IMemoryCache cache, ITokenService tokenService, IMapper mapper) : ControllerBase
     {
         private readonly IUserRepository userRepository = userRepository;
-        private readonly ITokenService _tokenService = tokenService;
+        private readonly ITokenService tokenService = tokenService;
         private readonly IMapper _mapper = mapper;
         private readonly IMemoryCache _cache = cache;
 
@@ -200,6 +201,48 @@ namespace TechZone.Server.Controllers
             }
         }
 
+        [HttpPost("verify-code")]
+        public IActionResult VerifyCode([FromBody] VerifyCodeRequest request)
+        {
+            if (string.IsNullOrEmpty(request.Email) || string.IsNullOrEmpty(request.Code))
+            {
+                return BadRequest(new
+                {
+                    status = "error",
+                    message = "Email and Code are required."
+                });
+            }
+
+            if (_cache.TryGetValue(request.Email, out string? cachedCode) && cachedCode != null)
+            {
+                if (cachedCode == request.Code)
+                {
+                    _cache.Remove(request.Email); // Xoá mã sau khi xác thực thành công
+                    return Ok(new
+                    {
+                        status = "success",
+                        message = "Verification code is valid. You can continue"
+                    });
+                }
+                else
+                {
+                    return BadRequest(new
+                    {
+                        status = "error",
+                        message = "Invalid verification code."
+                    });
+                }
+            }
+            else
+            {
+                return BadRequest(new
+                {
+                    status = "error",
+                    message = "Verification code has expired or does not exist."
+                });
+            }
+        }
+
         [HttpGet("GetUserById/{userId}")]
         public async Task<IActionResult> GetUserById(int userId)
         {
@@ -214,7 +257,75 @@ namespace TechZone.Server.Controllers
             }
             var userDto = _mapper.Map<UserInfoDTO>(user);
             return Ok(userDto);
-            
+
+        }
+
+        [HttpPut("Update-info/{userId}")]
+        public async Task<IActionResult> UpdateUserInfo(int userId, [FromBody] UpdateUserInfoRequestDTO request)
+        {
+            if (request == null)
+            {
+                return BadRequest(new
+                {
+                    status = "error",
+                    message = "Request body is invalid."
+                });
+            }
+
+            // check validation
+            if (!ModelState.IsValid)
+            {
+                var errors = ModelState.Values
+                .SelectMany(v => v.Errors)
+                .Select(e => e.ErrorMessage)
+                .ToList();
+
+                return BadRequest(new
+                {
+                    status = "error",
+                    message = "Validation failed.",
+                    errors = errors
+                });
+            }
+
+            try
+            {
+                //check user exists
+                var existingUser = await userRepository.GetUserByIdAsync(userId);
+                if (existingUser == null)
+                {
+                    return NotFound(new
+                    {
+                        status = "error",
+                        message = "User not found."
+                    });
+                }
+
+                var success = await userRepository.UpdateUserInfoAsync(userId, request);
+                if (!success)
+                {
+                    return BadRequest(new
+                    {
+                        status = "error",
+                        message = "Failed to update user info."
+                    });
+                }
+
+                return Ok(new
+                {
+                    status = "success",
+                    message = "User info updated successfully."
+                });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new
+                {
+                    status = "error",
+                    message = "An error occurred while updating user info.",
+                    details = ex.Message
+                });
+            }
         }
     }
 }
