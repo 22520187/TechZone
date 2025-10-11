@@ -1,4 +1,5 @@
 using TechZone.Server.Models.Domain;
+using TechZone.Server.Models.DTO.UPDATE;
 
 namespace TechZone.Server.Repositories
 {
@@ -12,5 +13,7 @@ namespace TechZone.Server.Repositories
         Task<ICollection<string>> GetUserRole(int userId);
 
         Task<bool> UpdatePasswordAsync(User user, string newPassword);
+
+        Task<bool> UpdateUserInfoAsync(int userId, UpdateUserInfoRequestDTO request);
     }
 }

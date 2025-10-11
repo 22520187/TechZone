@@ -1,6 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using TechZone.Server.Models;
 using TechZone.Server.Models.Domain;
+using TechZone.Server.Models.DTO.UPDATE;
+using TechZone.Server.Repositories;
 
 namespace TechZone.Server.Repositories.Implement
 {
@@ -67,7 +69,7 @@ namespace TechZone.Server.Repositories.Implement
                 .ToListAsync();
             return result;
         }
-        
+
         public async Task<bool> UpdatePasswordAsync(User user, string newPassword)
         {
             if (user == null || string.IsNullOrEmpty(newPassword))
@@ -81,5 +83,49 @@ namespace TechZone.Server.Repositories.Implement
             return changes > 0;
         }
 
+        public async Task<bool> UpdateUserInfoAsync(int userId, UpdateUserInfoRequestDTO request)
+        {
+            try
+            {
+                var user = await _context.Users.FindAsync(userId);
+                if (user == null) return false;
+
+                user.FullName = request.FullName;
+                user.Phone = request.Phone;
+                user.District = request.District;
+                user.City = request.City;
+                user.Ward = request.Ward;
+                user.AvatarImageUrl = request.PhotoUrl;
+                // Sử dụng ExecuteSqlRaw để cập nhật trực tiếp
+                var sql = @"UPDATE Users
+                           SET FullName = {0},
+                               Phone = {1},
+                               City = {2},
+                               District = {3},
+                               Ward = {4},
+                               AvatarImageUrl = {5}
+                           WHERE UserID = {6}";
+
+                var result = await _context.Database.ExecuteSqlRawAsync(sql,
+                    request.FullName ?? (object)DBNull.Value,
+                    request.Phone ?? (object)DBNull.Value,
+                    request.City ?? (object)DBNull.Value,
+                    request.District ?? (object)DBNull.Value,
+                    request.Ward ?? (object)DBNull.Value,
+                    request.PhotoUrl ?? (object)DBNull.Value,
+                    userId);
+
+                Console.WriteLine($"ExecuteSqlRaw result: {result}");
+
+                return result > 0;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in UpdateUserInfo: {ex}");
+                Console.WriteLine($"Inner exception: {ex.InnerException?.Message}");
+                Console.WriteLine($"Stack trace: {ex.StackTrace}");
+                throw;
+            }
+        }
     }
 }
