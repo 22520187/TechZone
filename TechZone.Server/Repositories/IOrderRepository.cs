@@ -7,5 +7,7 @@ namespace TechZone.Server.Repositories
     {
         Task<Order?> GetOrderByIdAsync(int orderId);
         Task<List<Order>> GetOrdersByUserIdAsync(int userId);
+
+        Task<bool> UpdateOrderStatusAsync(int orderId, string newStatus);
     }
 }

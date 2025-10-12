@@ -45,6 +45,17 @@ namespace TechZone.Server.Controllers
             var orderDTO = _mapper.Map<OrderDTO>(order);
             return Ok(orderDTO);
         }
+
+        [HttpPut("update-order-state/{orderId}")]
+        public async Task<ActionResult> UpdateOrderState(int orderId, [FromBody] string newState)
+        {
+            var result = await _orderRepository.UpdateOrderStatusAsync(orderId, newState);
+            if (!result)
+            {
+                return NotFound($"Order with ID {orderId} not found.");
+            }
+            return NoContent();
+        }
     }
 
 }
