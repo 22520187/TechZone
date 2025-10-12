@@ -21,7 +21,7 @@ import {
     deleteProduct,
 } from "../../../features/Admin/Products/Product";
 // import { fetchAllBrand } from "../../../features/Admin/Brands/Brand";
-// import { fetchAllCategory } from "../../../features/Admin/Categories/Category";
+import { fetchAllCategory } from "../../../features/Admin/Categories/Category";
 import api from "../../../features/AxiosInstance/AxiosInstance";
 
 export default function Products() {
@@ -30,7 +30,7 @@ export default function Products() {
         (state) => state.product
     );
     // const { brandItems } = useSelector((state) => state.brand);
-    // const { categoryItems } = useSelector((state) => state.category);
+    const { categoryItems } = useSelector((state) => state.category);
 
     const [searchQuery, setSearchQuery] = useState("");
     const [loading, setLoading] = useState(true);
@@ -77,15 +77,14 @@ export default function Products() {
     //     }
     // };
 
-    // Function to fetch categories data
-    // const fetchCategories = async () => {
-    //     try {
-    //         await dispatch(fetchAllCategory()).unwrap();
-    //     } catch (err) {
-    //         message.error("Unable to fetch categories. Please try again.");
-    //         console.error("Error fetching categories:", err);
-    //     }
-    // };
+    const fetchCategories = async () => {
+        try {
+            await dispatch(fetchAllCategory()).unwrap();
+        } catch (err) {
+            message.error("Unable to fetch categories. Please try again.");
+            console.error("Error fetching categories:", err);
+        }
+    };
 
     // Fetch data on component mount
     useEffect(() => {
@@ -93,7 +92,7 @@ export default function Products() {
             await Promise.all([
                 fetchProducts(),
                 // fetchBrands(),
-                // fetchCategories(),
+                fetchCategories(),
             ]);
         };
 
@@ -493,7 +492,7 @@ export default function Products() {
                                 ))}
                             </Select>
                         </Form.Item> */}
-{/* 
+                        {/* 
                         <Form.Item
                             name="categoryId"
                             label="Category"
