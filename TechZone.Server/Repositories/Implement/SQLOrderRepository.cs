@@ -33,5 +33,20 @@ namespace TechZone.Server.Repositories.Implement
                 .Where(o => o.UserId == userId)
                 .ToListAsync();
         }
+
+        // New method to update order status
+        public async Task<bool> UpdateOrderStatusAsync(int orderId, string newStatus)
+        {
+            var order = await _context.Orders.FindAsync(orderId);
+            if (order == null)
+            {
+                return false; // Order not found
+            }
+
+            order.Status = newStatus;
+            _context.Orders.Update(order);
+            await _context.SaveChangesAsync();
+            return true;
+        }
     }
 }
