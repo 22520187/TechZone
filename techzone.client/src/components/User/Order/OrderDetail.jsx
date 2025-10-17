@@ -14,6 +14,7 @@ import {
   Star,
 } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
+import TrackingMap from "./TrackingMap";
 import RatingModal from "./RatingModal";
 
 const mockOrderDetails = {
@@ -502,6 +503,20 @@ const OrderDetail = () => {
         </div>
       </motion.div>
 
+      {orderData.status.toUpperCase() === "PROCESSING" && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.2 }}
+          className="mb-8"
+        >
+          <TrackingMap 
+            orderId={orderData.id}
+            shippingAddress={orderData.addresses.shipping.address}
+          />
+        </motion.div>
+      )}
+
       <div className="mb-8">
         {orderData.status.toUpperCase() !== "CANCELED" ? (
           <>
@@ -509,104 +524,106 @@ const OrderDetail = () => {
               Expected delivery on {orderData.expectedDelivery}
             </p>
 
-            <div className="relative mb-8">
-              <div className="absolute top-4 left-0 right-0 h-1 bg-gray-200 z-0"></div>
+            {orderData.status.toUpperCase() !== "PROCESSING" && (
+              <div className="relative mb-8">
+                <div className="absolute top-4 left-0 right-0 h-1 bg-gray-200 z-0"></div>
 
-              <div
-                className="absolute top-4 left-0 h-1 bg-primary-500 z-0"
-                style={{ width: `${orderData.currentStep * 25}%` }}
-              ></div>
+                <div
+                  className="absolute top-4 left-0 h-1 bg-primary-500 z-0"
+                  style={{ width: `${orderData.currentStep * 25}%` }}
+                ></div>
 
-              <div className="flex justify-between relative z-10">
-                <div className="flex flex-col items-center">
-                  <div
-                    className={`w-8 h-8 rounded-full ${
-                      orderData.currentStep >= 1 ? "bg-primary-500" : "bg-white"
-                    } border-4 ${
-                      orderData.currentStep >= 1
-                        ? "border-white"
-                        : "border-gray-200"
-                    } flex items-center justify-center mb-2`}
-                  >
-                    <FileText
-                      size={16}
-                      className={
+                <div className="flex justify-between relative z-10">
+                  <div className="flex flex-col items-center">
+                    <div
+                      className={`w-8 h-8 rounded-full ${
+                        orderData.currentStep >= 1 ? "bg-primary-500" : "bg-white"
+                      } border-4 ${
                         orderData.currentStep >= 1
-                          ? "text-white"
-                          : "text-gray-400"
-                      }
-                    />
+                          ? "border-white"
+                          : "border-gray-200"
+                      } flex items-center justify-center mb-2`}
+                    >
+                      <FileText
+                        size={16}
+                        className={
+                          orderData.currentStep >= 1
+                            ? "text-white"
+                            : "text-gray-400"
+                        }
+                      />
+                    </div>
+                    <p className="text-sm text-gray-700">Order Placed</p>
                   </div>
-                  <p className="text-sm text-gray-700">Order Placed</p>
-                </div>
 
-                <div className="flex flex-col items-center">
-                  <div
-                    className={`w-8 h-8 rounded-full ${
-                      orderData.currentStep >= 2 ? "bg-primary-500" : "bg-white"
-                    } border-4 ${
-                      orderData.currentStep >= 2
-                        ? "border-white"
-                        : "border-gray-200"
-                    } flex items-center justify-center mb-2`}
-                  >
-                    <Package
-                      size={16}
-                      className={
+                  <div className="flex flex-col items-center">
+                    <div
+                      className={`w-8 h-8 rounded-full ${
+                        orderData.currentStep >= 2 ? "bg-primary-500" : "bg-white"
+                      } border-4 ${
                         orderData.currentStep >= 2
-                          ? "text-white"
-                          : "text-gray-400"
-                      }
-                    />
+                          ? "border-white"
+                          : "border-gray-200"
+                      } flex items-center justify-center mb-2`}
+                    >
+                      <Package
+                        size={16}
+                        className={
+                          orderData.currentStep >= 2
+                            ? "text-white"
+                            : "text-gray-400"
+                        }
+                      />
+                    </div>
+                    <p className="text-sm text-gray-700">Packaging</p>
                   </div>
-                  <p className="text-sm text-gray-700">Packaging</p>
-                </div>
 
-                <div className="flex flex-col items-center">
-                  <div
-                    className={`w-8 h-8 rounded-full ${
-                      orderData.currentStep >= 3 ? "bg-primary-500" : "bg-white"
-                    } border-4 ${
-                      orderData.currentStep >= 3
-                        ? "border-white"
-                        : "border-gray-200"
-                    } flex items-center justify-center mb-2`}
-                  >
-                    <Truck
-                      size={16}
-                      className={
+                  <div className="flex flex-col items-center">
+                    <div
+                      className={`w-8 h-8 rounded-full ${
+                        orderData.currentStep >= 3 ? "bg-primary-500" : "bg-white"
+                      } border-4 ${
                         orderData.currentStep >= 3
-                          ? "text-white"
-                          : "text-gray-400"
-                      }
-                    />
+                          ? "border-white"
+                          : "border-gray-200"
+                      } flex items-center justify-center mb-2`}
+                    >
+                      <Truck
+                        size={16}
+                        className={
+                          orderData.currentStep >= 3
+                            ? "text-white"
+                            : "text-gray-400"
+                        }
+                      />
+                    </div>
+                    <p className="text-sm text-gray-700">Shipping</p>
                   </div>
-                  <p className="text-sm text-gray-700">Shipping</p>
-                </div>
 
-                <div className="flex flex-col items-center">
-                  <div
-                    className={`w-8 h-8 rounded-full ${
-                      orderData.currentStep >= 4 ? "bg-primary-500" : "bg-white"
-                    } border-4 ${
-                      orderData.currentStep >= 4
-                        ? "border-white"
-                        : "border-gray-200"
-                    } flex items-center justify-center mb-2`}
-                  >
-                    <CheckCircle
-                      size={16}
-                      className={
+                  <div className="flex flex-col items-center">
+                    <div
+                      className={`w-8 h-8 rounded-full ${
+                        orderData.currentStep >= 4 ? "bg-primary-500" : "bg-white"
+                      } border-4 ${
                         orderData.currentStep >= 4
-                          ? "text-white"
-                          : "text-gray-400"
-                      }
-                    />
+                          ? "border-white"
+                          : "border-gray-200"
+                      } flex items-center justify-center mb-2`}
+                    >
+                      <CheckCircle
+                        size={16}
+                        className={
+                          orderData.currentStep >= 4
+                            ? "text-white"
+                            : "text-gray-400"
+                        }
+                      />
+                    </div>
+                    <p className="text-sm text-gray-700">Delivered</p>
                   </div>
-                  <p className="text-sm text-gray-700">Delivered</p>
                 </div>
               </div>
-            </div>
+            )}
           </>
         ) : (
           <div className="bg-red-50 rounded-lg p-4 mb-8">
@@ -617,33 +634,35 @@ const OrderDetail = () => {
         )}
       </div>
 
-      <div className="mb-8">
-        <h2 className="text-lg font-semibold mb-4">Order Activity</h2>
+      {orderData.status.toUpperCase() !== "PROCESSING" && (
+        <div className="mb-8">
+          <h2 className="text-lg font-semibold mb-4">Order Activity</h2>
 
-        <div className="space-y-6">
-          {orderData.activities.map((activity, index) => (
-            <motion.div
-              key={index}
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: index * 0.1 }}
-              className="flex"
-            >
-              <div className="mr-4">
-                <div
-                  className={`w-8 h-8 rounded-full flex items-center justify-center ${activity.color} bg-opacity-10`}
-                >
-                  <activity.icon size={18} className={activity.color} />
+          <div className="space-y-6">
+            {orderData.activities.map((activity, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: index * 0.1 }}
+                className="flex"
+              >
+                <div className="mr-4">
+                  <div
+                    className={`w-8 h-8 rounded-full flex items-center justify-center ${activity.color} bg-opacity-10`}
+                  >
+                    <activity.icon size={18} className={activity.color} />
+                  </div>
                 </div>
-              </div>
-              <div>
-                <p className="text-gray-800">{activity.description}</p>
-                <p className="text-gray-500 text-sm">{activity.date}</p>
-              </div>
-            </motion.div>
-          ))}
+                <div>
+                  <p className="text-gray-800">{activity.description}</p>
+                  <p className="text-gray-500 text-sm">{activity.date}</p>
+                </div>
+              </motion.div>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
       <div className="mb-8">
         <h2 className="text-lg font-semibold mb-4">
@@ -728,7 +747,7 @@ const OrderDetail = () => {
       <div className="grid grid-cols-3 gap-6 mb-4">
         <div>
           <h3 className="text-gray-800 font-medium mb-3">Billing Address</h3>
-          <div className="bg-gray-50 p-4 rounded-lg h-full">
+          <div className="bg-green-50 p-4 rounded-lg h-full">
             <p className="font-medium mb-1">
               {orderData.addresses.billing.name}
             </p>
@@ -740,7 +759,7 @@ const OrderDetail = () => {
 
         <div>
           <h3 className="text-gray-800 font-medium mb-3">Shipping Address</h3>
-          <div className="bg-gray-50 p-4 rounded-lg h-full">
+          <div className="bg-orange-50 p-4 rounded-lg h-full">
             <p className="font-medium mb-1">
               {orderData.addresses.shipping.name}
             </p>
@@ -752,7 +771,7 @@ const OrderDetail = () => {
 
         <div>
           <h3 className="text-gray-800 font-medium mb-3">Order Notes</h3>
-          <div className="bg-gray-50 p-4 rounded-lg h-full">
+          <div className="bg-blue-50 p-4 rounded-lg h-full">
             <p className="text-gray-600 text-sm">{orderData.notes}</p>
           </div>
         </div>
