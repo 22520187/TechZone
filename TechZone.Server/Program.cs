@@ -31,6 +31,7 @@ builder.Services.AddScoped<IUserRepository, SQLUserRepository>();
 builder.Services.AddScoped<IOrderRepository, SQLOrderRepository>();
 builder.Services.AddScoped<IOrderDetailRepository, SQLOrderDetailRepository>();
 builder.Services.AddScoped<IReviewRepository, SQLReviewRepository>();
+builder.Services.AddScoped<ICloudinaryService, CloudinaryService>();
 
 
 
