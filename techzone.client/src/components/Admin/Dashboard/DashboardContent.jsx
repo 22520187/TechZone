@@ -7,7 +7,7 @@ import {
     ArrowDown,
     Clock,
 } from "lucide-react";
-// import SalesChart from "./SaleChart";
+import SalesChart from "./SaleChart";
 
 const statsItems = [
     {
@@ -110,14 +110,14 @@ const DashboardContent = () => {
                 ))}
             </motion.div>
 
-            {/* <motion.div
+            <motion.div
                 className="bg-white rounded-xl shadow-sm mb-6"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3, delay: 0.4 }}
             >
                 <SalesChart />
-            </motion.div> */}
+            </motion.div>
 
             <motion.div
                 className="bg-white rounded-xl shadow-sm p-6"
