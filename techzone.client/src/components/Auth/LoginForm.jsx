@@ -4,34 +4,52 @@ import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, Link, useLocation } from "react-router-dom";
 import { Form, Input, Button, message } from "antd";
 import { UserOutlined, LockOutlined } from "@ant-design/icons";
+import { login } from "../../features/AxiosInstance/Auth/Auth";
 
 
 const Login = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const dispatch = useDispatch();
   const [form] = Form.useForm();
-  const [loading, setLoading] = useState(false);
+  
+  const authState = useSelector((state) => state.auth);
+  const loading = authState.status === "loading";
 
   // Get the redirect path from location state
   const from = location.state?.from || "/";
 
   const handleSubmit = async (values) => {
-    console.log(values);
+    try {
+      const result = await dispatch(login({
+        email: values.email,
+        password: values.password
+      })).unwrap();
+      
+      message.success("Đăng nhập thành công!");
+      
+      // Redirect based on user role
+      if (result.userRole === "Admin") {
+        navigate("/admin");
+      } else {
+        navigate(from);
+      }
+    } catch (error) {
+      console.error("Login error:", error);
+      message.error(error || "Đăng nhập thất bại. Vui lòng kiểm tra lại email và mật khẩu.");
+    }
   };
 
-  // const handleSubmit = (e) => {
-  //   e.preventDefault();
-  //   dispatch(login({ email, password }));
-  // };
-
-  // useEffect(() => {
-  //   if (authState.isAuthenticated) {
-  //     // console.log(authState.user);
-  //     // console.log(authState.userRole);
-  //     // console.log(authState.token);
-  //     // console.log(authState.isAuthenticated);
-  //     navigate("/"); // Đường dẫn trang Chủ
-  //   }
-  // }, [authState.isAuthenticated]);
+  useEffect(() => {
+    if (authState.isAuthenticated) {
+      // Redirect if already authenticated
+      if (authState.userRole === "Admin") {
+        navigate("/admin");
+      } else {
+        navigate(from);
+      }
+    }
+  }, [authState.isAuthenticated, authState.userRole, navigate, from]);
 
   return (
     <div className="h-screen w-full md:top-20 flex relative">
