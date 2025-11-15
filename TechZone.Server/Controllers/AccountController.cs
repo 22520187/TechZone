@@ -42,7 +42,8 @@ namespace TechZone.Server.Controllers
             var user = new User
             {
                 Email = request.Email,
-                PasswordHash = hashPassword
+                PasswordHash = hashPassword,
+                FullName = request.Username // Map username to FullName
             };
 
             var result = await userRepository.RegisterUserAsync(user);
@@ -107,9 +108,8 @@ namespace TechZone.Server.Controllers
                     });
                 }
 
-                // Hash the new password
-                var hashPassword = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
-                await userRepository.UpdatePasswordAsync(userToChangePassword, hashPassword);
+                // Pass plain password to repository - it will hash it
+                await userRepository.UpdatePasswordAsync(userToChangePassword, request.NewPassword);
 
                 return Ok(new
                 {

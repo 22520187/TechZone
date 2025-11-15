@@ -9,5 +9,8 @@ namespace TechZone.Server.Models.RequestModels
 
         [Required]
         public string Password { get; set; } = null!;
+
+        [Required]
+        public string Username { get; set; } = null!;
     }
 }

@@ -1,42 +1,47 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion } from "framer-motion";
 import { Link, useNavigate } from 'react-router-dom';
 import { Form, Input, Button, message } from "antd";
+import { useDispatch, useSelector } from "react-redux";
+import { register, resetStatus } from '../../features/AxiosInstance/Auth/Auth';
 import TechBackground from '../../components/Auth/TechBackground';
 import { UserOutlined, LockOutlined, MailOutlined } from "@ant-design/icons";
 import GradientText from '../../components/ReactBitsComponent/GradientText';
 
 const SignUp = () => {
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const [form] = Form.useForm();
-  const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
-    email: '',
-    phone: '',
-    password: '',
-    confirmPassword: ''
-  });
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const authState = useSelector((state) => state.auth);
+  const hasNavigatedRef = useRef(false);
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (formData.password !== formData.confirmPassword) {
-      alert('Passwords do not match!');
-      return;
+  useEffect(() => {
+    // Reset status when component mounts to clear any previous errors from other pages
+    dispatch(resetStatus());
+  }, [dispatch]);
+
+  useEffect(() => {
+    if (authState.status === "succeeded" && !authState.error && !authState.isAuthenticated && !hasNavigatedRef.current) {
+      hasNavigatedRef.current = true;
+      message.success("Đăng ký thành công! Đang chuyển đến trang đăng nhập...");
+      setTimeout(() => {
+        navigate("/auth/login");
+        // Reset status sau khi navigate
+        dispatch(resetStatus());
+        hasNavigatedRef.current = false;
+      }, 2000);
+    } else if (authState.status === "failed" && authState.error) {
+      // Only show registration errors, not login errors
+      const errorMessage = authState.error?.message || authState.error;
+      if (errorMessage && !errorMessage.includes("Username or password incorrect") && !errorMessage.includes("login")) {
+        message.error(errorMessage);
+      }
+      dispatch(resetStatus());
     }
-    // Handle signup logic here
-    console.log('Signup submitted:', formData);
-    navigate('/auth/login');
-  };
+  }, [authState.status, authState.error, authState.isAuthenticated, navigate, dispatch]);
 
-  const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
+  const handleSubmit = (values) => {
+    dispatch(register({ email: values.email, password: values.password, username: values.username }));
   };
 
   return (
@@ -189,15 +194,15 @@ const SignUp = () => {
                   <Button
                     type="primary"
                     htmlType="submit"
-                    loading={isLoading}
+                    loading={authState.status === "loading"}
                     className="w-full h-12 bg-gradient-to-br from-primary to-secondary border-none hover:from-primary-600 hover:to-secondary-600 text-white font-medium mb-6"
                     style={{
-                      background: isLoading
+                      background: authState.status === "loading"
                         ? undefined
                         : "linear-gradient(135deg, #50bbf5 0%, #5069f5 100%)",
                     }}
                   >
-                    {isLoading ? "Sending code..." : "Sign up"}
+                    {authState.status === "loading" ? "Đang đăng ký..." : "Sign up"}
                   </Button>
                 </Form.Item>
               </motion.div>

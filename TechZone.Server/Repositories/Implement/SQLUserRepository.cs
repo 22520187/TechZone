@@ -90,32 +90,22 @@ namespace TechZone.Server.Repositories.Implement
                 var user = await _context.Users.FindAsync(userId);
                 if (user == null) return false;
 
-                user.FullName = request.FullName;
-                user.Phone = request.Phone;
-                user.District = request.District;
-                user.City = request.City;
-                user.Ward = request.Ward;
-                user.AvatarImageUrl = request.PhotoUrl;
-                // Sử dụng ExecuteSqlRaw để cập nhật trực tiếp
-                var sql = @"UPDATE Users
-                           SET FullName = {0},
-                               Phone = {1},
-                               City = {2},
-                               District = {3},
-                               Ward = {4},
-                               AvatarImageUrl = {5}
-                           WHERE UserID = {6}";
+                // Update only non-null fields
+                if (request.FullName != null)
+                    user.FullName = request.FullName;
+                if (request.Phone != null)
+                    user.Phone = request.Phone;
+                if (request.District != null)
+                    user.District = request.District;
+                if (request.City != null)
+                    user.City = request.City;
+                if (request.Ward != null)
+                    user.Ward = request.Ward;
+                if (request.PhotoUrl != null)
+                    user.AvatarImageUrl = request.PhotoUrl;
 
-                var result = await _context.Database.ExecuteSqlRawAsync(sql,
-                    request.FullName ?? (object)DBNull.Value,
-                    request.Phone ?? (object)DBNull.Value,
-                    request.City ?? (object)DBNull.Value,
-                    request.District ?? (object)DBNull.Value,
-                    request.Ward ?? (object)DBNull.Value,
-                    request.PhotoUrl ?? (object)DBNull.Value,
-                    userId);
-
-                Console.WriteLine($"ExecuteSqlRaw result: {result}");
+                _context.Users.Update(user);
+                var result = await _context.SaveChangesAsync();
 
                 return result > 0;
             }

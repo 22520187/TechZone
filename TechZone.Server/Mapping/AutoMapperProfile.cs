@@ -10,7 +10,9 @@ namespace TechZone.Server.Mapping
     {
         public AutoMapperProfile()
         {
-            CreateMap<User, UserInfoDTO>().ReverseMap();
+            CreateMap<User, UserInfoDTO>()
+                .ForMember(dest => dest.PhotoUrl, opt => opt.MapFrom(src => src.AvatarImageUrl))
+                .ReverseMap();
             CreateMap<Order, OrderDTO>().ReverseMap();
             CreateMap<OrderDetail, OrderDetailDTO>().ReverseMap();
             CreateMap<Promotion, PromotionDTO>().ReverseMap();
