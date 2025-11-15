@@ -53,9 +53,19 @@ export const login = createAsyncThunk(
         } catch (error) {
             // Add more detailed error logging
             console.error("Login error:", error);
-            return thunkAPI.rejectWithValue(
-                error.response?.data || "Có lỗi xảy ra"
-            );
+            // Handle different error response formats
+            let errorMessage = "Có lỗi xảy ra";
+            if (error.response?.data) {
+                // If it's a string, use it directly
+                if (typeof error.response.data === 'string') {
+                    errorMessage = error.response.data;
+                } else if (error.response.data.message) {
+                    errorMessage = error.response.data.message;
+                } else {
+                    errorMessage = error.response.data;
+                }
+            }
+            return thunkAPI.rejectWithValue(errorMessage);
         }
     }
 );

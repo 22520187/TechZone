@@ -4,387 +4,606 @@ import { motion } from "framer-motion";
 import { toast } from "sonner";
 import EditModal from "./EditModal";
 import { useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { logout } from "../../../features/AxiosInstance/Auth/Auth";
+import api from "../../../features/AxiosInstance/AxiosInstance";
 
 const fadeIn = {
-    hidden: { opacity: 0, y: 20 },
-    visible: (custom) => ({
-        opacity: 1,
-        y: 0,
-        transition: {
-            delay: custom * 0.1,
-            duration: 0.5,
-            ease: [0.25, 0.1, 0.25, 1.0],
-        },
-    }),
+  hidden: { opacity: 0, y: 20 },
+  visible: (custom) => ({
+    opacity: 1,
+    y: 0,
+    transition: {
+      delay: custom * 0.1,
+      duration: 0.5,
+      ease: [0.25, 0.1, 0.25, 1.0],
+    },
+  }),
 };
 
 const EnhancedAccountSetting = () => {
-    const navigate = useNavigate();
+
+  // API key for Location API
+  const apiKey = "a84f0896-7c1a-11ef-8e53-0a00184fe694";
+
+  // Redux hooks
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const userId = useSelector((state) => state.auth.user);
+
+  // Missing state variables
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [showPassword, setShowPassword] = useState({
+    current: false,
+    new: false,
+    confirm: false,
+  });
+  // File upload state
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef(null);
+  const [imageChanged, setImageChanged] = useState(false);
+
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  // Ref để tránh infinite loop trong onError của avatar
+  const avatarErrorRef = useRef(false);
+
+  // Password Form State
+  const [passwordForm, setPasswordForm] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
+  });
+
+  // Profile Data States
+  const [profileData, setProfileData] = useState({
+    fullName: "",
+    email: "",
+    phoneNumber: "",
+    city: "",
+    district: "",
+    ward: "",
+    avatarUrl: "/lovable-uploads/ee6f74d2-cb92-47f8-9971-f947f6e0a573.png", // Default avatar
+  });
+
+  const [tempProfileData, setTempProfileData] = useState({ ...profileData });
+
+  // Location States
+  const [cities, setCities] = useState([]);
+  const [districts, setDistricts] = useState([]);
+  const [wards, setWards] = useState([]);
+
+  // Helper function to get location name from ID
+  const getLocationName = (id, type) => {
+    if (!id) return "";
     
-    // Missing state variables
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
-    const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+    if (type === "city") {
+      const city = cities.find((c) => c.ProvinceID === parseInt(id));
+      return city ? city.ProvinceName : id;
+    } else if (type === "district") {
+      const district = districts.find((d) => d.DistrictID === parseInt(id));
+      return district ? district.DistrictName : id;
+    } else if (type === "ward") {
+      const ward = wards.find((w) => w.WardCode === id);
+      return ward ? ward.WardName : id;
+    }
+    return id;
+  };
+
+  // Helper function to normalize avatar URL - tránh spam request
+  const getAvatarUrl = (url) => {
+    // Kiểm tra kỹ hơn - trim và check empty string
+    if (!url || (typeof url === 'string' && url.trim() === '')) {
+      return "/lovable-uploads/ee6f74d2-cb92-47f8-9971-f947f6e0a573.png";
+    }
+
+    // Xử lý trường hợp backend trả full URL (http/https)
+    if (url.startsWith("http://") || url.startsWith("https://")) {
+      return url;
+    }
+
+    // Nếu URL bắt đầu bằng "/" và không phải là "/api", giữ nguyên (relative path)
+    if (url.startsWith("/") && !url.startsWith("/api")) {
+      return url;
+    }
+
+    // Xử lý trường hợp URL bắt đầu bằng "/api" hoặc không có "/"
+    // Loại bỏ double slash và chuẩn hóa URL
+    const baseURL = api.defaults.baseURL.replace(/\/$/, "");
+    const cleanUrl = url.replace(/^\//, "");
     
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [showPassword, setShowPassword] = useState({
-        current: false,
-        new: false,
-        confirm: false,
-    });
-    
-    // Profile Data with mock data
-    const [profileData, setProfileData] = useState({
-        fullName: "Nguyễn Văn An",
-        email: "nguyenvanan@gmail.com",
-        phoneNumber: "0901234567",
-        city: "79", // Hồ Chí Minh
-        district: "760", // Quận 1
-        ward: "26734", // Phường Bến Nghé
-        avatarUrl: "/lovable-uploads/ee6f74d2-cb92-47f8-9971-f947f6e0a573.png", // Default avatar
-    });
-    const [tempProfileData, setTempProfileData] = useState({ ...profileData });
+    return `${baseURL}/${cleanUrl}`;
+  };
 
-    // File upload state
-    const [isUploading, setIsUploading] = useState(false);
-    const fileInputRef = useRef(null);
-    const [imageChanged, setImageChanged] = useState(false);
-
-    // Password Form State
-    const [passwordForm, setPasswordForm] = useState({
-        currentPassword: "",
-        newPassword: "",
-        confirmPassword: "",
-    });
-
-    // Location States with mock data
-    const [cities, setCities] = useState([]);
-    const [districts, setDistricts] = useState([]);
-    const [wards, setWards] = useState([]);
-
-    // Mock location data
-    const mockCities = [
-        { ProvinceID: "01", ProvinceName: "Hà Nội" },
-        { ProvinceID: "79", ProvinceName: "Thành phố Hồ Chí Minh" },
-        { ProvinceID: "48", ProvinceName: "Đà Nẵng" },
-        { ProvinceID: "92", ProvinceName: "Cần Thơ" },
-        { ProvinceID: "31", ProvinceName: "Hải Phòng" },
-        { ProvinceID: "77", ProvinceName: "Bà Rịa - Vũng Tàu" },
-        { ProvinceID: "74", ProvinceName: "Bình Dương" },
-        { ProvinceID: "75", ProvinceName: "Đồng Nai" },
-    ];
-
-    const mockDistricts = {
-        "01": [
-            { DistrictID: "001", DistrictName: "Quận Ba Đình" },
-            { DistrictID: "002", DistrictName: "Quận Hoàn Kiếm" },
-            { DistrictID: "003", DistrictName: "Quận Tây Hồ" },
-            { DistrictID: "004", DistrictName: "Quận Long Biên" },
-            { DistrictID: "005", DistrictName: "Quận Cầu Giấy" },
-        ],
-        "79": [
-            { DistrictID: "760", DistrictName: "Quận 1" },
-            { DistrictID: "761", DistrictName: "Quận 2" },
-            { DistrictID: "762", DistrictName: "Quận 3" },
-            { DistrictID: "763", DistrictName: "Quận 4" },
-            { DistrictID: "764", DistrictName: "Quận 5" },
-            { DistrictID: "765", DistrictName: "Quận 6" },
-            { DistrictID: "766", DistrictName: "Quận 7" },
-            { DistrictID: "767", DistrictName: "Quận 8" },
-            { DistrictID: "768", DistrictName: "Quận 9" },
-            { DistrictID: "769", DistrictName: "Quận 10" },
-        ],
-    };
-
-    const mockWards = {
-        "760": [
-            { WardCode: "26734", WardName: "Phường Bến Nghé" },
-            { WardCode: "26737", WardName: "Phường Bến Thành" },
-            { WardCode: "26740", WardName: "Phường Cầu Kho" },
-            { WardCode: "26743", WardName: "Phường Cầu Ông Lãnh" },
-            { WardCode: "26746", WardName: "Phường Cô Giang" },
-        ],
-        "761": [
-            { WardCode: "26749", WardName: "Phường An Phú" },
-            { WardCode: "26752", WardName: "Phường Thảo Điền" },
-            { WardCode: "26755", WardName: "Phường An Khánh" },
-            { WardCode: "26758", WardName: "Phường Bình An" },
-        ],
-    };
-
-
-    // useEffect to load mock data
-    useEffect(() => {
-        // Simulate loading
-        setLoading(true);
-        
-        setTimeout(() => {
-            setCities(mockCities);
-            setDistricts(mockDistricts[profileData.city] || []);
-            setWards(mockWards[profileData.district] || []);
-            setLoading(false);
-        }, 1000);
-    }, []);
-
-    // Update districts when city changes
-    useEffect(() => {
-        if (profileData.city) {
-            setDistricts(mockDistricts[profileData.city] || []);
-        } else {
-            setDistricts([]);
+  // Load User Data - Merge với localStorage logic để tránh conflict
+  useEffect(() => {
+    const fetchUserData = async () => {
+      setLoading(true);
+      try {
+        if (!userId) {
+          throw new Error("User ID not found. Please login again.");
         }
-    }, [profileData.city]);
 
-    // Update wards when district changes  
-    useEffect(() => {
-        if (profileData.district) {
-            setWards(mockWards[profileData.district] || []);
-        } else {
-            setWards([]);
-        }
-    }, [profileData.district]);
+        const response = await api.get(`api/account/GetUserById/${userId}`);
 
-    // Helper function to get location name by ID
-    const getLocationName = (id, type) => {
-        if (!id) return "Chưa chọn";
-        
-        switch (type) {
-            case "city":
-                const city = cities.find(c => c.ProvinceID === id);
-                return city ? city.ProvinceName : "Chưa chọn";
-            case "district":
-                const district = districts.find(d => d.DistrictID === id);
-                return district ? district.DistrictName : "Chưa chọn";
-            case "ward":
-                const ward = wards.find(w => w.WardCode === id);
-                return ward ? ward.WardName : "Chưa chọn";
-            default:
-                return "Chưa chọn";
+        if (!response || response.status !== 200) {
+          throw new Error(`Failed to fetch user data: ${response.status}`);
         }
+
+        const userData = response.data;
+
+        console.log("Fetched user data:", userData);
+
+        // Kiểm tra localStorage trước, nếu có thì dùng, không thì dùng từ API
+        // Ưu tiên localStorage vì nó có thể chứa URL mới nhất từ lần upload gần đây
+        const savedAvatar = localStorage.getItem(`user_avatar_${userId}`);
+        const avatarUrl = savedAvatar || userData.photoUrl || "/lovable-uploads/ee6f74d2-cb92-47f8-9971-f947f6e0a573.png";
+
+        // Map the API response to component state
+        const formattedData = {
+          fullName: userData.fullName || "",
+          email: userData.email || "",
+          phoneNumber: userData.phone || "",
+          city: userData.city || "",
+          district: userData.district || "",
+          ward: userData.ward || "",
+          avatarUrl: avatarUrl,
+        };
+
+        console.log("Formatted user data:", formattedData);
+
+        setProfileData(formattedData);
+        setTempProfileData(formattedData);
+
+        // Reset error ref khi load thành công
+        avatarErrorRef.current = false;
+
+        setLoading(false);
+      } catch (err) {
+        console.error("Error fetching user data:", err);
+        setError(err.message);
+        setLoading(false);
+        toast.error(err.message || "Failed to load user profile");
+      }
     };
 
-    // Toggle password visibility
-    const togglePasswordVisibility = (field) => {
-        setShowPassword({
-            ...showPassword,
-            [field]: !showPassword[field],
-        });
+    if (userId) {
+      fetchUserData();
+    } else {
+      setError("User not logged in");
+      setLoading(false);
+    }
+  }, [userId]);
+
+  // Sync tempProfileData with profileData when modal opens
+  useEffect(() => {
+    if (isProfileModalOpen) {
+      setTempProfileData({ ...profileData });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isProfileModalOpen]);
+
+  // Fetch cities
+  useEffect(() => {
+    const fetchCities = async () => {
+      try {
+        const response = await fetch(
+          "https://dev-online-gateway.ghn.vn/shiip/public-api/master-data/province",
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              Token: apiKey,
+            },
+          }
+        );
+        const data = await response.json();
+
+        if (data && data.data) {
+          setCities(data.data);
+        }
+      } catch (error) {
+        console.error("Error fetching cities:", error);
+        toast.error("Failed to load cities");
+      }
     };
 
-    // Handle password form changes
-    const handlePasswordFormChange = (e) => {
-        const { name, value } = e.target;
+    fetchCities();
+  }, []);
+
+  // Fetch districts when city changes
+  useEffect(() => {
+    const fetchDistricts = async () => {
+      if (!tempProfileData.city) return;
+
+      try {
+        const response = await fetch(
+          "https://dev-online-gateway.ghn.vn/shiip/public-api/master-data/district",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Token: apiKey,
+            },
+            body: JSON.stringify({
+              province_id: parseInt(tempProfileData.city),
+            }),
+          }
+        );
+        const data = await response.json();
+
+        if (data && data.data) {
+          setDistricts(data.data);
+        }
+      } catch (error) {
+        console.error("Error fetching districts:", error);
+        toast.error("Failed to load districts");
+      }
+    };
+
+    fetchDistricts();
+  }, [tempProfileData.city]);
+
+  // Fetch wards when district changes
+  useEffect(() => {
+    const fetchWards = async () => {
+      if (!tempProfileData.district) return;
+
+      try {
+        const response = await fetch(
+          "https://dev-online-gateway.ghn.vn/shiip/public-api/master-data/ward",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Token: apiKey,
+            },
+            body: JSON.stringify({
+              district_id: parseInt(tempProfileData.district),
+            }),
+          }
+        );
+        const data = await response.json();
+
+        if (data && data.data) {
+          setWards(data.data);
+        }
+      } catch (error) {
+        console.error("Error fetching wards:", error);
+        toast.error("Failed to load wards");
+      }
+    };
+
+    fetchWards();
+  }, [tempProfileData.district]);
+
+  // Toggle password visibility
+  const togglePasswordVisibility = (field) => {
+    setShowPassword({
+      ...showPassword,
+      [field]: !showPassword[field],
+    });
+  };
+
+  // Handle password form changes
+  const handlePasswordFormChange = (e) => {
+    const { name, value } = e.target;
+    setPasswordForm({
+      ...passwordForm,
+      [name]: value,
+    });
+  };
+
+  // Handle password change submission
+  const handlePasswordChange = async (e) => {
+    e.preventDefault();
+
+    // Validation
+    if (!passwordForm.currentPassword || !passwordForm.newPassword || !passwordForm.confirmPassword) {
+      toast.error("Vui lòng điền đầy đủ thông tin");
+      return;
+    }
+
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      toast.error("Mật khẩu mới và xác nhận mật khẩu không khớp");
+      return;
+    }
+
+    if (passwordForm.newPassword.length < 8) {
+      toast.error("Mật khẩu mới phải có ít nhất 8 ký tự");
+      return;
+    }
+
+    try {
+      const response = await api.post("api/Account/ChangePassword", {
+        email: profileData.email,
+        currentPassword: passwordForm.currentPassword,
+        newPassword: passwordForm.newPassword,
+      });
+
+      // Check response status and data
+      if (response.status === 200 && response.data?.status === "success") {
+        toast.success("Đổi mật khẩu thành công!");
         setPasswordForm({
-            ...passwordForm,
-            [name]: value,
+          currentPassword: "",
+          newPassword: "",
+          confirmPassword: "",
         });
-    };
+      } else {
+        toast.error(response.data?.message || "Đổi mật khẩu thất bại. Vui lòng thử lại!");
+      }
+    } catch (error) {
+      console.error("Password change error:", error);
+      const errorMessage = error.response?.data?.message || error.response?.data || "Đổi mật khẩu thất bại. Vui lòng thử lại!";
+      toast.error(errorMessage);
+    }
+  };
 
-    // Handle password change submission
-    const handlePasswordChange = async (e) => {
-        e.preventDefault();
-        
-        // Validation
-        if (!passwordForm.currentPassword || !passwordForm.newPassword || !passwordForm.confirmPassword) {
-            toast.error("Vui lòng điền đầy đủ thông tin");
-            return;
-        }
+  // Handle avatar upload
+  const handleAvatarUpload = async (file) => {
+    try {
+      setIsUploading(true);
 
-        if (passwordForm.newPassword !== passwordForm.confirmPassword) {
-            toast.error("Mật khẩu mới và xác nhận mật khẩu không khớp");
-            return;
-        }
+      // Create FormData to send the file
+      const formData = new FormData();
+      formData.append("file", file);
 
-        if (passwordForm.newPassword.length < 8) {
-            toast.error("Mật khẩu mới phải có ít nhất 8 ký tự");
-            return;
-        }
+      // Call the upload API
+      const uploadResponse = await api.post("api/Image/upload/avatar", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
 
-        // Mock password change
-        try {
-            // Simulate API call
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            
-            toast.success("Đổi mật khẩu thành công!");
-            setPasswordForm({
-                currentPassword: "",
-                newPassword: "",
-                confirmPassword: "",
-            });
-        } catch (error) {
-            toast.error("Đổi mật khẩu thất bại. Vui lòng thử lại!");
-        }
-    };
+      // Get the image URL from the response
+      const imageUrl = uploadResponse.data?.imageUrl;
 
-    // Handle file selection for avatar
-    const handleFileSelect = async (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
+      if (!imageUrl) {
+        throw new Error("Upload failed - no image URL returned");
+      }
 
-        // Validate file type
-        if (!file.type.startsWith('image/')) {
-            toast.error("Vui lòng chọn file hình ảnh");
-            return;
-        }
+      console.log("Uploaded image URL:", imageUrl);
 
-        // Validate file size (max 5MB)
-        if (file.size > 5 * 1024 * 1024) {
-            toast.error("File không được vượt quá 5MB");
-            return;
-        }
+      // Đánh dấu là ảnh đã được thay đổi
+      setImageChanged(true);
 
-        setIsUploading(true);
-        
-        try {
-            // Create preview URL
-            const imageUrl = URL.createObjectURL(file);
-            
-            // Simulate upload delay
-            await new Promise(resolve => setTimeout(resolve, 1500));
-            
-            // Update temp profile data
-            setTempProfileData({
-                ...tempProfileData,
-                avatarUrl: imageUrl,
-            });
-            
-            setImageChanged(true);
-            toast.success("Tải ảnh lên thành công!");
-        } catch (error) {
-            toast.error("Tải ảnh lên thất bại. Vui lòng thử lại!");
-        } finally {
-            setIsUploading(false);
-        }
-    };
+      // Chỉ update 1 state để tránh render 2 lần - React sẽ batch các updates
+      setProfileData((prev) => ({ ...prev, avatarUrl: imageUrl }));
+      setTempProfileData((prev) => ({ ...prev, avatarUrl: imageUrl }));
 
-    // Handle profile save
-    const saveProfileChanges = async () => {
-        try {
-            // Simulate API call
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            
-            setProfileData({ ...tempProfileData });
-            setIsProfileModalOpen(false);
-            toast.success("Cập nhật thông tin thành công!");
-        } catch (error) {
-            toast.error("Cập nhật thông tin thất bại. Vui lòng thử lại!");
-        }
-    };
+      // Lưu URL ảnh vào localStorage để đảm bảo nó được giữ lại sau khi tải lại trang
+      if (userId && imageUrl) {
+        localStorage.setItem(`user_avatar_${userId}`, imageUrl);
+        console.log("Saved avatar URL to localStorage:", imageUrl);
+      }
 
-    // Handle logout
-    const handleLogout = () => {
-        // dispatch(logout());
-        toast.success("Đăng xuất thành công!");
-        navigate("/auth/login");
-    };
+      toast.success("Tải ảnh đại diện lên thành công");
+      return imageUrl;
+    } catch (error) {
+      console.error("Lỗi khi tải ảnh lên:", error);
+      toast.error(
+        "Không thể tải ảnh lên: " + (error.response?.data?.message || error.message)
+      );
+      return null;
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
-    // Open profile modal
-    const openProfileModal = () => {
-        setTempProfileData({ ...profileData });
-        setIsProfileModalOpen(true);
-    };
+  // Handle file selection
+  const handleFileSelect = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
 
-    // Animation variants
-    const inputVariants = {
-        focus: { scale: 1.01, boxShadow: "0 0 0 2px rgba(249, 115, 22, 0.2)" },
-        blur: { scale: 1, boxShadow: "none" },
-    };
-
-    const buttonVariants = {
-        initial: { scale: 1 },
-        hover: { scale: 1.03, transition: { duration: 0.2 } },
-        tap: { scale: 0.98, transition: { duration: 0.2 } },
-    };
-
-    // Update districts when temp city changes (for modal)
-    useEffect(() => {
-        if (tempProfileData.city) {
-            setDistricts(mockDistricts[tempProfileData.city] || []);
-        }
-    }, [tempProfileData.city]);
-
-    // Update wards when temp district changes (for modal)  
-    useEffect(() => {
-        if (tempProfileData.district) {
-            setWards(mockWards[tempProfileData.district] || []);
-        }
-    }, [tempProfileData.district]);
-
-    // Show loading state
-    if (loading) {
-        return (
-            <div className="flex justify-center items-center h-screen">
-                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-            </div>
-        );
+    // Validate file type
+    const validTypes = ["image/jpeg", "image/jpg", "image/png"];
+    if (!validTypes.includes(file.type)) {
+      toast.error("Chỉ chấp nhận file hình ảnh (jpg, jpeg, png)");
+      return;
     }
 
-    // Show error state
-    if (error) {
-        return (
-            <div className="flex justify-center items-center h-screen">
-                <div className="bg-red-100 text-red-700 p-4 rounded-md">
-                    <p className="font-medium">Error loading profile</p>
-                    <p>{error}</p>
-                    <button
-                        onClick={() => window.location.reload()}
-                        className="mt-2 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
-                    >
-                        Retry
-                    </button>
-                </div>
-            </div>
-        );
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Kích thước file không được vượt quá 5MB");
+      return;
     }
 
+    // Upload the file
+    await handleAvatarUpload(file);
+    
+    // Reset file input để có thể chọn lại cùng file
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  // Save profile changes
+  const saveProfileChanges = async () => {
+    try {
+      if (!userId) {
+        toast.error("User not identified. Please login again.");
+        return;
+      }
+
+      // Prepare data to send to server
+      const payload = {
+        fullName: tempProfileData.fullName || "",
+        phone: tempProfileData.phoneNumber || "",
+        district: tempProfileData.district || "",
+        city: tempProfileData.city || "",
+        ward: tempProfileData.ward || "",
+        photoUrl: tempProfileData.avatarUrl || "", // Use updated image URL
+      };
+
+      console.log("Saving profile with avatar URL:", tempProfileData.avatarUrl);
+
+      // Save image URL to localStorage to ensure it's retained after page reload
+      if (tempProfileData.avatarUrl) {
+        localStorage.setItem(
+          `user_avatar_${userId}`,
+          tempProfileData.avatarUrl
+        );
+      }
+
+      const response = await api.put(
+        `api/Account/Update-info/${userId}`,
+        payload
+      );
+
+      if (response && response.status === 200) {
+        // Cập nhật dữ liệu hồ sơ với thông tin mới
+        setProfileData({ ...tempProfileData });
+
+        // Đóng modal
+        setIsProfileModalOpen(false);
+
+        // Hiển thị thông báo thành công
+        toast.success("Hồ sơ đã được cập nhật thành công!");
+
+        console.log(
+          "Profile updated successfully with avatar:",
+          tempProfileData.avatarUrl
+        );
+      } else {
+        toast.error("Không thể cập nhật hồ sơ. Vui lòng thử lại.");
+      }
+    } catch (err) {
+      console.error("Error in saveProfileChanges:", err);
+
+      // Show detailed error messages
+      if (err.response) {
+        toast.error(
+          `Error: ${err.response.data?.message || "An error occurred."}`
+        );
+      } else if (err.request) {
+        toast.error("No response received from server.");
+      } else {
+        toast.error(`Error: ${err.message}`);
+      }
+    }
+  };
+
+  // Handle logout
+const handleLogout = (e) => {
+  toast.success("Đăng xuất thành công!");
+  dispatch(logout());
+  // Navigate ngay lập tức, không delay
+  navigate("/auth/login");
+};
+
+  // Open profile modal
+  const openProfileModal = () => {
+    setTempProfileData({ ...profileData });
+    setIsProfileModalOpen(true);
+  };
+
+  // Animation variants
+  const inputVariants = {
+    focus: { scale: 1.01, boxShadow: "0 0 0 2px rgba(249, 115, 22, 0.2)" },
+    blur: { scale: 1, boxShadow: "none" },
+  };
+
+  const buttonVariants = {
+    initial: { scale: 1 },
+    hover: { scale: 1.03, transition: { duration: 0.2 } },
+    tap: { scale: 0.98, transition: { duration: 0.2 } },
+  };
+
+
+  // Show loading state
+  if (loading) {
     return (
-        <motion.div
-            initial="hidden"
-            animate="visible"
-            variants={fadeIn}
-            className="max-w-7xl mx-auto px-4 sm:px-6 py-2"
-        >
-            <h1 className="text-xl font-bold mb-12 text-primary-600">USER PROFILE</h1>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-12">
-                <motion.div className="space-y-8" variants={fadeIn} custom={1}>
-                    <div className="flex flex-col bg-white rounded-xl shadow-xl p-8 md:p-12 items-start gap-6 relative">
-                        {/* profile Image */}
-                        <div className="flex flex-col items-center">
-                            <motion.div
-                                initial={{ scale: 0.8, opacity: 0 }}
-                                animate={{ scale: 1, opacity: 1 }}
-                                transition={{ duration: 0.5, delay: 0.2 }}
-                                className="w-24 h-24 rounded-full overflow-hidden bg-sky-500 flex-shrink-0 relative group cursor-pointer"
-                                whileHover={{ scale: 1.05, transition: { duration: 0.2 } }}
-                                onClick={() => fileInputRef.current?.click()}
-                            >
-                                {/* Avatar Image */}
-                                <img
-                                    src={"/lovable-uploads/ee6f74d2-cb92-47f8-9971-f947f6e0a573.png"}
-                                    alt="Profile Image"
-                                    className="w-full h-full object-cover"
-                                />
+      <div className="flex justify-center items-center h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
-                                {/* Overlay with camera icon on hover */}
-                                <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <Camera size={24} className="text-white" />
-                                </div>
+  // Show error state
+  if (error) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <div className="bg-red-100 text-red-700 p-4 rounded-md">
+          <p className="font-medium">Error loading profile</p>
+          <p>{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="mt-2 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
 
-                                {/* Hidden file input */}
-                                <input
-                                    type="file"
-                                    ref={fileInputRef}
-                                    className="hidden"
-                                    accept="image/jpeg,image/jpg,image/png"
-                                    onChange={handleFileSelect}
-                                />
-                            </motion.div>
-                            <p className="text-xs text-gray-500 mt-2">
-                                Click to change avatar
-                            </p>
-                        </div>
+  return (
+    <motion.div
+      initial="hidden"
+      animate="visible"
+      variants={fadeIn}
+      className="max-w-7xl mx-auto px-4 sm:px-6 py-2"
+    >
+      <h1 className="text-xl font-bold mb-12 text-primary-600">USER PROFILE</h1>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-12">
+        <motion.div className="space-y-8" variants={fadeIn} custom={1}>
+          <div className="flex flex-col bg-white rounded-xl shadow-xl p-8 md:p-12 items-start gap-6 relative">
+            {/* profile Image */}
+            <div className="flex flex-col items-center">
+              <motion.div
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ duration: 0.5, delay: 0.2 }}
+                className="w-24 h-24 rounded-full overflow-hidden bg-sky-500 flex-shrink-0 relative group cursor-pointer"
+                whileHover={{ scale: 1.05, transition: { duration: 0.2 } }}
+                onClick={() => fileInputRef.current?.click()}
+              >
+                {/* Avatar Image */}
+                <img
+                  src={getAvatarUrl(profileData.avatarUrl)}
+                  alt="Profile"
+                  className="w-full h-full object-cover"
+                  decoding="async"
+                  loading="lazy"
+                  onError={(e) => {
+                    // Tránh infinite loop - chỉ set default một lần
+                    const defaultAvatar = "/lovable-uploads/ee6f74d2-cb92-47f8-9971-f947f6e0a573.png";
+                    if (!avatarErrorRef.current && e.target.src !== defaultAvatar) {
+                      avatarErrorRef.current = true;
+                      e.target.onerror = null; // Ngăn không cho trigger lại
+                      e.target.src = defaultAvatar;
+                    }
+                  }}
+                  onLoad={() => {
+                    // Reset error flag khi load thành công
+                    avatarErrorRef.current = false;
+                  }}
+                />
 
-                        {/* Account Info */}
+                {/* Overlay with camera icon on hover */}
+                <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                  <Camera size={24} className="text-white" />
+                </div>
+
+                {/* Hidden file input */}
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  className="hidden"
+                  accept="image/jpeg,image/jpg,image/png"
+                  onChange={handleFileSelect}
+                />
+              </motion.div>
+              <p className="text-xs text-gray-500 mt-2">
+                Click to change avatar
+              </p>
+            </div>
+
+            {/* Account Info */}
             <div className="grid grid-cols-2 gap-x-16 gap-y-4 w-full">
               {[
                 { label: "Full Name", value: profileData.fullName },
@@ -429,6 +648,7 @@ const EnhancedAccountSetting = () => {
               </motion.button>
 
               <motion.button
+                type="button"
                 onClick={handleLogout}
                 variants={buttonVariants}
                 initial="initial"
@@ -581,16 +801,23 @@ const EnhancedAccountSetting = () => {
             >
               {/* Avatar Preview */}
               <img
-                src={
-                  tempProfileData.avatarUrl ||
-                  "/lovable-uploads/ee6f74d2-cb92-47f8-9971-f947f6e0a573.png"
-                }
+                src={getAvatarUrl(tempProfileData.avatarUrl)}
                 alt="Profile"
                 className="w-full h-full object-cover"
+                decoding="async"
+                loading="lazy"
                 onError={(e) => {
-                  e.target.onerror = null;
-                  e.target.src =
-                    "/lovable-uploads/ee6f74d2-cb92-47f8-9971-f947f6e0a573.png";
+                  // Tránh infinite loop - chỉ set default một lần
+                  const defaultAvatar = "/lovable-uploads/ee6f74d2-cb92-47f8-9971-f947f6e0a573.png";
+                  if (!avatarErrorRef.current && e.target.src !== defaultAvatar) {
+                    avatarErrorRef.current = true;
+                    e.target.onerror = null; // Ngăn không cho trigger lại
+                    e.target.src = defaultAvatar;
+                  }
+                }}
+                onLoad={() => {
+                  // Reset error flag khi load thành công
+                  avatarErrorRef.current = false;
                 }}
               />
 
@@ -728,4 +955,4 @@ const EnhancedAccountSetting = () => {
   );
 };
 
-export default EnhancedAccountSetting;
+export default EnhancedAccountSetting

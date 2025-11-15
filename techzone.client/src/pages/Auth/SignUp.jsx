@@ -16,10 +16,9 @@ const SignUp = () => {
   const hasNavigatedRef = useRef(false);
 
   useEffect(() => {
-    if (authState.status === "succeeded" && !authState.isAuthenticated) {
-      dispatch(resetStatus());
-    }
-  }, []);
+    // Reset status when component mounts to clear any previous errors from other pages
+    dispatch(resetStatus());
+  }, [dispatch]);
 
   useEffect(() => {
     if (authState.status === "succeeded" && !authState.error && !authState.isAuthenticated && !hasNavigatedRef.current) {
@@ -32,8 +31,11 @@ const SignUp = () => {
         hasNavigatedRef.current = false;
       }, 2000);
     } else if (authState.status === "failed" && authState.error) {
-      const errorMessage = authState.error?.message || authState.error || "Có lỗi xảy ra khi đăng ký";
-      message.error(errorMessage);
+      // Only show registration errors, not login errors
+      const errorMessage = authState.error?.message || authState.error;
+      if (errorMessage && !errorMessage.includes("Username or password incorrect") && !errorMessage.includes("login")) {
+        message.error(errorMessage);
+      }
       dispatch(resetStatus());
     }
   }, [authState.status, authState.error, authState.isAuthenticated, navigate, dispatch]);

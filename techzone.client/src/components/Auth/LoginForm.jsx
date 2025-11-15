@@ -36,7 +36,11 @@ const Login = () => {
       }
     } catch (error) {
       console.error("Login error:", error);
-      message.error(error || "Đăng nhập thất bại. Vui lòng kiểm tra lại email và mật khẩu.");
+      // Handle different error formats
+      const errorMessage = typeof error === 'string' 
+        ? error 
+        : error?.message || error?.response?.data || "Đăng nhập thất bại. Vui lòng kiểm tra lại email và mật khẩu.";
+      message.error(errorMessage);
     }
   };
 
