@@ -42,7 +42,8 @@ namespace TechZone.Server.Controllers
             var user = new User
             {
                 Email = request.Email,
-                PasswordHash = hashPassword
+                PasswordHash = hashPassword,
+                FullName = request.Username // Map username to FullName
             };
 
             var result = await userRepository.RegisterUserAsync(user);
