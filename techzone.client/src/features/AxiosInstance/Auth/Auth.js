@@ -11,6 +11,22 @@ import {
 const API_URL = "/api/Account";
 const authCookies = getAuthCookies();
 
+// Thunk để xử lý đăng ký
+export const register = createAsyncThunk(
+    "Auth/Register",
+    async (credentials, thunkAPI) => {
+        try {
+            const response = await api.post(`${API_URL}/register`, credentials); // Gọi API register
+            return response.data; // Trả về dữ liệu từ server
+        } catch (error) {
+            console.error("Register error:", error);
+            return thunkAPI.rejectWithValue(
+                error.response?.data || "Có lỗi xảy ra khi đăng ký"
+            );
+        }
+    }
+);
+
 // Thunk để xử lý đăng nhập
 export const login = createAsyncThunk(
     "Auth/Login",
@@ -61,11 +77,29 @@ const authSlice = createSlice({
             state.token = null;
             state.userRole = null;
             state.isAuthenticated = false;
+            state.status = "idle";
+            state.error = null;
             clearAuthCookies(); // Xóa cookies khi logout
+        },
+        resetStatus: (state) => {
+            state.status = "idle";
+            state.error = null;
         },
     },
     extraReducers: (builder) => {
         builder
+            .addCase(register.pending, (state) => {
+                state.status = "loading";
+                state.error = null;
+            })
+            .addCase(register.fulfilled, (state) => {
+                state.status = "succeeded";
+                state.error = null;
+            })
+            .addCase(register.rejected, (state, action) => {
+                state.status = "failed";
+                state.error = action.payload;
+            })
             .addCase(login.pending, (state) => {
                 state.status = "loading";
                 state.error = null;
@@ -86,5 +120,5 @@ const authSlice = createSlice({
 });
 
 // Export các action và reducer
-export const { logout } = authSlice.actions;
+export const { logout, resetStatus } = authSlice.actions;
 export default authSlice.reducer;

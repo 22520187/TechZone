@@ -1,17 +1,18 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Eye, EyeOff } from "lucide-react";
-import { Link } from "react-router-dom"
+import { Link } from "react-router-dom";
 
 const SignUpForm = () => {
   const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Handle login logic
-    console.log("Login with:", { email, password });
+    // Component này không được sử dụng, logic đăng ký nằm ở pages/Auth/SignUp.jsx
+    console.log("SignUpForm is not in use. Please use pages/Auth/SignUp.jsx instead.");
   };
 
   return (
@@ -83,7 +84,8 @@ const SignUpForm = () => {
             <input
               id="username"
               type="text"
-              
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
               className="w-full px-4 py-3 rounded-md border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all"
               placeholder="User name"
               required

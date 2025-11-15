@@ -10,7 +10,7 @@ import AIChatButton from "./components/User/Chat/AIChatButton";
 
 function App() {
     // const userRole = useSelector((state) => state.auth.userRole);
-    const userRole = "admin";
+    const userRole = "user";
     // const isAuthenticated = useSelector((state) => state.auth.isAuthenticated);
     const isAuthenticated = true;
 
