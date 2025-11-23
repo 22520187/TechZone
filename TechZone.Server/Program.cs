@@ -27,6 +27,10 @@ builder.Services.AddCors(options =>
 
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IUserRepository, SQLUserRepository>();
+builder.Services.AddScoped<IProductRepository, SQLProductRepository>();
+builder.Services.AddScoped<IProductColorRepository, SQLProductColorRepository>();
+builder.Services.AddScoped<IProductImageRepository, SQLProductImageRepository>();
+
 builder.Services.AddHttpClient();  // Đăng ký IHttpClientFactory
 
 
