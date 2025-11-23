@@ -64,6 +64,11 @@ namespace TechZone.Server.Mapping
             CreateMap<Category, AdminAddCategoryDTO>().ReverseMap();
             CreateMap<Category, AdminUpdateCategoryDTO>().ReverseMap();
 
+            CreateMap<Brand, BrandDTO>().ReverseMap();
+            CreateMap<Brand, AdminBrandDTO>().ReverseMap();
+            CreateMap<Brand, AdminAddBrandDTO>().ReverseMap();
+            CreateMap<Brand, AdminUpdateBrandDTO>().ReverseMap();
+
         }
     }
 }
