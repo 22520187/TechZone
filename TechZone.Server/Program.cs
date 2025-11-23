@@ -30,6 +30,10 @@ builder.Services.AddScoped<IUserRepository, SQLUserRepository>();
 builder.Services.AddScoped<IProductRepository, SQLProductRepository>();
 builder.Services.AddScoped<IProductColorRepository, SQLProductColorRepository>();
 builder.Services.AddScoped<IProductImageRepository, SQLProductImageRepository>();
+builder.Services.AddScoped<IOrderRepository, SQLOrderRepository>();
+builder.Services.AddScoped<IOrderDetailRepository, SQLOrderDetailRepository>();
+builder.Services.AddScoped<IReviewRepository, SQLReviewRepository>();
+builder.Services.AddScoped<ICloudinaryService, CloudinaryService>();
 
 builder.Services.AddHttpClient();  // Đăng ký IHttpClientFactory
 
