@@ -35,6 +35,8 @@ builder.Services.AddScoped<ICloudinaryService, CloudinaryService>();
 builder.Services.AddScoped<IProductRepository, SQLProductRepository>();
 builder.Services.AddScoped<IProductColorRepository, SQLProductColorRepository>();
 builder.Services.AddScoped<IProductImageRepository, SQLProductImageRepository>();
+builder.Services.AddScoped<ICategoryRepository, SQLCategoryRepository>();
+
 
 
 
