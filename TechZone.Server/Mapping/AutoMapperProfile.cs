@@ -69,6 +69,9 @@ namespace TechZone.Server.Mapping
             CreateMap<Brand, AdminAddBrandDTO>().ReverseMap();
             CreateMap<Brand, AdminUpdateBrandDTO>().ReverseMap();
 
+            CreateMap<ChatHistory, ChatHistoryDTO>().ReverseMap();
+            CreateMap<AddChatMessageDTO, ChatHistory>().ReverseMap();
+
         }
     }
 }

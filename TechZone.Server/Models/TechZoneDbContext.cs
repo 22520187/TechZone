@@ -40,6 +40,8 @@ public partial class TechZoneDbContext : DbContext
 
     public virtual DbSet<User> Users { get; set; }
 
+    public virtual DbSet<ChatHistory> ChatHistories { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Brand>(entity =>
@@ -247,6 +249,23 @@ public partial class TechZoneDbContext : DbContext
                 .HasMaxLength(50)
                 .HasDefaultValue("user");
             entity.Property(e => e.Ward).HasMaxLength(100);
+        });
+
+        modelBuilder.Entity<ChatHistory>(entity =>
+        {
+            entity.HasKey(e => e.ChatHistoryId).HasName("PK__ChatHist__A0C2A90912345678");
+
+            entity.ToTable("ChatHistory");
+
+            entity.Property(e => e.Message).HasMaxLength(2000);
+            entity.Property(e => e.Response).HasMaxLength(2000);
+            entity.Property(e => e.MessageType).HasMaxLength(50);
+            entity.Property(e => e.CreatedAt).HasColumnType("datetime");
+
+            entity.HasOne(d => d.User).WithMany(p => p.ChatHistories)
+                .HasForeignKey(d => d.UserId)
+                .HasConstraintName("FK__ChatHisto__UserI__7A672E12")
+                .OnDelete(DeleteBehavior.SetNull);
         });
 
         OnModelCreatingPartial(modelBuilder);

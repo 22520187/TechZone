@@ -3,6 +3,7 @@ import authReducer from "@/features/AxiosInstance/Auth/Auth";
 import productReducer from "@/features/Admin/Products/Product";
 import categoryReducer from "@/features/Admin/Categories/Category";
 import userReducer from "@/features/Admin/Users/User";
+import chatbotReducer from "@/features/Chatbot/Chatbot";
 
 export const store = configureStore({
     reducer: {
@@ -10,5 +11,6 @@ export const store = configureStore({
         product: productReducer,
         category: categoryReducer,
         user: userReducer,
+        chatbot: chatbotReducer,
     },
 });
