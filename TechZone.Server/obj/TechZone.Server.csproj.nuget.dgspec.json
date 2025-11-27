@@ -1,31 +1,25 @@
 {
   "format": 1,
   "restore": {
-    "D:\\SE347\\TechZone\\TechZone.Server\\TechZone.Server.csproj": {}
+    "G:\\WORKSPACE\\SE347\\TechZone\\TechZone.Server\\TechZone.Server.csproj": {}
   },
   "projects": {
-    "D:\\SE347\\TechZone\\TechZone.Server\\TechZone.Server.csproj": {
+    "G:\\WORKSPACE\\SE347\\TechZone\\TechZone.Server\\TechZone.Server.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "D:\\SE347\\TechZone\\TechZone.Server\\TechZone.Server.csproj",
+        "projectUniqueName": "G:\\WORKSPACE\\SE347\\TechZone\\TechZone.Server\\TechZone.Server.csproj",
         "projectName": "TechZone.Server",
-        "projectPath": "D:\\SE347\\TechZone\\TechZone.Server\\TechZone.Server.csproj",
-        "packagesPath": "C:\\Users\\ADMIN\\.nuget\\packages\\",
-        "outputPath": "D:\\SE347\\TechZone\\TechZone.Server\\obj\\",
+        "projectPath": "G:\\WORKSPACE\\SE347\\TechZone\\TechZone.Server\\TechZone.Server.csproj",
+        "packagesPath": "C:\\Users\\duypr\\.nuget\\packages\\",
+        "outputPath": "G:\\WORKSPACE\\SE347\\TechZone\\TechZone.Server\\obj\\",
         "projectStyle": "PackageReference",
-        "fallbackFolders": [
-          "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
-        ],
         "configFilePaths": [
-          "C:\\Users\\ADMIN\\AppData\\Roaming\\NuGet\\NuGet.Config",
-          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
-          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+          "C:\\Users\\duypr\\AppData\\Roaming\\NuGet\\NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net8.0"
         ],
         "sources": {
-          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
@@ -44,7 +38,7 @@
           "auditLevel": "low",
           "auditMode": "direct"
         },
-        "SdkAnalysisLevel": "9.0.200"
+        "SdkAnalysisLevel": "10.0.100"
       },
       "frameworks": {
         "net8.0": {
@@ -110,6 +104,24 @@
           ],
           "assetTargetFallback": true,
           "warn": true,
+          "downloadDependencies": [
+            {
+              "name": "Microsoft.AspNetCore.App.Ref",
+              "version": "[8.0.22, 8.0.22]"
+            },
+            {
+              "name": "Microsoft.NETCore.App.Host.win-x64",
+              "version": "[8.0.22, 8.0.22]"
+            },
+            {
+              "name": "Microsoft.NETCore.App.Ref",
+              "version": "[8.0.22, 8.0.22]"
+            },
+            {
+              "name": "Microsoft.WindowsDesktop.App.Ref",
+              "version": "[8.0.22, 8.0.22]"
+            }
+          ],
           "frameworkReferences": {
             "Microsoft.AspNetCore.App": {
               "privateAssets": "none"
@@ -118,7 +130,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.203/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.100/PortableRuntimeIdentifierGraph.json"
         }
       }
     }

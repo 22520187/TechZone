@@ -9,15 +9,14 @@ import AllAdminRoutes from "./routes/AllAdminRoutes";
 import AIChatButton from "./components/User/Chat/AIChatButton";
 
 function App() {
-    const userRole = useSelector((state) => state.auth.userRole);
-    const isAuthenticated = useSelector((state) => state.auth.isAuthenticated);
-    // const userRole = "admin";
-    
-    // const isAuthenticated = true;
+    // const userRole = useSelector((state) => state.auth.userRole);
+    const userRole = "admin";
+    // const isAuthenticated = useSelector((state) => state.auth.isAuthenticated);
+    const isAuthenticated = true;
 
     return (
         <div>
-            {isAuthenticated && userRole?.toLowerCase() === "admin" ? (
+            {isAuthenticated && userRole?.toLowerCase() === "user" ? (
                 <AdminLayout>
                     <AllAdminRoutes />
                 </AdminLayout>
