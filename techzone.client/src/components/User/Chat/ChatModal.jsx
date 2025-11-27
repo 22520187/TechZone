@@ -1,25 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Send, Bot, User, Minimize2, Maximize2, Trash2 } from 'lucide-react';
-import { Input, Button, Modal, message as antMessage } from 'antd';
-import { useDispatch, useSelector } from 'react-redux';
-import { 
-  saveChatMessage, 
-  getRecentChatHistory,
-  deleteChatHistory,
-  clearChatHistory
-} from '../../../features/Chatbot/Chatbot';
-import { getAuthCookies } from '../../../features/AxiosInstance/Cookies/CookiesHelper';
+import { Send, Bot, User, Minimize2, Maximize2 } from 'lucide-react';
+import { Input, Button } from 'antd';
 
 const { TextArea } = Input;
 
 const ChatModal = ({ isOpen, onClose }) => {
-  const dispatch = useDispatch();
-  const chatbotState = useSelector((state) => state.chatbot);
-  const chatHistory = chatbotState?.chatHistory || [];
-  const authCookies = getAuthCookies();
-  const userId = authCookies.userID ? parseInt(authCookies.userID) : null;
-
   const [messages, setMessages] = useState([
     {
       id: 1,
@@ -31,92 +17,11 @@ const ChatModal = ({ isOpen, onClose }) => {
   const [inputMessage, setInputMessage] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
-  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const messagesEndRef = useRef(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
-
-  // Load chat history when modal opens
-  useEffect(() => {
-    if (isOpen && userId) {
-      const loadChatHistory = async () => {
-        setIsLoadingHistory(true);
-        try {
-          await dispatch(getRecentChatHistory({ userId, limit: 50 })).unwrap();
-        } catch (error) {
-          console.error("Error loading chat history:", error);
-        } finally {
-          setIsLoadingHistory(false);
-        }
-      };
-
-      loadChatHistory();
-    }
-  }, [isOpen, userId, dispatch]);
-
-  // Convert chat history to messages format
-  useEffect(() => {
-    if (chatHistory && chatHistory.length > 0 && isOpen) {
-      const convertedMessages = chatHistory
-        .filter(chat => chat.message || chat.response) // Filter out empty records
-        .map((chat, index) => {
-          // If both message and response exist, create two separate messages
-          if (chat.message && chat.response) {
-            return [
-              {
-                id: chat.chatHistoryId * 2 || index * 2 + 1,
-                type: 'user',
-                content: chat.message,
-                timestamp: new Date(chat.createdAt)
-              },
-              {
-                id: chat.chatHistoryId * 2 + 1 || index * 2 + 2,
-                type: 'bot',
-                content: chat.response,
-                timestamp: new Date(chat.createdAt)
-              }
-            ];
-          }
-          // Otherwise, use messageType to determine type
-          return {
-            id: chat.chatHistoryId || index + 1,
-            type: chat.messageType || (chat.message ? 'user' : 'bot'),
-            content: chat.message || chat.response,
-            timestamp: new Date(chat.createdAt)
-          };
-        })
-        .flat() // Flatten array if we created pairs
-        .sort((a, b) => a.timestamp - b.timestamp); // Sort by timestamp
-
-      // Add welcome message if no history or first time
-      if (convertedMessages.length === 0 || 
-          !convertedMessages.some(m => m.type === 'bot' && m.content.includes('Xin chào'))) {
-        setMessages([
-          {
-            id: 0,
-            type: 'bot',
-            content: 'Xin chào! Tôi là AI Assistant của TechZone. Tôi có thể giúp bạn tìm hiểu về các sản phẩm, dịch vụ và hỗ trợ mua sắm. Bạn cần hỗ trợ gì?',
-            timestamp: new Date()
-          },
-          ...convertedMessages
-        ]);
-      } else {
-        setMessages(convertedMessages);
-      }
-    } else if (chatHistory && chatHistory.length === 0 && !isLoadingHistory && isOpen) {
-      // Reset to welcome message if no history
-      setMessages([
-        {
-          id: 0,
-          type: 'bot',
-          content: 'Xin chào! Tôi là AI Assistant của TechZone. Tôi có thể giúp bạn tìm hiểu về các sản phẩm, dịch vụ và hỗ trợ mua sắm. Bạn cần hỗ trợ gì?',
-          timestamp: new Date()
-        }
-      ]);
-    }
-  }, [chatHistory, isOpen, isLoadingHistory]);
 
   useEffect(() => {
     scrollToBottom();
@@ -125,11 +30,10 @@ const ChatModal = ({ isOpen, onClose }) => {
   const handleSendMessage = async () => {
     if (!inputMessage.trim()) return;
 
-    const userMessageContent = inputMessage.trim();
     const userMessage = {
       id: messages.length + 1,
       type: 'user',
-      content: userMessageContent,
+      content: inputMessage,
       timestamp: new Date()
     };
 
@@ -137,41 +41,16 @@ const ChatModal = ({ isOpen, onClose }) => {
     setInputMessage('');
     setIsTyping(true);
 
-    // Get bot response
-    const botResponseContent = getBotResponse(userMessageContent);
-
-    // Simulate AI response delay
-    setTimeout(async () => {
+    // Simulate AI response
+    setTimeout(() => {
       const botResponse = {
         id: messages.length + 2,
         type: 'bot',
-        content: botResponseContent,
+        content: getBotResponse(inputMessage),
         timestamp: new Date()
       };
-
       setMessages(prev => [...prev, botResponse]);
       setIsTyping(false);
-
-      // Save to database
-      if (userId) {
-        try {
-          // Save user message
-          await dispatch(saveChatMessage({
-            message: userMessageContent,
-            response: '',
-            messageType: 'user'
-          })).unwrap();
-
-          // Save bot response
-          await dispatch(saveChatMessage({
-            message: '',
-            response: botResponseContent,
-            messageType: 'bot'
-          })).unwrap();
-        } catch (error) {
-          console.error("Error saving chat message:", error);
-        }
-      }
     }, 1500);
   };
 
@@ -196,48 +75,6 @@ const ChatModal = ({ isOpen, onClose }) => {
       e.preventDefault();
       handleSendMessage();
     }
-  };
-
-  const handleDeleteHistory = () => {
-    Modal.confirm({
-      title: 'Xóa lịch sử chat',
-      content: 'Bạn có chắc chắn muốn xóa toàn bộ lịch sử chat? Hành động này không thể hoàn tác.',
-      okText: 'Xóa',
-      okType: 'danger',
-      cancelText: 'Hủy',
-      onOk: async () => {
-        if (userId) {
-          try {
-            await dispatch(deleteChatHistory(userId)).unwrap();
-            dispatch(clearChatHistory());
-            setMessages([
-              {
-                id: 0,
-                type: 'bot',
-                content: 'Xin chào! Tôi là AI Assistant của TechZone. Tôi có thể giúp bạn tìm hiểu về các sản phẩm, dịch vụ và hỗ trợ mua sắm. Bạn cần hỗ trợ gì?',
-                timestamp: new Date()
-              }
-            ]);
-            antMessage.success('Đã xóa lịch sử chat thành công');
-          } catch (error) {
-            antMessage.error('Có lỗi xảy ra khi xóa lịch sử chat');
-            console.error("Error deleting chat history:", error);
-          }
-        } else {
-          // Nếu chưa đăng nhập, chỉ xóa local state
-          dispatch(clearChatHistory());
-          setMessages([
-            {
-              id: 0,
-              type: 'bot',
-              content: 'Xin chào! Tôi là AI Assistant của TechZone. Tôi có thể giúp bạn tìm hiểu về các sản phẩm, dịch vụ và hỗ trợ mua sắm. Bạn cần hỗ trợ gì?',
-              timestamp: new Date()
-            }
-          ]);
-          antMessage.success('Đã xóa lịch sử chat');
-        }
-      }
-    });
   };
 
   if (!isOpen) return null;
@@ -286,15 +123,6 @@ const ChatModal = ({ isOpen, onClose }) => {
               </div>
             </div>
             <div className="flex items-center space-x-2">
-              {!isMinimized && chatHistory && chatHistory.length > 0 && (
-                <button
-                  onClick={handleDeleteHistory}
-                  className="p-1 hover:text-red-300 rounded transition-colors cursor-pointer"
-                  title="Xóa lịch sử chat"
-                >
-                  <Trash2 size={16} />
-                </button>
-              )}
               <button
                 onClick={() => setIsMinimized(!isMinimized)}
                 className="p-1 hover:text-black rounded transition-colors cursor-pointer"

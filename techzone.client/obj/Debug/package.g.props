@@ -12,7 +12,8 @@
     <PackageJsonDependenciesAntDesignV5PatchForReact19 Condition="$(PackageJsonDependenciesAntDesignV5PatchForReact19) == ''">^1.0.3</PackageJsonDependenciesAntDesignV5PatchForReact19>
     <PackageJsonDependenciesGooglemapsReactWrapper Condition="$(PackageJsonDependenciesGooglemapsReactWrapper) == ''">^1.2.0</PackageJsonDependenciesGooglemapsReactWrapper>
     <PackageJsonDependenciesHeroiconsReact Condition="$(PackageJsonDependenciesHeroiconsReact) == ''">^2.2.0</PackageJsonDependenciesHeroiconsReact>
-    <PackageJsonDependenciesReduxjsToolkit Condition="$(PackageJsonDependenciesReduxjsToolkit) == ''">^2.10.1</PackageJsonDependenciesReduxjsToolkit>
+    <PackageJsonDependenciesReactSpringWeb Condition="$(PackageJsonDependenciesReactSpringWeb) == ''">^10.0.3</PackageJsonDependenciesReactSpringWeb>
+    <PackageJsonDependenciesReduxjsToolkit Condition="$(PackageJsonDependenciesReduxjsToolkit) == ''">^2.11.0</PackageJsonDependenciesReduxjsToolkit>
     <PackageJsonDependenciesSyncfusionEj2Base Condition="$(PackageJsonDependenciesSyncfusionEj2Base) == ''">^31.1.22</PackageJsonDependenciesSyncfusionEj2Base>
     <PackageJsonDependenciesAntd Condition="$(PackageJsonDependenciesAntd) == ''">^5.27.3</PackageJsonDependenciesAntd>
     <PackageJsonDependenciesAxios Condition="$(PackageJsonDependenciesAxios) == ''">^1.13.2</PackageJsonDependenciesAxios>
@@ -24,6 +25,7 @@
     <PackageJsonDependenciesLeaflet Condition="$(PackageJsonDependenciesLeaflet) == ''">^1.9.4</PackageJsonDependenciesLeaflet>
     <PackageJsonDependenciesLucideReact Condition="$(PackageJsonDependenciesLucideReact) == ''">^0.544.0</PackageJsonDependenciesLucideReact>
     <PackageJsonDependenciesMotion Condition="$(PackageJsonDependenciesMotion) == ''">^12.23.24</PackageJsonDependenciesMotion>
+    <PackageJsonDependenciesOgl Condition="$(PackageJsonDependenciesOgl) == ''">^1.0.11</PackageJsonDependenciesOgl>
     <PackageJsonDependenciesReact Condition="$(PackageJsonDependenciesReact) == ''">^19.1.1</PackageJsonDependenciesReact>
     <PackageJsonDependenciesReactDom Condition="$(PackageJsonDependenciesReactDom) == ''">^19.1.1</PackageJsonDependenciesReactDom>
     <PackageJsonDependenciesReactLeaflet Condition="$(PackageJsonDependenciesReactLeaflet) == ''">^5.0.0</PackageJsonDependenciesReactLeaflet>
