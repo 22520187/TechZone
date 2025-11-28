@@ -38,7 +38,7 @@ const HeroHeaderSection = () => {
             delay={2.5}
             className="text-base font-medium text-gray-600"
             textAlign="start"
-            text="At NextGenTech, we are dedicated to bringing you the latest and greatest in technology. Our mission is to make online shopping for cutting-edge gadgets easy and enjoyable."
+            text="At TechZone, we are dedicated to bringing you the latest and greatest in technology. Our mission is to make online shopping for cutting-edge gadgets easy and enjoyable."
           ></SplitText>
           <motion.button
             initial={{ opacity: 0, y: 20 }}

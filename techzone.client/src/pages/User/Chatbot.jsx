@@ -1,12 +1,25 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Send, Bot, User, MessageCircle, Sparkles } from 'lucide-react';
-import { Input, Button, Card } from 'antd';
+
+import { Input, Button, Card, Modal, message as antMessage } from 'antd';
+import { useDispatch, useSelector } from 'react-redux';
 import GradientText from '../../components/ReactBitsComponent/GradientText';
+import {
+  saveChatMessage,
+  getRecentChatHistory,
+  deleteChatHistory,
+  clearChatHistory
+} from '../../features/Chatbot/Chatbot';
+import { getAuthCookies } from '../../features/AxiosInstance/Cookies/CookiesHelper';
 
 const { TextArea } = Input;
 
 const Chatbot = () => {
+  const dispatch = useDispatch();
+  const chatbotState = useSelector((state) => state.chatbot);
+  const chatHistory = chatbotState?.chatHistory || [];
+  const authCookies = getAuthCookies();
+  const userId = authCookies.userID ? parseInt(authCookies.userID) : null;
   const [messages, setMessages] = useState([
     {
       id: 1,
@@ -17,11 +30,92 @@ const Chatbot = () => {
   ]);
   const [inputMessage, setInputMessage] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const messagesEndRef = useRef(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
+
+  // Load chat history on mount
+  useEffect(() => {
+    const loadChatHistory = async () => {
+      if (userId) {
+        setIsLoadingHistory(true);
+        try {
+          await dispatch(getRecentChatHistory({ userId, limit: 50 })).unwrap();
+        } catch (error) {
+          console.error("Error loading chat history:", error);
+        } finally {
+          setIsLoadingHistory(false);
+        }
+      }
+    };
+
+    loadChatHistory();
+  }, [userId, dispatch]);
+
+  // Convert chat history to messages format
+  useEffect(() => {
+    if (chatHistory && chatHistory.length > 0) {
+      const convertedMessages = chatHistory
+        .filter(chat => chat.message || chat.response) // Filter out empty records
+        .map((chat, index) => {
+          // If both message and response exist, create two separate messages
+          if (chat.message && chat.response) {
+            return [
+              {
+                id: chat.chatHistoryId * 2 || index * 2 + 1,
+                type: 'user',
+                content: chat.message,
+                timestamp: new Date(chat.createdAt)
+              },
+              {
+                id: chat.chatHistoryId * 2 + 1 || index * 2 + 2,
+                type: 'bot',
+                content: chat.response,
+                timestamp: new Date(chat.createdAt)
+              }
+            ];
+          }
+          // Otherwise, use messageType to determine type
+          return {
+            id: chat.chatHistoryId || index + 1,
+            type: chat.messageType || (chat.message ? 'user' : 'bot'),
+            content: chat.message || chat.response,
+            timestamp: new Date(chat.createdAt)
+          };
+        })
+        .flat() // Flatten array if we created pairs
+        .sort((a, b) => a.timestamp - b.timestamp); // Sort by timestamp
+
+      // Add welcome message if no history or first time
+      if (convertedMessages.length === 0 ||
+        !convertedMessages.some(m => m.type === 'bot' && m.content.includes('Xin chào'))) {
+        setMessages([
+          {
+            id: 0,
+            type: 'bot',
+            content: 'Xin chào! Tôi là AI Assistant của TechZone. Tôi có thể giúp bạn tìm hiểu về các sản phẩm công nghệ, tư vấn mua sắm, và trả lời mọi câu hỏi về dịch vụ của chúng tôi. Bạn cần hỗ trợ gì hôm nay?',
+            timestamp: new Date()
+          },
+          ...convertedMessages
+        ]);
+      } else {
+        setMessages(convertedMessages);
+      }
+    } else if (chatHistory && chatHistory.length === 0 && !isLoadingHistory) {
+      // Reset to welcome message if no history
+      setMessages([
+        {
+          id: 0,
+          type: 'bot',
+          content: 'Xin chào! Tôi là AI Assistant của TechZone. Tôi có thể giúp bạn tìm hiểu về các sản phẩm công nghệ, tư vấn mua sắm, và trả lời mọi câu hỏi về dịch vụ của chúng tôi. Bạn cần hỗ trợ gì hôm nay?',
+          timestamp: new Date()
+        }
+      ]);
+    }
+  }, [chatHistory, isLoadingHistory]);
 
   useEffect(() => {
     scrollToBottom();
@@ -30,10 +124,12 @@ const Chatbot = () => {
   const handleSendMessage = async () => {
     if (!inputMessage.trim()) return;
 
+    const userMessageContent = inputMessage.trim();
+
     const userMessage = {
       id: messages.length + 1,
       type: 'user',
-      content: inputMessage,
+      content: userMessageContent,
       timestamp: new Date()
     };
 
@@ -41,22 +137,46 @@ const Chatbot = () => {
     setInputMessage('');
     setIsTyping(true);
 
-    // Simulate AI response
-    setTimeout(() => {
+    // Get bot response
+    const botResponseContent = getBotResponse(userMessageContent);
+
+    // Simulate AI response delay
+    setTimeout(async () => {
       const botResponse = {
         id: messages.length + 2,
         type: 'bot',
-        content: getBotResponse(inputMessage),
+        content: botResponseContent,
         timestamp: new Date()
       };
       setMessages(prev => [...prev, botResponse]);
       setIsTyping(false);
+
+      // Save to database
+      if (userId) {
+        try {
+          // Save user message
+          await dispatch(saveChatMessage({
+            message: userMessageContent,
+            response: '',
+            messageType: 'user'
+          })).unwrap();
+
+          // Save bot response
+          await dispatch(saveChatMessage({
+            message: '',
+            response: botResponseContent,
+            messageType: 'bot'
+          })).unwrap();
+        } catch (error) {
+          console.error("Error saving chat message:", error);
+        }
+      }
     }, 1500);
   };
 
   const getBotResponse = (userInput) => {
     const input = userInput.toLowerCase();
-    
+
     if (input.includes('laptop') || input.includes('máy tính')) {
       return 'TechZone có nhiều dòng laptop từ gaming, văn phòng đến workstation. Một số thương hiệu nổi bật như ASUS, Dell, HP, Lenovo với giá từ 10 triệu đến 50 triệu. Bạn cần laptop cho mục đích gì?';
     } else if (input.includes('điện thoại') || input.includes('phone')) {
@@ -90,6 +210,48 @@ const Chatbot = () => {
     'Khuyến mãi tháng này',
     'Chính sách bảo hành'
   ];
+
+  const handleDeleteHistory = () => {
+    Modal.confirm({
+      title: 'Xóa lịch sử chat',
+      content: 'Bạn có chắc chắn muốn xóa toàn bộ lịch sử chat? Hành động này không thể hoàn tác.',
+      okText: 'Xóa',
+      okType: 'danger',
+      cancelText: 'Hủy',
+      onOk: async () => {
+        if (userId) {
+          try {
+            await dispatch(deleteChatHistory(userId)).unwrap();
+            dispatch(clearChatHistory());
+            setMessages([
+              {
+                id: 0,
+                type: 'bot',
+                content: 'Xin chào! Tôi là AI Assistant của TechZone. Tôi có thể giúp bạn tìm hiểu về các sản phẩm công nghệ, tư vấn mua sắm, và trả lời mọi câu hỏi về dịch vụ của chúng tôi. Bạn cần hỗ trợ gì hôm nay?',
+                timestamp: new Date()
+              }
+            ]);
+            antMessage.success('Đã xóa lịch sử chat thành công');
+          } catch (error) {
+            antMessage.error('Có lỗi xảy ra khi xóa lịch sử chat');
+            console.error("Error deleting chat history:", error);
+          }
+        } else {
+          // Nếu chưa đăng nhập, chỉ xóa local state
+          dispatch(clearChatHistory());
+          setMessages([
+            {
+              id: 0,
+              type: 'bot',
+              content: 'Xin chào! Tôi là AI Assistant của TechZone. Tôi có thể giúp bạn tìm hiểu về các sản phẩm công nghệ, tư vấn mua sắm, và trả lời mọi câu hỏi về dịch vụ của chúng tôi. Bạn cần hỗ trợ gì hôm nay?',
+              timestamp: new Date()
+            }
+          ]);
+          antMessage.success('Đã xóa lịch sử chat');
+        }
+      }
+    });
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 pt-20">
@@ -126,6 +288,21 @@ const Chatbot = () => {
           className="max-w-4xl mx-auto"
         >
           <Card className="shadow-xl border-0 overflow-hidden">
+            {/* Header with Delete Button */}
+            <div className="flex items-center justify-between px-6 py-4 bg-white border-b">
+              <h3 className="text-lg font-semibold text-gray-800">Chat với AI Assistant</h3>
+              {chatHistory && chatHistory.length > 0 && (
+                <Button
+                  type="text"
+                  danger
+                  icon={<Trash2 size={16} />}
+                  onClick={handleDeleteHistory}
+                  className="flex items-center gap-2"
+                >
+                  Xóa lịch sử
+                </Button>
+              )}
+            </div>
             {/* Messages Area */}
             <div className="h-96 overflow-y-auto p-6 bg-gradient-to-b from-white to-gray-50">
               <div className="space-y-6">
@@ -136,15 +313,13 @@ const Chatbot = () => {
                     animate={{ opacity: 1, y: 0 }}
                     className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
                   >
-                    <div className={`flex items-start space-x-3 max-w-2xl ${
-                      message.type === 'user' ? 'flex-row-reverse space-x-reverse' : ''
-                    }`}>
-                      {/* Avatar */}
-                      <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
-                        message.type === 'user' 
-                          ? 'bg-gradient-to-r from-primary to-secondary' 
-                          : 'bg-gradient-to-r from-purple-500 to-pink-500'
+                    <div className={`flex items-start space-x-3 max-w-2xl ${message.type === 'user' ? 'flex-row-reverse space-x-reverse' : ''
                       }`}>
+                      {/* Avatar */}
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${message.type === 'user'
+                        ? 'bg-gradient-to-r from-primary to-secondary'
+                        : 'bg-gradient-to-r from-purple-500 to-pink-500'
+                        }`}>
                         {message.type === 'user' ? (
                           <User size={20} className="text-white" />
                         ) : (
@@ -153,17 +328,15 @@ const Chatbot = () => {
                       </div>
 
                       {/* Message Bubble */}
-                      <div className={`px-4 py-3 rounded-2xl ${
-                        message.type === 'user'
-                          ? 'bg-gradient-to-r from-primary to-secondary text-white'
-                          : 'bg-white border border-gray-200 text-gray-800 shadow-sm'
-                      }`}>
+                      <div className={`px-4 py-3 rounded-2xl ${message.type === 'user'
+                        ? 'bg-gradient-to-r from-primary to-secondary text-white'
+                        : 'bg-white border border-gray-200 text-gray-800 shadow-sm'
+                        }`}>
                         <p className="text-sm leading-relaxed whitespace-pre-line">
                           {message.content}
                         </p>
-                        <p className={`text-xs mt-2 ${
-                          message.type === 'user' ? 'text-white opacity-70' : 'text-gray-500'
-                        }`}>
+                        <p className={`text-xs mt-2 ${message.type === 'user' ? 'text-white opacity-70' : 'text-gray-500'
+                          }`}>
                           {message.timestamp.toLocaleTimeString('vi-VN', {
                             hour: '2-digit',
                             minute: '2-digit'

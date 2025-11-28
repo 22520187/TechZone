@@ -4,6 +4,7 @@ import productReducer from "@/features/Admin/Products/Product";
 import categoryReducer from "@/features/Admin/Categories/Category";
 import userReducer from "@/features/Admin/Users/User";
 import cartReducer from "@/features/Cart/Cart";
+import chatbotReducer from "@/features/Chatbot/Chatbot";
 
 export const store = configureStore({
     reducer: {
@@ -12,5 +13,6 @@ export const store = configureStore({
         category: categoryReducer,
         user: userReducer,
         cart: cartReducer,
+        chatbot: chatbotReducer,
     },
 });

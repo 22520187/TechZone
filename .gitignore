@@ -366,3 +366,5 @@ FodyWeavers.xsd
 TechZone.Server/appsettings.json
 
 
+bin/
+obj/
