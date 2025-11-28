@@ -366,7 +366,5 @@ FodyWeavers.xsd
 TechZone.Server/appsettings.json
 
 
-/TechZone.Server/obj/
-/TechZone.Client/obj/
-*/obj/
-*/bin/
+bin/
+obj/

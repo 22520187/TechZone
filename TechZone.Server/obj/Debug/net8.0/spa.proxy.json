@@ -3,7 +3,7 @@
 "ServerUrl": "https://localhost:62661",
 "RedirectUrl": "",
 "LaunchCommand": "npm run dev",
-"WorkingDirectory": "G:\\WORKSPACE\\SE347\\TechZone\\TechZone.Server\\..\\techzone.client",
+"WorkingDirectory": "D:\\SE347\\TechZone\\TechZone.Server\\..\\techzone.client",
 "MaxTimeoutInSeconds": "120",
 "KeepRunning": "false"
 }
