@@ -1,6 +1,9 @@
 import { Routes, Route } from "react-router-dom";
 import Home from "../pages/User/Home";
 import NotFound from "../pages/NotFound/NotFound";
+import Products from "../pages/User/Products/Products";
+import ProductDetail from "../pages/User/ProductDetail/ProductDetail";
+import Cart from "../pages/User/Cart/Cart";
 import Login from "../pages/Auth/Login";
 import SignUp from "../pages/Auth/SignUp";
 import ForgotPassword from "../pages/ForgotPassword/Forgotpassword";
@@ -20,7 +23,9 @@ const AllUserRoutes = () => {
             <Route path="/order/:orderId" element={<OrderDetail />} />
             <Route path="/setting" element={<Setting />} />
             <Route path="/chat" element={<Chatbot />} />
-
+            <Route path="/cart" element={<Cart />} />
+            <Route path="/products" element={<Products />} />
+            <Route path="/products/:productId" element={<ProductDetail />} />
         </Routes>
     )
 }
