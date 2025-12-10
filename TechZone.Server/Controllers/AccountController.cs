@@ -217,7 +217,7 @@ namespace TechZone.Server.Controllers
             {
                 if (cachedCode == request.Code)
                 {
-                    _cache.Remove(request.Email); // Xoá mã sau khi xác thực thành công
+                    // Giữ mã trong cache cho bước đổi mật khẩu, xoá sau khi đổi thành công
                     return Ok(new
                     {
                         status = "success",
@@ -239,6 +239,83 @@ namespace TechZone.Server.Controllers
                 {
                     status = "error",
                     message = "Verification code has expired or does not exist."
+                });
+            }
+        }
+
+        [HttpPost("forgot-reset-password")]
+        public async Task<IActionResult> ForgotResetPassword([FromBody] ForgotResetPasswordRequest request)
+        {
+            if (!ModelState.IsValid)
+            {
+                var errors = ModelState.Values
+                    .SelectMany(v => v.Errors)
+                    .Select(e => e.ErrorMessage)
+                    .ToList();
+
+                return BadRequest(new
+                {
+                    status = "error",
+                    message = "Validation failed.",
+                    errors
+                });
+            }
+
+            if (!_cache.TryGetValue(request.Email, out string? cachedCode) || cachedCode == null)
+            {
+                return BadRequest(new
+                {
+                    status = "error",
+                    message = "Verification code has expired or does not exist."
+                });
+            }
+
+            if (cachedCode != request.Code)
+            {
+                return BadRequest(new
+                {
+                    status = "error",
+                    message = "Invalid verification code."
+                });
+            }
+
+            try
+            {
+                var user = await userRepository.GetUserByEmailAsync(request.Email);
+                if (user == null)
+                {
+                    return NotFound(new
+                    {
+                        status = "error",
+                        message = "User not found."
+                    });
+                }
+
+                var updated = await userRepository.UpdatePasswordAsync(user, request.NewPassword);
+                if (!updated)
+                {
+                    return BadRequest(new
+                    {
+                        status = "error",
+                        message = "Failed to reset password."
+                    });
+                }
+
+                _cache.Remove(request.Email); // Chỉ xoá mã sau khi reset thành công
+
+                return Ok(new
+                {
+                    status = "success",
+                    message = "Password has been reset successfully."
+                });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new
+                {
+                    status = "error",
+                    message = "An error occurred while resetting the password.",
+                    details = ex.Message
                 });
             }
         }

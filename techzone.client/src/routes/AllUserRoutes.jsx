@@ -6,7 +6,9 @@ import ProductDetail from "../pages/User/ProductDetail/ProductDetail";
 import Cart from "../pages/User/Cart/Cart";
 import Login from "../pages/Auth/Login";
 import SignUp from "../pages/Auth/SignUp";
-import ForgotPassword from "../pages/ForgotPassword/Forgotpassword";
+import ForgotPassword from "../pages/ForgotPassword/ForgotPassword";
+import VerifyCode from "../pages/VerifyCode/VerifyCode";
+import ResetPassword from "../pages/ResetPassword/ResetPassword";
 import OrderHistory from "../pages/User/Order/OrderHistory";
 import OrderDetail from "../pages/User/Order/OrderDetail";
 import Setting from "../pages/User/Setting";
@@ -19,6 +21,8 @@ const AllUserRoutes = () => {
             <Route path="/auth/login" element={<Login />} />
             <Route path="/auth/signup" element={<SignUp />} />
             <Route path="/auth/forgot-password" element={<ForgotPassword />} />
+            <Route path="/auth/verify-code" element={<VerifyCode />} />
+            <Route path="/auth/reset-password" element={<ResetPassword />} />
             <Route path="/order-history" element={<OrderHistory />} />
             <Route path="/order/:orderId" element={<OrderDetail />} />
             <Route path="/setting" element={<Setting />} />
