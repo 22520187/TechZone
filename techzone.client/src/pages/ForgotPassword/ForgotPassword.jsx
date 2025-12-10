@@ -1,7 +1,7 @@
 import React, { useState } from "react";
-import { UseState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate, Link } from "react-router-dom";
+import api from "../../features/AxiosInstance/AxiosInstance";
 
 const forgotPasswordBgImage =
   "https://images.unsplash.com/photo-1721322800607-8c38375eef04?auto=format&w=800&q=75";
@@ -9,16 +9,35 @@ const forgotPasswordBgImage =
 const ForgotPassword = () => {
     const navigate = useNavigate();
     const [imageLoaded, setImageLoaded] = useState(false);
-    const [email, setEmail] = useState("");
-    const [isSubmitted, setIsSubmitted] = useState();
-    const [error, setError] = useState("");
-    const [isLoading, setIsLoading] = useState(false);
-    
-    const handleSubmit = async (e) =>
-    {
-        e.preventDefault();
-        setIsLoading(true);
+  const [email, setEmail] = useState("");
+  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
+    setIsLoading(true);
+
+    try {
+      const response = await api.post(
+        `api/account/send-verification-code/${encodeURIComponent(email)}`
+      );
+
+      if (response.status === 200 && response.data.status === "success") {
+        setIsSubmitted(true);
+        setTimeout(() => {
+          navigate(`/auth/verify-code?email=${encodeURIComponent(email)}&type=reset`);
+        }, 1500);
+      } else {
+        setError(response.data.message || "Không thể gửi mã. Vui lòng thử lại.");
+      }
+    } catch (err) {
+      setError(err.response?.data?.message || "Có lỗi xảy ra. Vui lòng thử lại.");
+    } finally {
+      setIsLoading(false);
     }
+  };
 
 
 
@@ -73,7 +92,7 @@ const ForgotPassword = () => {
                   <label htmlFor="email" className="block text-sm font-medium text-gray-700">
                         Email
                       </label>
-                      <input
+                      <input  
                         id="email"
                         type="email"
                         value={email}
