@@ -1,4 +1,5 @@
 using AutoMapper;
+using System;
 using TechZone.Server.Models.Domain;
 using TechZone.Server.Models.DTO.ADD;
 
@@ -71,6 +72,52 @@ namespace TechZone.Server.Mapping
 
             CreateMap<ChatHistory, ChatHistoryDTO>().ReverseMap();
             CreateMap<AddChatMessageDTO, ChatHistory>().ReverseMap();
+
+            // Cart mappings
+            CreateMap<AddItemToCartRequestDTO, CartDetail>()
+                .ForMember(dest => dest.CartId, opt => opt.MapFrom(src => src.CartId))
+                .ForMember(dest => dest.ProductColorId, opt => opt.MapFrom(src => src.ProductColorId))
+                .ForMember(dest => dest.Quantity, opt => opt.MapFrom(src => src.Quantity))
+                .ForMember(dest => dest.CartDetailId, opt => opt.Ignore())
+                .ForMember(dest => dest.Cart, opt => opt.Ignore())
+                .ForMember(dest => dest.ProductColor, opt => opt.Ignore());
+            
+            CreateMap<UpdateCartItemRequestDTO, CartDetail>()
+                .ForMember(dest => dest.CartDetailId, opt => opt.MapFrom(src => src.CartDetailId))
+                .ForMember(dest => dest.Quantity, opt => opt.MapFrom(src => src.Quantity))
+                .ForMember(dest => dest.CartId, opt => opt.Ignore())
+                .ForMember(dest => dest.ProductColorId, opt => opt.Ignore())
+                .ForMember(dest => dest.Cart, opt => opt.Ignore())
+                .ForMember(dest => dest.ProductColor, opt => opt.Ignore());
+
+            CreateMap<CartDetail, CartItemDetailDTO>()
+                .ForMember(dest => dest.CartDetailId, opt => opt.MapFrom(src => src.CartDetailId))
+                .ForMember(dest => dest.CartId, opt => opt.MapFrom(src => src.CartId ?? 0))
+                .ForMember(dest => dest.Quantity, opt => opt.MapFrom(src => src.Quantity))
+                .ForMember(dest => dest.ProductColor, opt => opt.MapFrom(src => src.ProductColor));
+            
+            CreateMap<ProductColor, CartItemDTO>()
+                .ForMember(dest => dest.ProductColorId, opt => opt.MapFrom(src => src.ProductColorId))
+                .ForMember(dest => dest.Color, opt => opt.MapFrom(src => src.Color))
+                .ForMember(dest => dest.ColorCode, opt => opt.MapFrom(src => src.ColorCode))
+                .ForMember(dest => dest.StockQuantity, opt => opt.MapFrom(src => src.StockQuantity))
+                .ForMember(dest => dest.Product, opt => opt.MapFrom(src => src.Product));
+
+            // Order mappings
+            CreateMap<CreateOrderRequestDTO, Order>()
+                .ForMember(dest => dest.UserId, opt => opt.MapFrom(src => src.UserId))
+                .ForMember(dest => dest.PaymentMethod, opt => opt.MapFrom(src => src.PaymentMethod))
+                .ForMember(dest => dest.PromotionId, opt => opt.MapFrom(src => src.PromotionId))
+                .ForMember(dest => dest.ShippingAddress, opt => opt.MapFrom(src => src.ShippingAddress))
+                .ForMember(dest => dest.FullName, opt => opt.MapFrom(src => src.FullName))
+                .ForMember(dest => dest.Phone, opt => opt.MapFrom(src => src.Phone))
+                .ForMember(dest => dest.OrderId, opt => opt.Ignore())
+                .ForMember(dest => dest.OrderDate, opt => opt.MapFrom(src => DateTime.Now))
+                .ForMember(dest => dest.Status, opt => opt.MapFrom(src => "Pending"))
+                .ForMember(dest => dest.TotalAmount, opt => opt.Ignore())
+                .ForMember(dest => dest.OrderDetails, opt => opt.Ignore())
+                .ForMember(dest => dest.Promotion, opt => opt.Ignore())
+                .ForMember(dest => dest.User, opt => opt.Ignore());
 
         }
     }

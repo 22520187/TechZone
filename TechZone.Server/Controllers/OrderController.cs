@@ -4,6 +4,7 @@ using TechZone.Server.Models;
 using TechZone.Server.Models.Domain;
 using TechZone.Server.Repositories;
 using TechZone.Server.Models.DTO.GET;
+using TechZone.Server.Models.DTO.ADD;
 
 namespace TechZone.Server.Controllers
 {
@@ -55,6 +56,31 @@ namespace TechZone.Server.Controllers
                 return NotFound($"Order with ID {orderId} not found.");
             }
             return NoContent();
+        }
+
+        // Tạo đơn hàng mới từ giỏ hàng
+        [HttpPost("create")]
+        public async Task<ActionResult> CreateOrder([FromBody] CreateOrderRequestDTO createOrderRequest)
+        {
+            try
+            {
+                // Kiểm tra dữ liệu đầu vào
+                if (createOrderRequest.UserId <= 0)
+                {
+                    return BadRequest("UserId không hợp lệ");
+                }
+
+                // Tạo đơn hàng
+                var order = await _orderRepository.CreateOrderFromCartAsync(createOrderRequest);
+
+                // Trả về thông tin đơn hàng đã tạo
+                var orderDTO = _mapper.Map<OrderDTO>(order);
+                return CreatedAtAction(nameof(GetOrderById), new { orderId = order.OrderId }, orderDTO);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
         }
     }
 

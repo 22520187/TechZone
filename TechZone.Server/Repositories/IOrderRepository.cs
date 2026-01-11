@@ -1,4 +1,5 @@
 using TechZone.Server.Models.Domain;
+using TechZone.Server.Models.DTO.ADD;
 using TechZone.Server.Models.DTO.GET;
 
 namespace TechZone.Server.Repositories
@@ -9,5 +10,7 @@ namespace TechZone.Server.Repositories
         Task<List<Order>> GetOrdersByUserIdAsync(int userId);
 
         Task<bool> UpdateOrderStatusAsync(int orderId, string newStatus);
+
+        Task<Order> CreateOrderFromCartAsync(CreateOrderRequestDTO createOrderRequest);
     }
 }
