@@ -36,6 +36,9 @@ builder.Services.AddScoped<IProductRepository, SQLProductRepository>();
 builder.Services.AddScoped<IProductColorRepository, SQLProductColorRepository>();
 builder.Services.AddScoped<IProductImageRepository, SQLProductImageRepository>();
 builder.Services.AddScoped<ICategoryRepository, SQLCategoryRepository>();
+builder.Services.AddScoped<IBrandRepository, SQLBrandRepository>();
+builder.Services.AddScoped<ICartRepository, SQLCartRepository>();
+builder.Services.AddScoped<ICartDetailRepository, SQLCartDetailRepository>();
 builder.Services.AddScoped<IChatHistoryRepository, SQLChatHistoryRepository>();
 
 

@@ -15,12 +15,13 @@ namespace TechZone.Server.Controllers
     [Route("api/[controller]")]
     [ApiController]
 
-    public class AccountController(IUserRepository userRepository, IMemoryCache cache, ITokenService tokenService, IMapper mapper) : ControllerBase
+    public class AccountController(IUserRepository userRepository, IMemoryCache cache, ITokenService tokenService, IMapper mapper, ICartRepository cartRepository) : ControllerBase
     {
         private readonly IUserRepository userRepository = userRepository;
         private readonly ITokenService tokenService = tokenService;
         private readonly IMapper _mapper = mapper;
         private readonly IMemoryCache _cache = cache;
+        private readonly ICartRepository cartRepository = cartRepository;
 
         private readonly EmailService _emailService = new EmailService();
 
@@ -47,6 +48,23 @@ namespace TechZone.Server.Controllers
             };
 
             var result = await userRepository.RegisterUserAsync(user);
+            
+            // Tạo Cart ngay sau khi đăng ký thành công
+            try
+            {
+                var cart = new Cart
+                {
+                    UserId = result.UserId
+                };
+                await cartRepository.CreateAsync(cart);
+            }
+            catch (Exception ex)
+            {
+                // Log lỗi nhưng không fail registration nếu tạo cart thất bại
+                // Có thể tạo cart sau khi user login lần đầu
+                Console.WriteLine($"Failed to create cart for user {result.UserId}: {ex.Message}");
+            }
+            
             return Ok(result);
         }
 

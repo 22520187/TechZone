@@ -3,6 +3,7 @@ using TechZone.Server.Models;
 using AutoMapper;
 using TechZone.Server.Models.Domain;
 using TechZone.Server.Models.DTO.GET;
+using TechZone.Server.Models.DTO.ADD;
 
 namespace TechZone.Server.Repositories.Implement
 {
@@ -48,5 +49,102 @@ namespace TechZone.Server.Repositories.Implement
             await _context.SaveChangesAsync();
             return true;
         }
+
+        // Tạo đơn hàng mới từ giỏ hàng
+		public async Task<Order> CreateOrderFromCartAsync(CreateOrderRequestDTO createOrderRequest)
+		{
+			// Sử dụng execution strategy của EF Core để xử lý transaction
+			var strategy = dbContext.Database.CreateExecutionStrategy();
+
+			return await strategy.ExecuteAsync(async () =>
+			{
+				// Tạo transaction bên trong execution strategy
+				using var transaction = await dbContext.Database.BeginTransactionAsync();
+				try
+				{
+					// Lấy thông tin giỏ hàng của người dùng
+					var cart = await dbContext.Carts
+						.FirstOrDefaultAsync(c => c.UserId == createOrderRequest.UserId);
+
+					if (cart == null)
+					{
+						throw new Exception($"Không tìm thấy giỏ hàng cho người dùng có ID {createOrderRequest.UserId}");
+					}
+
+					// Lấy chi tiết giỏ hàng
+					var cartDetails = await dbContext.CartDetails
+						.Include(cd => cd.ProductColor)
+						.ThenInclude(pc => pc.Product)
+						.Where(cd => cd.CartId == cart.CartId)
+						.ToListAsync();
+
+					if (cartDetails.Count == 0)
+					{
+						throw new Exception("Giỏ hàng trống, không thể tạo đơn hàng");
+					}
+
+					// Tạo đơn hàng mới
+					var order = _mapper.Map<Order>(createOrderRequest);
+
+					// Tính tổng tiền đơn hàng
+					decimal totalAmount = 0;
+
+					// Thêm đơn hàng vào database
+					await dbContext.Orders.AddAsync(order);
+					await dbContext.SaveChangesAsync();
+
+					// Tạo chi tiết đơn hàng từ chi tiết giỏ hàng
+					foreach (var cartDetail in cartDetails)
+					{
+						if (cartDetail.ProductColor == null || cartDetail.ProductColor.Product == null)
+						{
+							continue;
+						}
+
+						// Kiểm tra số lượng tồn kho
+						if (cartDetail.ProductColor.StockQuantity < cartDetail.Quantity)
+						{
+							throw new Exception($"Sản phẩm {cartDetail.ProductColor.Product.Name} (màu {cartDetail.ProductColor.Color}) không đủ số lượng trong kho");
+						}
+
+						// Tạo chi tiết đơn hàng
+						var orderDetail = new OrderDetail
+						{
+							OrderId = order.OrderId,
+							ProductColorId = cartDetail.ProductColorId,
+							Quantity = cartDetail.Quantity,
+							Price = cartDetail.ProductColor.Product.Price
+						};
+
+						// Cập nhật tổng tiền
+						totalAmount += orderDetail.Price.GetValueOrDefault() * orderDetail.Quantity;
+
+						// Thêm chi tiết đơn hàng vào database
+						await dbContext.OrderDetails.AddAsync(orderDetail);
+
+						// Giảm số lượng tồn kho
+						cartDetail.ProductColor.StockQuantity -= cartDetail.Quantity;
+						dbContext.ProductColors.Update(cartDetail.ProductColor);
+					}
+
+					// Cập nhật tổng tiền đơn hàng
+					order.TotalAmount = totalAmount;
+					dbContext.Orders.Update(order);
+
+					// Xóa giỏ hàng
+					dbContext.CartDetails.RemoveRange(cartDetails);
+
+					await dbContext.SaveChangesAsync();
+					await transaction.CommitAsync();
+
+					return order;
+				}
+				catch (Exception ex)
+				{
+					await transaction.RollbackAsync();
+					throw new Exception($"Lỗi khi tạo đơn hàng: {ex.Message}", ex);
+				}
+			});
+		}
     }
 }
