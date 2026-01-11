@@ -9,7 +9,12 @@ const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const userId = useSelector((state) => state.auth.user);
-  console.log(userId);
+  const cartItems = useSelector((state) => state.cart?.items || []);
+  
+  // Tính tổng số lượng sản phẩm trong giỏ hàng
+  const cartItemCount = cartItems.reduce((total, item) => {
+    return total + (item.quantity || 0);
+  }, 0);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -58,9 +63,11 @@ const Navbar = () => {
         className="text-foreground hover:text-primary transition-colors relative"
       >
         <ShoppingCart size={20} />
-        <span className="absolute -top-2 -right-2 bg-primary text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-          3
-        </span>
+        {cartItemCount > 0 && (
+          <span className="absolute -top-2 -right-2 bg-primary text-white text-xs rounded-full min-w-[20px] h-5 flex items-center justify-center px-1.5">
+            {cartItemCount > 99 ? "99+" : cartItemCount}
+          </span>
+        )}
       </Link>
     </div>
   );

@@ -13,6 +13,9 @@ import OrderHistory from "../pages/User/Order/OrderHistory";
 import OrderDetail from "../pages/User/Order/OrderDetail";
 import Setting from "../pages/User/Setting";
 import Chatbot from "../pages/User/Chatbot";
+import Checkout from "../pages/User/Checkout/Checkout";
+import CheckoutSuccess from "../pages/User/Checkout/CheckoutSuccess";
+import AboutUs from "../pages/User/AboutUs/AboutUs";
 const AllUserRoutes = () => {
     return (
         <Routes>
@@ -28,6 +31,9 @@ const AllUserRoutes = () => {
             <Route path="/setting" element={<Setting />} />
             <Route path="/chat" element={<Chatbot />} />
             <Route path="/cart" element={<Cart />} />
+            <Route path="/checkout" element={<Checkout />} />
+            <Route path="/checkout/success" element={<CheckoutSuccess />} />
+            <Route path="/about" element={<AboutUs />} />
             <Route path="/products" element={<Products />} />
             <Route path="/products/:productId" element={<ProductDetail />} />
         </Routes>
