@@ -13,7 +13,7 @@
     <PackageJsonDependenciesGooglemapsReactWrapper Condition="$(PackageJsonDependenciesGooglemapsReactWrapper) == ''">^1.2.0</PackageJsonDependenciesGooglemapsReactWrapper>
     <PackageJsonDependenciesHeroiconsReact Condition="$(PackageJsonDependenciesHeroiconsReact) == ''">^2.2.0</PackageJsonDependenciesHeroiconsReact>
     <PackageJsonDependenciesReactSpringWeb Condition="$(PackageJsonDependenciesReactSpringWeb) == ''">^10.0.3</PackageJsonDependenciesReactSpringWeb>
-    <PackageJsonDependenciesReduxjsToolkit Condition="$(PackageJsonDependenciesReduxjsToolkit) == ''">^2.11.0</PackageJsonDependenciesReduxjsToolkit>
+    <PackageJsonDependenciesReduxjsToolkit Condition="$(PackageJsonDependenciesReduxjsToolkit) == ''">^2.11.2</PackageJsonDependenciesReduxjsToolkit>
     <PackageJsonDependenciesSyncfusionEj2Base Condition="$(PackageJsonDependenciesSyncfusionEj2Base) == ''">^31.1.22</PackageJsonDependenciesSyncfusionEj2Base>
     <PackageJsonDependenciesAntd Condition="$(PackageJsonDependenciesAntd) == ''">^5.27.3</PackageJsonDependenciesAntd>
     <PackageJsonDependenciesAxios Condition="$(PackageJsonDependenciesAxios) == ''">^1.13.2</PackageJsonDependenciesAxios>
@@ -25,19 +25,19 @@
     <PackageJsonDependenciesJwtDecode Condition="$(PackageJsonDependenciesJwtDecode) == ''">^4.0.0</PackageJsonDependenciesJwtDecode>
     <PackageJsonDependenciesLeaflet Condition="$(PackageJsonDependenciesLeaflet) == ''">^1.9.4</PackageJsonDependenciesLeaflet>
     <PackageJsonDependenciesLucideReact Condition="$(PackageJsonDependenciesLucideReact) == ''">^0.544.0</PackageJsonDependenciesLucideReact>
-    <PackageJsonDependenciesMotion Condition="$(PackageJsonDependenciesMotion) == ''">^12.23.24</PackageJsonDependenciesMotion>
+    <PackageJsonDependenciesMotion Condition="$(PackageJsonDependenciesMotion) == ''">^12.26.1</PackageJsonDependenciesMotion>
     <PackageJsonDependenciesOgl Condition="$(PackageJsonDependenciesOgl) == ''">^1.0.11</PackageJsonDependenciesOgl>
     <PackageJsonDependenciesReact Condition="$(PackageJsonDependenciesReact) == ''">^19.1.1</PackageJsonDependenciesReact>
     <PackageJsonDependenciesReactDom Condition="$(PackageJsonDependenciesReactDom) == ''">^19.1.1</PackageJsonDependenciesReactDom>
     <PackageJsonDependenciesReactLeaflet Condition="$(PackageJsonDependenciesReactLeaflet) == ''">^5.0.0</PackageJsonDependenciesReactLeaflet>
     <PackageJsonDependenciesReactRedux Condition="$(PackageJsonDependenciesReactRedux) == ''">^9.2.0</PackageJsonDependenciesReactRedux>
-    <PackageJsonDependenciesReactRouterDom Condition="$(PackageJsonDependenciesReactRouterDom) == ''">^7.9.6</PackageJsonDependenciesReactRouterDom>
+    <PackageJsonDependenciesReactRouterDom Condition="$(PackageJsonDependenciesReactRouterDom) == ''">^7.12.0</PackageJsonDependenciesReactRouterDom>
     <PackageJsonDependenciesRecharts Condition="$(PackageJsonDependenciesRecharts) == ''">^3.3.0</PackageJsonDependenciesRecharts>
     <PackageJsonDependenciesRedux Condition="$(PackageJsonDependenciesRedux) == ''">^5.0.1</PackageJsonDependenciesRedux>
     <PackageJsonDependenciesSonner Condition="$(PackageJsonDependenciesSonner) == ''">^2.0.7</PackageJsonDependenciesSonner>
-    <PackageJsonDependenciesTailwindcss Condition="$(PackageJsonDependenciesTailwindcss) == ''">^4.1.17</PackageJsonDependenciesTailwindcss>
+    <PackageJsonDependenciesTailwindcss Condition="$(PackageJsonDependenciesTailwindcss) == ''">^4.1.18</PackageJsonDependenciesTailwindcss>
     <PackageJsonDevdependenciesEslintJs Condition="$(PackageJsonDevdependenciesEslintJs) == ''">^9.33.0</PackageJsonDevdependenciesEslintJs>
-    <PackageJsonDevdependenciesTailwindcssVite Condition="$(PackageJsonDevdependenciesTailwindcssVite) == ''">^4.1.17</PackageJsonDevdependenciesTailwindcssVite>
+    <PackageJsonDevdependenciesTailwindcssVite Condition="$(PackageJsonDevdependenciesTailwindcssVite) == ''">^4.1.18</PackageJsonDevdependenciesTailwindcssVite>
     <PackageJsonDevdependenciesTypesJsCookie Condition="$(PackageJsonDevdependenciesTypesJsCookie) == ''">^3.0.6</PackageJsonDevdependenciesTypesJsCookie>
     <PackageJsonDevdependenciesTypesReact Condition="$(PackageJsonDevdependenciesTypesReact) == ''">^19.1.10</PackageJsonDevdependenciesTypesReact>
     <PackageJsonDevdependenciesTypesReactDom Condition="$(PackageJsonDevdependenciesTypesReactDom) == ''">^19.1.7</PackageJsonDevdependenciesTypesReactDom>

@@ -1,3 +1,3 @@
-import Customers from "./Customers";
+import Customers from "./Customer";
 
 export default Customers;
