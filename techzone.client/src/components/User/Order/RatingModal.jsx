@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Star } from "lucide-react";
 import { message } from "antd";
+import api from "../../../features/AxiosInstance/AxiosInstance";
+import { useSelector } from "react-redux";
 
 const RatingModal = ({
     isOpen,
@@ -14,8 +16,10 @@ const RatingModal = ({
     const [rating, setRating] = useState(0);
     const [hoveredRating, setHoveredRating] = useState(0);
     const [feedback, setFeedback] = useState("");
+    const [submitting, setSubmitting] = useState(false);
+    const userId = useSelector((state) => state.auth.user);
 
-    const handleSubmit = () => {
+    const handleSubmit = async () => {
         // Check if order is completed before allowing rating
         if (orderStatus && orderStatus.toUpperCase() !== "COMPLETED") {
             message.warning("You can only rate products from completed orders.");
@@ -32,13 +36,44 @@ const RatingModal = ({
             return;
         }
 
-        // Pass productId as the first parameter
-        onSubmit(productId, rating, feedback);
+        if (!userId) {
+            message.error("Please login to submit a review.");
+            return;
+        }
 
-        setRating(0);
-        setFeedback("");
+        try {
+            setSubmitting(true);
 
-        onClose();
+            // Call API to submit review
+            const response = await api.post("/api/Review/add", {
+                userId: parseInt(userId),
+                productId: parseInt(productId),
+                rating: rating,
+                comment: feedback || null
+            });
+
+            if (response.data && response.data.status === "success") {
+                message.success("Review submitted successfully!");
+                
+                // Call the onSubmit callback if provided
+                if (onSubmit) {
+                    onSubmit(productId, rating, feedback);
+                }
+
+                // Reset form
+                setRating(0);
+                setFeedback("");
+                onClose();
+            } else {
+                message.error(response.data?.message || "Failed to submit review");
+            }
+        } catch (error) {
+            console.error("Error submitting review:", error);
+            const errorMessage = error.response?.data?.message || error.message || "Failed to submit review";
+            message.error(errorMessage);
+        } finally {
+            setSubmitting(false);
+        }
     };
 
     if (!isOpen) return null;
@@ -108,9 +143,10 @@ const RatingModal = ({
                             whileHover={{ scale: 1.02 }}
                             whileTap={{ scale: 0.98 }}
                             onClick={handleSubmit}
-                            className="w-full max-w-xs px-4 py-2 font-medium cursor-pointer text-white bg-gradient-to-br from-primary to-secondary rounded-md hover:bg-gradient-to-br hover:from-primary-600 hover:to-secondary-600 transition-colors"
+                            disabled={submitting}
+                            className="w-full max-w-xs px-4 py-2 font-medium cursor-pointer text-white bg-gradient-to-br from-primary to-secondary rounded-md hover:bg-gradient-to-br hover:from-primary-600 hover:to-secondary-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                            PUBLISH REVIEW
+                            {submitting ? "SUBMITTING..." : "PUBLISH REVIEW"}
                         </motion.button>
                     </div>
                 </div>

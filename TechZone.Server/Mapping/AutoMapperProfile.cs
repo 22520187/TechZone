@@ -17,7 +17,16 @@ namespace TechZone.Server.Mapping
                 .ForMember(dest => dest.PhotoUrl, opt => opt.MapFrom(src => src.AvatarImageUrl))
                 .ReverseMap();
             CreateMap<Order, OrderDTO>().ReverseMap();
-            CreateMap<OrderDetail, OrderDetailDTO>().ReverseMap();
+            CreateMap<OrderDetail, OrderDetailDTO>()
+                .ForMember(dest => dest.ProductColor, opt => opt.MapFrom(src => src.ProductColor));
+            
+            // Map ProductColor to OrderDetailProductColorDTO (similar to CartItemDTO mapping)
+            CreateMap<ProductColor, OrderDetailProductColorDTO>()
+                .ForMember(dest => dest.ProductColorId, opt => opt.MapFrom(src => src.ProductColorId))
+                .ForMember(dest => dest.Color, opt => opt.MapFrom(src => src.Color))
+                .ForMember(dest => dest.ColorCode, opt => opt.MapFrom(src => src.ColorCode))
+                .ForMember(dest => dest.StockQuantity, opt => opt.MapFrom(src => src.StockQuantity))
+                .ForMember(dest => dest.Product, opt => opt.MapFrom(src => src.Product));
             CreateMap<Promotion, PromotionDTO>().ReverseMap();
             CreateMap<Review, ReviewDTO>()
                 .ForMember(dest => dest.UserName, opt => opt.MapFrom(src => src.User != null ? src.User.FullName : "Anonymous"))
@@ -114,6 +123,8 @@ namespace TechZone.Server.Mapping
                 .ForMember(dest => dest.OrderId, opt => opt.Ignore())
                 .ForMember(dest => dest.OrderDate, opt => opt.MapFrom(src => DateTime.Now))
                 .ForMember(dest => dest.Status, opt => opt.MapFrom(src => "Pending"))
+                .ForMember(dest => dest.PaymentStatus, opt => opt.MapFrom(src => 
+                    src.PaymentMethod == "cod" ? "COD" : "Unpaid"))
                 .ForMember(dest => dest.TotalAmount, opt => opt.Ignore())
                 .ForMember(dest => dest.OrderDetails, opt => opt.Ignore())
                 .ForMember(dest => dest.Promotion, opt => opt.Ignore())

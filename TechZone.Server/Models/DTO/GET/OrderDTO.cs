@@ -6,8 +6,13 @@ namespace TechZone.Server.Models.DTO.GET
         public string Status { get; set; }
         public DateTime? OrderDate { get; set; }
         public decimal? TotalAmount { get; set; }
+        public string? PaymentMethod { get; set; }
+        public string? PaymentStatus { get; set; }
+        public string? ShippingAddress { get; set; }
+        public string? FullName { get; set; }
+        public string? Phone { get; set; }
 
-        public virtual PromotionDTO VoucherApplied { get; set; }
+        public virtual PromotionDTO? VoucherApplied { get; set; }
         public List<OrderDetailDTO> OrderDetails { get; set; } = new();
     }
 }

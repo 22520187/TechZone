@@ -16,6 +16,7 @@ import {
 import { useNavigate, useParams } from "react-router-dom";
 import TrackingMap from "./TrackingMap";
 import RatingModal from "./RatingModal";
+import api from "../../../features/AxiosInstance/AxiosInstance";
 
 const mockOrderDetails = {
   "ORD2509": {
@@ -409,18 +410,209 @@ const OrderDetail = () => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    setLoading(true);
-    setTimeout(() => {
-      const orderDetail = mockOrderDetails[orderId];
-      if (orderDetail) {
-        setOrderData(orderDetail);
-        setError(null);
-      } else {
-        setError("Order not found");
+    const fetchOrderDetail = async () => {
+      if (!orderId) {
+        setError("Order ID is required");
+        setLoading(false);
+        return;
       }
-      setLoading(false);
-    }, 1000);
+
+      try {
+        setLoading(true);
+        setError(null);
+
+        // Fetch order information
+        const orderResponse = await api.get(`/api/Order/${orderId}`);
+        const order = orderResponse.data;
+
+        if (!order) {
+          setError("Order not found");
+          setLoading(false);
+          return;
+        }
+
+        // Fetch order details
+        const orderDetailsResponse = await api.get(`/api/OrderDetail/order/${orderId}`);
+        const orderDetails = orderDetailsResponse.data || [];
+
+        // Process order details
+        // Now OrderDetailDTO includes ProductColor with Product information
+        // We can get ProductId from ProductColor.Product.ProductId
+        const productsData = orderDetails.map((detail) => {
+          // Get ProductId from ProductColor.Product (the actual product, not the color variant)
+          const productId = detail.productColor?.product?.productId || detail.productColorId;
+          const product = detail.productColor?.product;
+          const productColor = detail.productColor;
+          
+          return {
+            productId: productId, // Actual ProductId for rating
+            productColorId: detail.productColorId,
+            quantity: detail.quantity,
+            price: detail.price || 0,
+            productName: product?.name || `Product ${productId}`,
+            productCategory: product?.category?.categoryName || "Unknown",
+            color: productColor?.color || "Unknown",
+            colorCode: productColor?.colorCode || "",
+          };
+        });
+
+        // Transform order data to match component structure
+        // API now returns camelCase (configured in Program.cs)
+        const transformedOrder = {
+          id: order.orderId?.toString() || "",
+          status: order.status || "PENDING",
+          date: order.orderDate ? new Date(order.orderDate) : new Date(),
+          total: order.totalAmount || 0,
+          productCount: orderDetails.length,
+          orderDate: order.orderDate 
+            ? new Date(order.orderDate).toLocaleDateString("en-GB", { day: "2-digit", month: "2-digit", year: "numeric" })
+            : new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "2-digit", year: "numeric" }),
+          totalAmount: order.totalAmount 
+            ? new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND", maximumFractionDigits: 0 }).format(order.totalAmount)
+            : "0 VND",
+          expectedDelivery: order.orderDate 
+            ? new Date(new Date(order.orderDate).getTime() + 2 * 24 * 60 * 60 * 1000).toLocaleDateString("en-GB", { day: "2-digit", month: "2-digit", year: "numeric" })
+            : "N/A",
+          currentStep: getCurrentStep(order.status),
+          customer: {
+            name: order.fullName || "N/A",
+            phone: order.phone || "N/A",
+            email: "N/A", // Not in OrderDTO
+            address: order.shippingAddress || "N/A"
+          },
+          paymentMethod: order.paymentMethod || "COD",
+          paymentStatus: order.paymentStatus || "Unpaid",
+          items: productsData.map(p => ({
+            name: p.productName,
+            quantity: p.quantity,
+            price: p.price
+          })),
+          products: productsData.map((p, index) => ({
+            productId: p.productId.toString(), // Actual ProductId (not ProductColorId)
+            category: p.productCategory,
+            name: p.productName,
+            color: p.color,
+            colorCode: p.colorCode,
+            price: p.price 
+              ? new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND", maximumFractionDigits: 0 }).format(p.price)
+              : "0 VND",
+            quantity: p.quantity,
+            subtotal: (p.price * p.quantity)
+              ? new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND", maximumFractionDigits: 0 }).format(p.price * p.quantity)
+              : "0 VND",
+            isRated: false // TODO: Check from reviews API to see if user has already rated this product
+          })),
+          activities: generateActivities(order.status, order.orderDate),
+          addresses: {
+            shipping: {
+              name: order.fullName || "N/A",
+              address: order.shippingAddress || "N/A"
+            }
+          },
+          notes: "No special notes", // Notes field not in OrderDTO currently
+          timeline: generateTimeline(order.status, order.orderDate)
+        };
+
+        setOrderData(transformedOrder);
+      } catch (err) {
+        console.error("Error fetching order detail:", err);
+        setError(err.response?.data?.message || "Failed to fetch order details");
+        message.error(err.response?.data?.message || "Failed to fetch order details");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchOrderDetail();
   }, [orderId]);
+
+  // Helper function to determine current step based on status
+  const getCurrentStep = (status) => {
+    const statusUpper = (status || "").toUpperCase();
+    if (statusUpper === "COMPLETED") return 4;
+    if (statusUpper === "SHIPPING" || statusUpper === "PROCESSING") return 3;
+    if (statusUpper === "CONFIRMED") return 2;
+    if (statusUpper === "ORDER_PLACED" || statusUpper === "PENDING") return 1;
+    if (statusUpper === "CANCELLED" || statusUpper === "CANCELED") return 0;
+    return 1;
+  };
+
+  // Helper function to generate activities
+  const generateActivities = (status, orderDate) => {
+    const activities = [];
+    const date = orderDate ? new Date(orderDate) : new Date();
+    const dateStr = date.toLocaleDateString("en-GB", { day: "2-digit", month: "2-digit", year: "numeric" });
+    const timeStr = date.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
+
+    const statusUpper = (status || "").toUpperCase();
+    
+    if (statusUpper === "COMPLETED") {
+      activities.push({
+        icon: CheckCircle2,
+        color: "text-green-500",
+        description: "Order delivered successfully",
+        date: `${dateStr} - ${timeStr}`
+      });
+    }
+    if (statusUpper === "SHIPPING" || statusUpper === "PROCESSING" || statusUpper === "COMPLETED") {
+      activities.push({
+        icon: Truck,
+        color: "text-blue-500",
+        description: "Order is out for delivery",
+        date: `${dateStr} - ${timeStr}`
+      });
+    }
+    if (statusUpper === "CONFIRMED" || statusUpper === "PROCESSING" || statusUpper === "SHIPPING" || statusUpper === "COMPLETED") {
+      activities.push({
+        icon: Package,
+        color: "text-orange-500",
+        description: "Order confirmed and being prepared",
+        date: `${dateStr} - ${timeStr}`
+      });
+    }
+    activities.push({
+      icon: FileCheck,
+      color: "text-purple-500",
+      description: "Order placed successfully",
+      date: `${dateStr} - ${timeStr}`
+    });
+
+    if (statusUpper === "CANCELLED" || statusUpper === "CANCELED") {
+      activities.unshift({
+        icon: FileText,
+        color: "text-red-500",
+        description: "Order cancelled",
+        date: `${dateStr} - ${timeStr}`
+      });
+    }
+
+    return activities;
+  };
+
+  // Helper function to generate timeline
+  const generateTimeline = (status, orderDate) => {
+    const timeline = [];
+    const date = orderDate ? new Date(orderDate) : new Date();
+    const statusUpper = (status || "").toUpperCase();
+
+    timeline.push({ status: "ORDER_PLACED", date });
+
+    if (statusUpper !== "CANCELLED" && statusUpper !== "CANCELED") {
+      if (statusUpper === "CONFIRMED" || statusUpper === "PROCESSING" || statusUpper === "SHIPPING" || statusUpper === "COMPLETED") {
+        timeline.push({ status: "CONFIRMED", date: new Date(date.getTime() + 15 * 60 * 1000) });
+      }
+      if (statusUpper === "SHIPPING" || statusUpper === "COMPLETED") {
+        timeline.push({ status: "SHIPPING", date: new Date(date.getTime() + 4 * 60 * 60 * 1000) });
+      }
+      if (statusUpper === "COMPLETED") {
+        timeline.push({ status: "COMPLETED", date: new Date(date.getTime() + 6.5 * 60 * 60 * 1000) });
+      }
+    } else {
+      timeline.push({ status: "CANCELLED", date: new Date(date.getTime() + 60 * 60 * 1000) });
+    }
+
+    return timeline;
+  };
 
   if (loading) {
     return (
@@ -455,7 +647,12 @@ const OrderDetail = () => {
 
   // Update product rating status
   const handleRatingSubmit = async (productId, rating, comment) => {
-    alert(`Rated product ${productId} with ${rating} stars and comment: ${comment}`);
+    // Rating is already submitted in RatingModal
+    // This callback can be used to update local state if needed
+    message.success("Review submitted successfully!");
+    
+    // Optionally refresh order data to show updated rating status
+    // You can refetch order details here if needed
   };
 
   return (
@@ -496,6 +693,21 @@ const OrderDetail = () => {
               {orderData.productCount} Products • Order placed on{" "}
               {orderData.orderDate}
             </p>
+            {orderData.paymentMethod && (
+              <p className="text-gray-600 text-sm mt-1">
+                Payment Method: <span className="font-medium">{orderData.paymentMethod === 'vnpay' ? 'VNPay' : 'Cash on Delivery'}</span>
+                {orderData.paymentStatus && (
+                  <span className={`ml-2 px-2 py-0.5 rounded text-xs font-medium ${
+                    orderData.paymentStatus === 'Paid' ? 'bg-green-100 text-green-800' :
+                    orderData.paymentStatus === 'COD' ? 'bg-blue-100 text-blue-800' :
+                    orderData.paymentStatus === 'Failed' ? 'bg-red-100 text-red-800' :
+                    'bg-yellow-100 text-yellow-800'
+                  }`}>
+                    {orderData.paymentStatus}
+                  </span>
+                )}
+              </p>
+            )}
           </div>
           <p className="text-blue-500 font-bold text-2xl">
             {orderData.totalAmount}
@@ -697,6 +909,13 @@ const OrderDetail = () => {
                     {product.color && product.color !== "Unknown" && (
                       <p className="text-gray-500 text-xs">
                         Color: {product.color}
+                        {product.colorCode && (
+                          <span 
+                            className="ml-2 inline-block w-4 h-4 rounded-full border border-gray-300"
+                            style={{ backgroundColor: product.colorCode }}
+                            title={product.color}
+                          />
+                        )}
                       </p>
                     )}
                   </div>
@@ -746,13 +965,13 @@ const OrderDetail = () => {
 
       <div className="grid grid-cols-3 gap-6 mb-4">
         <div>
-          <h3 className="text-gray-800 font-medium mb-3">Billing Address</h3>
+          <h3 className="text-gray-800 font-medium mb-3">Payment Method</h3>
           <div className="bg-green-50 p-4 rounded-lg h-full">
             <p className="font-medium mb-1">
-              {orderData.addresses.billing.name}
+              {orderData.paymentMethod || "N/A"}
             </p>
             <p className="text-gray-600 text-sm">
-              {orderData.addresses.billing.address}
+              Payment information for this order
             </p>
           </div>
         </div>

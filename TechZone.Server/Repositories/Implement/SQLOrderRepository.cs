@@ -22,10 +22,20 @@ namespace TechZone.Server.Repositories.Implement
         public async Task<Order?> GetOrderByIdAsync(int orderId)
         {
             return await _context.Orders
-            .Include(o => o.OrderDetails)
-            .ThenInclude(od => od.ProductColor)
-            .Include(o => o.User)
-            .FirstOrDefaultAsync(o => o.OrderId == orderId);
+                .Include(o => o.OrderDetails)
+                    .ThenInclude(od => od.ProductColor)
+                        .ThenInclude(pc => pc.Product)
+                            .ThenInclude(p => p.Category)
+                .Include(o => o.OrderDetails)
+                    .ThenInclude(od => od.ProductColor)
+                        .ThenInclude(pc => pc.Product)
+                            .ThenInclude(p => p.Brand)
+                .Include(o => o.OrderDetails)
+                    .ThenInclude(od => od.ProductColor)
+                        .ThenInclude(pc => pc.Product)
+                            .ThenInclude(p => p.ProductImages)
+                .Include(o => o.User)
+                .FirstOrDefaultAsync(o => o.OrderId == orderId);
         }
 
         public async Task<List<Order>> GetOrdersByUserIdAsync(int userId)
@@ -45,6 +55,21 @@ namespace TechZone.Server.Repositories.Implement
             }
 
             order.Status = newStatus;
+            _context.Orders.Update(order);
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        // New method to update payment status
+        public async Task<bool> UpdatePaymentStatusAsync(int orderId, string paymentStatus)
+        {
+            var order = await _context.Orders.FindAsync(orderId);
+            if (order == null)
+            {
+                return false; // Order not found
+            }
+
+            order.PaymentStatus = paymentStatus;
             _context.Orders.Update(order);
             await _context.SaveChangesAsync();
             return true;

@@ -3,6 +3,7 @@ using TechZone.Server.Models;
 using TechZone.Server.Repositories;
 using TechZone.Server.Repositories.Implement;
 using TechZone.Server.Mapping;
+using TechZone.Server.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,7 +19,9 @@ builder.Services.AddCors(options =>
     {
         builder.WithOrigins(
                    "https://localhost:3000",
-                   "http://localhost:3000"
+                   "http://localhost:3000",
+                   "http://localhost:5173",
+                   "https://localhost:5173"
                )
                .AllowAnyHeader()
                .AllowAnyMethod()
@@ -40,8 +43,7 @@ builder.Services.AddScoped<IBrandRepository, SQLBrandRepository>();
 builder.Services.AddScoped<ICartRepository, SQLCartRepository>();
 builder.Services.AddScoped<ICartDetailRepository, SQLCartDetailRepository>();
 builder.Services.AddScoped<IChatHistoryRepository, SQLChatHistoryRepository>();
-
-
+builder.Services.AddScoped<VNPayService>();
 
 
 
@@ -53,7 +55,15 @@ builder.Services.AddMemoryCache();
 
 
 
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        // Handle circular references by ignoring cycles
+        options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
+        // Use camelCase naming policy for JSON (JavaScript convention)
+        options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
+        options.JsonSerializerOptions.WriteIndented = true;
+    });
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();

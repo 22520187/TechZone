@@ -122,7 +122,8 @@ const mockReviews = [
 ];
 
 const ProductDetail = () => {
-  const { id } = useParams();
+  const { productId } = useParams();
+  const id = productId; // Use productId from route params
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const cartId = useSelector((state) => state.cart.cartId);
@@ -138,9 +139,24 @@ const ProductDetail = () => {
 
   //#region fetch data
   const fetchProduct = async () => {
+    // Validate id before making API call
+    if (!id || id === "undefined" || id === "null" || isNaN(Number(id))) {
+      message.error("Invalid product ID");
+      navigate("/products");
+      return;
+    }
+
     try {
+      setLoading(true);
+      const productIdNumber = Number(id);
+      if (isNaN(productIdNumber) || productIdNumber <= 0) {
+        message.error("Invalid product ID");
+        navigate("/products");
+        return;
+      }
+      
       const response = await api.get(
-        `/api/Product/CustomerGetProductById/${id}`
+        `/api/Product/CustomerGetProductById/${productIdNumber}`
       );
       const data = response.data;
       const mappedData = {
@@ -204,11 +220,14 @@ const ProductDetail = () => {
     } catch (error) {
       console.error(error);
       message.error("Error fetching product: " + error.message);
+      setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchProduct();
+    if (id) {
+      fetchProduct();
+    }
   }, [id]);
   //#endregion
 
@@ -282,7 +301,8 @@ const ProductDetail = () => {
 
   const handleBackToProducts = () => navigate("/products");
 
-  if (loading && id) {
+  // Show skeleton while loading or if product data is not ready
+  if (loading || !product.id || !product.price) {
     return <SkeletonProductDetail />;
   }
 
@@ -311,8 +331,8 @@ const ProductDetail = () => {
       >
         <div className="bg-white rounded-lg shadow-sm overflow-hidden">
           <ProductImageCarousel
-            images={product.images}
-            productName={product.name}
+            images={product.images || []}
+            productName={product.name || ""}
           />
         </div>
 
@@ -326,10 +346,10 @@ const ProductDetail = () => {
               </h1>
               <div className="flex items-center mt-2">
                 <span className="text-muted-foreground">By </span>
-                <span className="ml-1 font-medium">{product.brandName}</span>
+                <span className="ml-1 font-medium">{product.brandName || ""}</span>
                 <span className="mx-2 text-muted-foreground">in</span>
                 <div className=" px-2 py-1 text-sm font-medium bg-primary-100 rounded">
-                  {product.categoryName}
+                  {product.categoryName || ""}
                 </div>
               </div>
             </div>
@@ -339,7 +359,7 @@ const ProductDetail = () => {
               {[...Array(5)].map((_, i) => (
                 <svg
                   key={i}
-                  className={`w-5 h-5 ${i < Math.floor(product.rating)
+                  className={`w-5 h-5 ${i < Math.floor(product.rating || 0)
                     ? "text-yellow-400 fill-yellow-400"
                     : "text-muted fill-muted"
                     }`}
@@ -348,23 +368,23 @@ const ProductDetail = () => {
                   <path d="M12 17.27L18.18 21L16.54 13.97L22 9.24L14.81 8.63L12 2L9.19 8.63L2 9.24L7.46 13.97L5.82 21L12 17.27Z" />
                 </svg>
               ))}
-              <div className="text-sm font-medium ml-1">{product.rating}</div>
+              <div className="text-sm font-medium ml-1">{product.rating || 0}</div>
               <div className="text-sm text-muted-foreground">
-                ({product.reviewCount} reviews)
+                ({(product.reviewCount || 0)} reviews)
               </div>
             </div>
 
             {/* Price */}
             <div className="flex items-baseline space-x-2 mt-1">
               <span className="text-2xl font-bold">
-                ${product.price.toFixed(2)}
+                ${product.price ? product.price.toFixed(2) : "0.00"}
               </span>
-              {product.oldPrice && product.oldPrice > product.price && (
+              {product.oldPrice && product.price && product.oldPrice > product.price && (
                 <span className="text-muted-foreground line-through">
                   ${product.oldPrice.toFixed(2)}
                 </span>
               )}
-              {product.oldPrice && product.oldPrice > product.price && (
+              {product.oldPrice && product.price && product.oldPrice > product.price && (
                 <div className="ml-2 px-2 py-1 text-sm font-medium bg-red-300 rounded">
                   Save ${(product.oldPrice - product.price).toFixed(2)}
                 </div>
@@ -373,7 +393,7 @@ const ProductDetail = () => {
 
             {/* Short Description */}
             <p className="text-muted-foreground line-clamp-2">
-              {product.description}
+              {product.description || ""}
             </p>
 
             {/* Color Selection */}
@@ -382,7 +402,7 @@ const ProductDetail = () => {
                 Color: {selectedColor?.name || "None"}
               </span>
               <div className="flex space-x-2">
-                {product.productColors.map((color) => (
+                {(product.productColors || []).map((color) => (
                   <button
                     key={color.id}
                     onClick={() => handleColorSelect(color)}
@@ -427,7 +447,7 @@ const ProductDetail = () => {
               <span className="ml-4 text-sm text-muted-foreground">
                 {selectedColor
                   ? `${availableStock} available`
-                  : `Total stock: ${product.stockQuantity}`}
+                  : `Total stock: ${product.stockQuantity || 0}`}
               </span>
             </div>
 
@@ -466,9 +486,9 @@ const ProductDetail = () => {
       </motion.div>
       <ProductReviews
         reviews={reviews}
-        productId={product.id}
-        averageRating={product.rating}
-        totalReviews={product.reviewCount}
+        productId={product.id || id}
+        averageRating={product.rating || 0}
+        totalReviews={product.reviewCount || 0}
       />
     </motion.div>
   );
