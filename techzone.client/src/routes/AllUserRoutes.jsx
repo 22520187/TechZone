@@ -17,6 +17,9 @@ import Checkout from "../pages/User/Checkout/Checkout";
 import CheckoutSuccess from "../pages/User/Checkout/CheckoutSuccess";
 import VNPayReturn from "../pages/User/Checkout/VNPayReturn";
 import AboutUs from "../pages/User/AboutUs/AboutUs";
+import WarrantyList from "../pages/User/Warranty/WarrantyList";
+import WarrantyDetail from "../pages/User/Warranty/WarrantyDetail";
+import WarrantyClaimHistory from "../pages/User/Warranty/WarrantyClaimHistory";
 const AllUserRoutes = () => {
     return (
         <Routes>
@@ -38,6 +41,9 @@ const AllUserRoutes = () => {
             <Route path="/about" element={<AboutUs />} />
             <Route path="/products" element={<Products />} />
             <Route path="/products/:productId" element={<ProductDetail />} />
+            <Route path="/warranty" element={<WarrantyList />} />
+            <Route path="/warranty/:warrantyId" element={<WarrantyDetail />} />
+            <Route path="/warranty-claims" element={<WarrantyClaimHistory />} />
         </Routes>
     )
 }

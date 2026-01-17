@@ -23,6 +23,10 @@ public partial class Product
 
     public DateTime? CreatedAt { get; set; }
 
+    public int? WarrantyPeriodMonths { get; set; }
+
+    public string? WarrantyTerms { get; set; }
+
     public virtual Brand? Brand { get; set; }
 
     public virtual Category? Category { get; set; }
@@ -34,4 +38,6 @@ public partial class Product
     public virtual ICollection<Review> Reviews { get; set; } = new List<Review>();
 
     public virtual ICollection<Promotion> Promotions { get; set; } = new List<Promotion>();
+
+    public virtual ICollection<Warranty> Warranties { get; set; } = new List<Warranty>();
 }

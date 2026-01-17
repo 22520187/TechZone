@@ -130,6 +130,19 @@ namespace TechZone.Server.Mapping
                 .ForMember(dest => dest.Promotion, opt => opt.Ignore())
                 .ForMember(dest => dest.User, opt => opt.Ignore());
 
+            // Warranty mappings
+            CreateMap<Warranty, WarrantyDTO>()
+                .ForMember(dest => dest.Product, opt => opt.MapFrom(src => src.Product))
+                .ForMember(dest => dest.OrderDetail, opt => opt.MapFrom(src => src.OrderDetail))
+                .ForMember(dest => dest.WarrantyClaims, opt => opt.MapFrom(src => src.WarrantyClaims))
+                .ReverseMap();
+
+            // WarrantyClaim mappings
+            CreateMap<WarrantyClaim, WarrantyClaimDTO>()
+                .ForMember(dest => dest.Warranty, opt => opt.MapFrom(src => src.Warranty))
+                .ForMember(dest => dest.User, opt => opt.MapFrom(src => src.User))
+                .ReverseMap();
+
         }
     }
 }

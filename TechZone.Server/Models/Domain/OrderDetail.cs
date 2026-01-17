@@ -20,4 +20,6 @@ public partial class OrderDetail
     public virtual Order? Order { get; set; }
 
     public virtual ProductColor? ProductColor { get; set; }
+
+    public virtual ICollection<Warranty> Warranties { get; set; } = new List<Warranty>();
 }

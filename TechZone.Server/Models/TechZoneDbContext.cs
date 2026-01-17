@@ -42,6 +42,10 @@ public partial class TechZoneDbContext : DbContext
 
     public virtual DbSet<ChatHistory> ChatHistories { get; set; }
 
+    public virtual DbSet<Warranty> Warranties { get; set; }
+
+    public virtual DbSet<WarrantyClaim> WarrantyClaims { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Brand>(entity =>
@@ -140,6 +144,7 @@ public partial class TechZoneDbContext : DbContext
             entity.Property(e => e.CreatedAt).HasColumnType("datetime");
             entity.Property(e => e.Name).HasMaxLength(255);
             entity.Property(e => e.Price).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.WarrantyTerms).HasMaxLength(2000);
 
             entity.HasOne(d => d.Brand).WithMany(p => p.Products)
                 .HasForeignKey(d => d.BrandId)
@@ -265,6 +270,51 @@ public partial class TechZoneDbContext : DbContext
             entity.HasOne(d => d.User).WithMany(p => p.ChatHistories)
                 .HasForeignKey(d => d.UserId)
                 .HasConstraintName("FK__ChatHisto__UserI__7A672E12")
+                .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        modelBuilder.Entity<Warranty>(entity =>
+        {
+            entity.HasKey(e => e.WarrantyId).HasName("PK__Warranty__1234567890ABCDEF");
+
+            entity.ToTable("Warranty");
+
+            entity.Property(e => e.WarrantyType).HasMaxLength(50);
+            entity.Property(e => e.Status).HasMaxLength(50);
+            entity.Property(e => e.StartDate).HasColumnType("datetime");
+            entity.Property(e => e.EndDate).HasColumnType("datetime");
+            entity.Property(e => e.CreatedAt).HasColumnType("datetime");
+
+            entity.HasOne(d => d.OrderDetail).WithMany(p => p.Warranties)
+                .HasForeignKey(d => d.OrderDetailId)
+                .HasConstraintName("FK__Warranty__OrderD__7B5B524B")
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(d => d.Product).WithMany(p => p.Warranties)
+                .HasForeignKey(d => d.ProductId)
+                .HasConstraintName("FK__Warranty__Produ__7C4F7684")
+                .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        modelBuilder.Entity<WarrantyClaim>(entity =>
+        {
+            entity.HasKey(e => e.WarrantyClaimId).HasName("PK__Warranty__1234567890FEDCBA");
+
+            entity.ToTable("WarrantyClaim");
+
+            entity.Property(e => e.IssueDescription).HasMaxLength(2000);
+            entity.Property(e => e.Status).HasMaxLength(50);
+            entity.Property(e => e.SubmittedAt).HasColumnType("datetime");
+            entity.Property(e => e.ResolvedAt).HasColumnType("datetime");
+
+            entity.HasOne(d => d.Warranty).WithMany(p => p.WarrantyClaims)
+                .HasForeignKey(d => d.WarrantyId)
+                .HasConstraintName("FK__WarrantyC__Warranty__7D439ABD")
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(d => d.User).WithMany(p => p.WarrantyClaims)
+                .HasForeignKey(d => d.UserId)
+                .HasConstraintName("FK__WarrantyC__UserI__7E37BEF6")
                 .OnDelete(DeleteBehavior.SetNull);
         });
 
