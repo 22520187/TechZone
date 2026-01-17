@@ -10,6 +10,7 @@ namespace TechZone.Server.Repositories
         Task<List<Order>> GetOrdersByUserIdAsync(int userId);
 
         Task<bool> UpdateOrderStatusAsync(int orderId, string newStatus);
+        Task<bool> UpdatePaymentStatusAsync(int orderId, string paymentStatus);
 
         Task<Order> CreateOrderFromCartAsync(CreateOrderRequestDTO createOrderRequest);
     }

@@ -15,6 +15,7 @@ import Setting from "../pages/User/Setting";
 import Chatbot from "../pages/User/Chatbot";
 import Checkout from "../pages/User/Checkout/Checkout";
 import CheckoutSuccess from "../pages/User/Checkout/CheckoutSuccess";
+import VNPayReturn from "../pages/User/Checkout/VNPayReturn";
 import AboutUs from "../pages/User/AboutUs/AboutUs";
 const AllUserRoutes = () => {
     return (
@@ -33,6 +34,7 @@ const AllUserRoutes = () => {
             <Route path="/cart" element={<Cart />} />
             <Route path="/checkout" element={<Checkout />} />
             <Route path="/checkout/success" element={<CheckoutSuccess />} />
+            <Route path="/checkout/vnpay-return" element={<VNPayReturn />} />
             <Route path="/about" element={<AboutUs />} />
             <Route path="/products" element={<Products />} />
             <Route path="/products/:productId" element={<ProductDetail />} />

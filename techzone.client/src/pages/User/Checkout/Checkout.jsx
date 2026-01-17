@@ -71,22 +71,44 @@ const Checkout = () => {
 
       // Handle successful order creation
       if (response.data) {
-        message.success("Order created successfully!");
+        const orderId = response.data.orderId;
 
-        // Navigate to success page with order details
-        navigate(
-          `/checkout/success?orderNumber=${
-            response.data.orderId
-          }&total=${cartTotal.toFixed(2)}`
-        );
+        // Check payment method
+        if (formValues.paymentMethod === "vnpay") {
+          // Create VNPay payment URL
+          try {
+            const vnpayResponse = await api.post("/api/VNPay/create-payment-url", {
+              orderId: orderId,
+              amount: cartTotal,
+              orderInfo: `Thanh toán đơn hàng #${orderId}`,
+            });
 
-        // Refresh the cart (optional)
-        dispatch(fetchCartDetailsByCustomerId(userId));
+            if (vnpayResponse.data?.paymentUrl) {
+              // Redirect to VNPay payment page
+              window.location.href = vnpayResponse.data.paymentUrl;
+            } else {
+              throw new Error("Không thể tạo link thanh toán VNPay");
+            }
+          } catch (vnpayError) {
+            console.error("VNPay error:", vnpayError);
+            message.error("Lỗi khi tạo link thanh toán VNPay. Vui lòng thử lại.");
+            setIsProcessing(false);
+          }
+        } else {
+          // COD payment - navigate to success page
+          message.success("Order created successfully!");
+          navigate(
+            `/checkout/success?orderNumber=${orderId}&total=${cartTotal.toFixed(2)}`
+          );
+
+          // Refresh the cart
+          dispatch(fetchCartDetailsByCustomerId(userId));
+          setIsProcessing(false);
+        }
       }
     } catch (error) {
       console.error("Failed to create order:", error);
       message.error("Lỗi khi tạo đơn hàng. Vui lòng thử lại.");
-    } finally {
       setIsProcessing(false);
     }
   };

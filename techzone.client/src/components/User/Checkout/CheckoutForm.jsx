@@ -3,13 +3,12 @@ import { Form, Input, Card, Radio, Button, Row, Col, Typography } from "antd";
 import { motion } from "framer-motion";
 import { ShieldCheckIcon, Banknote } from "lucide-react";
 
-import momo from "../../../assets/Payment/momo.svg";
 import vnpay from "../../../assets/Payment/vnpay.svg";
 
 const { Text, Title } = Typography;
 
 export function CheckoutForm({ onSubmit, isProcessing, form }) {
-  const [paymentMethod, setPaymentMethod] = useState("cod");
+  const [paymentMethod, setPaymentMethod] = useState("vnpay");
 
   const handleSubmit = (values) => {
     // Combine form values with payment method
@@ -135,25 +134,19 @@ export function CheckoutForm({ onSubmit, isProcessing, form }) {
               className="w-full"
             >
               <Row gutter={[16, 16]}>
-                <Col xs={24} sm={8}>
-                  <Radio.Button value="momo" className="w-full text-center">
+                <Col xs={24} sm={12}>
+                  <Radio.Button value="vnpay" className="w-full text-center h-16">
                     <div className="flex items-center justify-center gap-2">
-                      <img src={momo} className="size-5"></img> Momo Wallet
+                      <img src={vnpay} className="size-8" alt="VNPay"></img> 
+                      <span className="font-medium">VNPay</span>
                     </div>
                   </Radio.Button>
                 </Col>
-                <Col xs={24} sm={8}>
-                  <Radio.Button value="vnpay" className="w-full text-center">
+                <Col xs={24} sm={12}>
+                  <Radio.Button value="cod" className="w-full text-center h-16">
                     <div className="flex items-center justify-center gap-2">
-                      <img src={vnpay} className="size-8"></img> VNPay
-                    </div>
-                  </Radio.Button>
-                </Col>
-                <Col xs={24} sm={8}>
-                  <Radio.Button value="cod" className="w-full text-center ">
-                    <div className="flex items-center justify-center gap-2">
-                      <Banknote className="text-green-700"></Banknote> Cash on
-                      Delivery
+                      <Banknote className="text-green-700"></Banknote> 
+                      <span className="font-medium">Cash on Delivery</span>
                     </div>
                   </Radio.Button>
                 </Col>

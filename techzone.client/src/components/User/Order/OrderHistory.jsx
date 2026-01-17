@@ -10,73 +10,62 @@ import {
   ExclamationTriangleIcon,
   CogIcon,
 } from "@heroicons/react/24/outline";
-
-const mockOrders = [
-  {
-    id: "ORD2509",
-    status: "COMPLETED",
-    date: new Date("2025-09-28"),
-    total: 29990000,
-    items: [
-      { name: "iPhone 15 Pro", quantity: 1, price: 29990000 }
-    ]
-  },
-  {
-    id: "ORD2510", 
-    status: "PROCESSING",
-    date: new Date("2025-09-29"),
-    total: 45990000,
-    items: [
-      { name: "MacBook Air M3", quantity: 1, price: 45990000 }
-    ]
-  },
-  {
-    id: "ORD2511",
-    status: "PENDING CONFIRM",
-    date: new Date("2025-09-30"),
-    total: 12990000,
-    items: [
-      { name: "Samsung Galaxy S24", quantity: 1, price: 12990000 }
-    ]
-  },
-  {
-    id: "ORD2512",
-    status: "CANCELLED",
-    date: new Date("2025-09-27"),
-    total: 19990000,
-    items: [
-      { name: "iPad Air", quantity: 1, price: 19990000 }
-    ]
-  },
-  {
-    id: "ORD2513",
-    status: "COMPLETED",
-    date: new Date("2025-09-26"),
-    total: 59990000,
-    items: [
-      { name: "Gaming PC", quantity: 1, price: 49990000 },
-      { name: "Gaming Monitor", quantity: 1, price: 9990000 }
-    ]
-  }
-];
-
+import api from "../../../features/AxiosInstance/AxiosInstance";
+import { message } from "antd";
 
 const OrderHistory = () => {
-
   const [orders, setOrders] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const navigate = useNavigate();
+  const userId = useSelector((state) => state.auth.user);
 
-   useEffect(() => {
-    setLoading(true);
-    setTimeout(() => {
-      setOrders(mockOrders);
-      setLoading(false);
-    }, 1000); // Giả lập delay API
-  }, []);
+  useEffect(() => {
+    const fetchOrders = async () => {
+      if (!userId) {
+        setError("Please login to view your orders");
+        setLoading(false);
+        return;
+      }
+
+      try {
+        setLoading(true);
+        setError(null);
+        const response = await api.get(`/api/Order/user/${userId}`);
+        
+        if (response.data && Array.isArray(response.data)) {
+          // Transform API response to match component structure
+          const transformedOrders = response.data.map((order) => ({
+            id: order.orderId,
+            status: order.status || "PENDING",
+            date: order.orderDate ? new Date(order.orderDate) : new Date(),
+            total: order.totalAmount || 0,
+            items: order.orderDetails || [],
+            paymentMethod: order.paymentMethod || "COD",
+            paymentStatus: order.paymentStatus || "Unpaid"
+          }));
+          
+          // Sort by date (newest first)
+          transformedOrders.sort((a, b) => b.date - a.date);
+          
+          setOrders(transformedOrders);
+        } else {
+          setOrders([]);
+        }
+      } catch (err) {
+        console.error("Error fetching orders:", err);
+        setError(err.response?.data?.message || "Failed to fetch orders");
+        message.error(err.response?.data?.message || "Failed to fetch orders");
+        setOrders([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchOrders();
+  }, [userId]);
 
   const getPaginationNumbers = () => {
     const numbers = [];
@@ -172,8 +161,16 @@ const OrderHistory = () => {
     <div className="container mx-auto px-4 py-8 max-w-7xl">
       <h1 className="text-xl font-bold mb-4 text-primary-600">ORDER HISTORY</h1>
 
-      {orders.length === 0 ? (
-        <div className="bg-gray-500 rounded-lg p-8 text-center">
+      {loading ? (
+        <div className="flex justify-center items-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500"></div>
+        </div>
+      ) : error ? (
+        <div className="bg-red-50 rounded-lg p-8 text-center">
+          <p className="text-red-600">{error}</p>
+        </div>
+      ) : orders.length === 0 ? (
+        <div className="bg-gray-50 rounded-lg p-8 text-center">
           <p className="text-gray-600">You don't have any orders yet</p>
         </div>
       ) : (
@@ -181,8 +178,9 @@ const OrderHistory = () => {
           <div className="grid grid-cols-12 bg-gray-100 py-3 px-4 border-b border-gray-200">
             <div className="col-span-2 font-medium text-gray-700">Order ID</div>
             <div className="col-span-2 font-medium text-gray-700">Status</div>
-            <div className="col-span-3 font-medium text-gray-700">Order Date</div>
-            <div className="col-span-3 font-medium text-gray-700">Total Amount</div>
+            <div className="col-span-2 font-medium text-gray-700">Payment</div>
+            <div className="col-span-2 font-medium text-gray-700">Order Date</div>
+            <div className="col-span-2 font-medium text-gray-700">Total Amount</div>
             <div className="col-span-2 font-medium text-gray-700">Action</div>
           </div>
 
@@ -205,10 +203,20 @@ const OrderHistory = () => {
                   </span>
                 </div>
               </div>
-              <div className="col-span-3 text-gray-600">
+              <div className="col-span-2">
+                <span className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium ${
+                  order.paymentStatus === 'Paid' ? 'bg-green-100 text-green-800' :
+                  order.paymentStatus === 'COD' ? 'bg-blue-100 text-blue-800' :
+                  order.paymentStatus === 'Failed' ? 'bg-red-100 text-red-800' :
+                  'bg-yellow-100 text-yellow-800'
+                }`}>
+                  {order.paymentStatus}
+                </span>
+              </div>
+              <div className="col-span-2 text-gray-600">
                 {formatDate(order.date)}
               </div>
-              <div className="col-span-3 text-gray-600">{order.total}</div>
+              <div className="col-span-2 text-gray-600">{formatPrice(order.total)}</div>
               <div className="col-span-2">
                 <motion.button
                   whileHover={{ scale: 1.05 }}

@@ -14,8 +14,17 @@ namespace TechZone.Server.Repositories.Implement
         public async Task<List<OrderDetail>> GetOrderDetailsByOrderIdAsync(int orderId)
         {
             return await dbContext.OrderDetails
-            .Where(od => od.OrderId == orderId)
-            .ToListAsync();
+                .Include(od => od.ProductColor)
+                    .ThenInclude(pc => pc.Product)
+                        .ThenInclude(p => p.Category)
+                .Include(od => od.ProductColor)
+                    .ThenInclude(pc => pc.Product)
+                        .ThenInclude(p => p.Brand)
+                .Include(od => od.ProductColor)
+                    .ThenInclude(pc => pc.Product)
+                        .ThenInclude(p => p.ProductImages)
+                .Where(od => od.OrderId == orderId)
+                .ToListAsync();
         }
 
         // Lấy chi tiết đơn hàng theo orderDetailId
@@ -24,7 +33,16 @@ namespace TechZone.Server.Repositories.Implement
             try
             {
                 var orderDetail = await dbContext.OrderDetails
-                .FirstOrDefaultAsync(od => od.OrderDetailId == orderDetailId);
+                    .Include(od => od.ProductColor)
+                        .ThenInclude(pc => pc.Product)
+                            .ThenInclude(p => p.Category)
+                    .Include(od => od.ProductColor)
+                        .ThenInclude(pc => pc.Product)
+                            .ThenInclude(p => p.Brand)
+                    .Include(od => od.ProductColor)
+                        .ThenInclude(pc => pc.Product)
+                            .ThenInclude(p => p.ProductImages)
+                    .FirstOrDefaultAsync(od => od.OrderDetailId == orderDetailId);
 
                 if (orderDetail == null)
                 {

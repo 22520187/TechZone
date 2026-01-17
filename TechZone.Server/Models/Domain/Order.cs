@@ -17,6 +17,8 @@ public partial class Order
 
     public string? PaymentMethod { get; set; }
 
+    public string? PaymentStatus { get; set; }
+
     public int? PromotionId { get; set; }
 
     public string? ShippingAddress { get; set; }
