@@ -4,6 +4,7 @@ using AutoMapper;
 using TechZone.Server.Models.Domain;
 using TechZone.Server.Models.DTO.GET;
 using TechZone.Server.Models.DTO.ADD;
+using TechZone.Server.Repositories;
 
 namespace TechZone.Server.Repositories.Implement
 {
@@ -12,11 +13,13 @@ namespace TechZone.Server.Repositories.Implement
         private readonly IMapper _mapper;
 
         private readonly TechZoneDbContext _context;
+        private readonly IWarrantyRepository _warrantyRepository;
 
-        public SQLOrderRepository(TechZoneDbContext dbContext, IMapper mapper) : base(dbContext)
+        public SQLOrderRepository(TechZoneDbContext dbContext, IMapper mapper, IWarrantyRepository warrantyRepository) : base(dbContext)
         {
             _mapper = mapper;
             _context = dbContext;
+            _warrantyRepository = warrantyRepository;
         }
 
         public async Task<Order?> GetOrderByIdAsync(int orderId)
@@ -48,16 +51,60 @@ namespace TechZone.Server.Repositories.Implement
         // New method to update order status
         public async Task<bool> UpdateOrderStatusAsync(int orderId, string newStatus)
         {
-            var order = await _context.Orders.FindAsync(orderId);
+            var order = await _context.Orders
+                .Include(o => o.OrderDetails)
+                .FirstOrDefaultAsync(o => o.OrderId == orderId);
+            
             if (order == null)
             {
                 return false; // Order not found
             }
 
+            var oldStatus = order.Status;
             order.Status = newStatus;
             _context.Orders.Update(order);
             await _context.SaveChangesAsync();
+
+            // Auto-create warranties when order is delivered or completed
+            if ((newStatus.Equals("Delivered", StringComparison.OrdinalIgnoreCase) || 
+                 newStatus.Equals("Completed", StringComparison.OrdinalIgnoreCase)) &&
+                !oldStatus.Equals("Delivered", StringComparison.OrdinalIgnoreCase) &&
+                !oldStatus.Equals("Completed", StringComparison.OrdinalIgnoreCase))
+            {
+                await CreateWarrantiesForOrderAsync(orderId);
+            }
+
             return true;
+        }
+
+        // Helper method to create warranties for all order details
+        private async Task CreateWarrantiesForOrderAsync(int orderId)
+        {
+            var order = await _context.Orders
+                .Include(o => o.OrderDetails)
+                .FirstOrDefaultAsync(o => o.OrderId == orderId);
+
+            if (order == null || order.OrderDetails == null) return;
+
+            foreach (var orderDetail in order.OrderDetails)
+            {
+                // Check if warranty already exists for this order detail
+                var existingWarranty = await _context.Warranties
+                    .FirstOrDefaultAsync(w => w.OrderDetailId == orderDetail.OrderDetailId);
+
+                if (existingWarranty == null)
+                {
+                    try
+                    {
+                        await _warrantyRepository.CreateWarrantyForOrderDetailAsync(orderDetail.OrderDetailId);
+                    }
+                    catch (Exception ex)
+                    {
+                        // Log error but continue with other order details
+                        Console.WriteLine($"Error creating warranty for OrderDetail {orderDetail.OrderDetailId}: {ex.Message}");
+                    }
+                }
+            }
         }
 
         // New method to update payment status

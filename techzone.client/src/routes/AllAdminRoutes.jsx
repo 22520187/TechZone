@@ -11,6 +11,7 @@ import Promotions from "../pages/Admin/Promotions";
 import PromotionDetail from "../pages/Admin/PromotionDetail";
 import ProductDetail from "../pages/Admin/ProductDetail";
 import Settings from "../pages/Admin/Settings/Settings";
+import WarrantyClaims from "../pages/Admin/WarrantyClaims/WarrantyClaims";
 
 const AllAdminRoutes = () => {
   return (
@@ -24,6 +25,7 @@ const AllAdminRoutes = () => {
       <Route path="/customers" element={<Customers/>}/>
       <Route path="/promotions" element={<Promotions/>}/>
       <Route path="/promotions/:promotionId" element={<PromotionDetail/>}/>
+      <Route path="/warranty-claims" element={<WarrantyClaims/>}/>
       <Route path="/settings" element={<Settings/>}/>
 
       <Route path="*" element={<NotFound />} />

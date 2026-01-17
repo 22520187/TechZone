@@ -139,7 +139,7 @@
           }
         }
       },
-      "Microsoft.AspNetCore.SpaProxy/8.0.22": {
+      "Microsoft.AspNetCore.SpaProxy/8.0.23": {
         "type": "package",
         "compile": {
           "lib/net8.0/Microsoft.AspNetCore.SpaProxy.dll": {}
@@ -2756,10 +2756,10 @@
         "mailkit.nuspec"
       ]
     },
-    "Microsoft.AspNetCore.SpaProxy/8.0.22": {
-      "sha512": "CFnPIbLHsuLKKsJNC1wMFaeKvxRfDS8fnVzDxLdCI6kMbHB91tCLOm8+rPpAGV99VJSFNhduLEWx22Zjw30wag==",
+    "Microsoft.AspNetCore.SpaProxy/8.0.23": {
+      "sha512": "g7whRdNtTf+ngEbr1HMeb4hzR5JWDeTOcycZFp6vPb1GYN8KLeqPdR/nmmbs6r8yxFqh4VTcoPSSexFS8ZiX0A==",
       "type": "package",
-      "path": "microsoft.aspnetcore.spaproxy/8.0.22",
+      "path": "microsoft.aspnetcore.spaproxy/8.0.23",
       "files": [
         ".nupkg.metadata",
         ".signature.p7s",
@@ -2767,7 +2767,7 @@
         "THIRD-PARTY-NOTICES.TXT",
         "build/Microsoft.AspNetCore.SpaProxy.targets",
         "lib/net8.0/Microsoft.AspNetCore.SpaProxy.dll",
-        "microsoft.aspnetcore.spaproxy.8.0.22.nupkg.sha512",
+        "microsoft.aspnetcore.spaproxy.8.0.23.nupkg.sha512",
         "microsoft.aspnetcore.spaproxy.nuspec"
       ]
     },
