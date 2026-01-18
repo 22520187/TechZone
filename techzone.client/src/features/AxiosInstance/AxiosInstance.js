@@ -1,8 +1,8 @@
 import axios from "axios";
-// import {
-//   getAuthFromCookies,
-//   clearAuthCookies,
-// } from "../CookieHelper/CookieHelper";
+import {
+  getAuthCookies,  // ✅ Sửa tên và path
+  clearAuthCookies,
+} from "./Cookies/CookiesHelper";  // ✅ Sửa path
 
 const productURL = "https://nextgentech-73nf.onrender.com";
 const developmentURL = "http://localhost:5288";
@@ -21,14 +21,13 @@ const instance = axios.create({
 // Interceptor cho requests
 instance.interceptors.request.use(
     (config) => {
-        // const authCookies = getAuthFromCookies();
-        // if (authCookies.token) {
-        //   config.headers["Authorization"] = `Bearer ${authCookies.accessToken}`;
-        // }
+        const authCookies = getAuthCookies();  // ✅ Sửa tên function
+        if (authCookies.token) {  // ✅ Kiểm tra token
+          config.headers["Authorization"] = `Bearer ${authCookies.token}`;  // ✅ Sửa property name
+        }
 
         // Đảm bảo signal được truyền qua nếu có
         if (config.signal) {
-            // Thêm listener để xử lý khi request bị hủy
             config.signal.addEventListener("abort", () => {
                 // Có thể thêm logic cleanup nếu cần
             });
@@ -46,9 +45,7 @@ instance.interceptors.request.use(
 instance.interceptors.response.use(
     (response) => response,
     (error) => {
-        // Kiểm tra xem lỗi có phải do request bị hủy không
         if (axios.isCancel(error)) {
-            // Trả về một error đặc biệt cho cancelled requests
             const cancelError = new Error("Request was cancelled");
             cancelError.name = "AbortError";
             return Promise.reject(cancelError);
@@ -63,7 +60,6 @@ instance.interceptors.response.use(
 
 export default instance;
 
-// Thêm một utility function để tạo request có thể hủy
 export const createCancellableRequest = (requestFn) => {
     const controller = new AbortController();
     const promise = requestFn(controller.signal);

@@ -1,6 +1,7 @@
 using AutoMapper;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using TechZone.Server.Repositories;
 using TechZone.Server.Models.Domain;
 using TechZone.Server.Models.RequestModels;
@@ -9,6 +10,7 @@ using TechZone.Server.Services;
 using System.Runtime.CompilerServices;
 using TechZone.Server.Models.DTO.GET;
 using TechZone.Server.Models.DTO.UPDATE;
+using TechZone.Server.Models.DTO.ADD;
 
 namespace TechZone.Server.Controllers
 {
@@ -24,6 +26,73 @@ namespace TechZone.Server.Controllers
         private readonly ICartRepository cartRepository = cartRepository;
 
         private readonly EmailService _emailService = new EmailService();
+
+        // TODO: Add [Authorize(Roles = "Admin")] after configuring JWT Authentication
+        [HttpGet("AdminGetAllUsers")]
+        public async Task<IActionResult> AdminGetAllUsers()
+        {
+            var users = await userRepository.GetAllUsersAsync();
+            var userDtos = _mapper.Map<List<AdminUserDTO>>(users);
+            return Ok(userDtos);
+        }
+
+        [HttpPost("AddUser")]
+        public async Task<IActionResult> AddUser([FromBody] AdminAddUserDTO adminAddUserDTO)
+        {
+            // Check email exists
+            bool isEmailExists = await userRepository.IsEmailExistsAsync(adminAddUserDTO.Email);
+            if (isEmailExists)
+            {
+                return BadRequest(new { status = "error", message = "Email already exists" });
+            }
+            
+            var user = _mapper.Map<User>(adminAddUserDTO);
+            var result = await userRepository.RegisterUserAsync(user);
+            
+            // Create cart for new user
+            try
+            {
+                var cart = new Cart { UserId = result.UserId };
+                await cartRepository.CreateAsync(cart);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Failed to create cart: {ex.Message}");
+            }
+            
+            return Ok(_mapper.Map<AdminUserDTO>(result));
+        }
+
+        [HttpPut("UpdateUser/{userId}")]
+        public async Task<IActionResult> UpdateUser(int userId, [FromBody] AdminUpdateUserDTO adminUpdateUserDTO)
+        {
+            var existingUser = await userRepository.GetUserByIdAsync(userId);
+            if (existingUser == null)
+            {
+                return NotFound(new { status = "error", message = "User not found" });
+            }
+            
+            var success = await userRepository.UpdateUserAsync(userId, adminUpdateUserDTO);
+            if (!success)
+            {
+                return BadRequest(new { status = "error", message = "Failed to update user" });
+            }
+            
+            var updatedUser = await userRepository.GetUserByIdAsync(userId);
+            return Ok(_mapper.Map<AdminUserDTO>(updatedUser));
+        }
+
+        [HttpDelete("DeleteUser/{userId}")]
+        public async Task<IActionResult> DeleteUser(int userId)
+        {
+            var user = await userRepository.DeleteUserAsync(userId);
+            if (user == null)
+            {
+                return NotFound(new { status = "error", message = "User not found" });
+            }
+            
+            return Ok(_mapper.Map<AdminUserDTO>(user));
+        }
 
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterRequests request)

@@ -20,5 +20,12 @@ namespace TechZone.Server.Repositories.Implement
         {
             return await dbContext.ProductImages.Where(pi => pi.ProductId == productId).ToListAsync();
         }
+
+        public async Task DeleteProductImagesByProductIdAsync(int productId)
+        {
+            var images = await dbContext.ProductImages.Where(pi => pi.ProductId == productId).ToListAsync();
+            dbContext.ProductImages.RemoveRange(images);
+            await dbContext.SaveChangesAsync();
+        }
     }
 }

@@ -20,5 +20,12 @@ namespace TechZone.Server.Repositories.Implement
         {
             return await dbContext.ProductColors.Where(pc => pc.ProductId == productId).ToListAsync();
         }
+
+        public async Task DeleteProductColorsByProductIdAsync(int productId)
+        {
+            var colors = await dbContext.ProductColors.Where(pc => pc.ProductId == productId).ToListAsync();
+            dbContext.ProductColors.RemoveRange(colors);
+            await dbContext.SaveChangesAsync();
+        }
     }
 }

@@ -7,5 +7,7 @@ namespace TechZone.Server.Repositories
         Task AddProductColorsAsync(List<ProductColor> productColors);
 
         Task<List<ProductColor>> GetProductColorsByProductIdAsync(int productId);
+
+        Task DeleteProductColorsByProductIdAsync(int productId);
     }
 }

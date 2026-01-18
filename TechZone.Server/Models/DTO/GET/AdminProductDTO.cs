@@ -19,6 +19,7 @@ namespace TechZone.Server.Models.DTO.GET
         public virtual CategoryDTO? Category { get; set; }
 
         public ICollection<ProductImageDTO> ProductImages { get; set; } = new List<ProductImageDTO>();
+        public ICollection<ProductColorDTO> ProductColors { get; set; } = new List<ProductColorDTO>();
         public decimal Rating { get; set; }
         public int ReviewCount { get; set; }
 

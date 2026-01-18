@@ -42,6 +42,7 @@ namespace TechZone.Server.Repositories.Implement
             .Include(p => p.Brand)
             .Include(p => p.Category)
             .Include(p => p.ProductImages)
+            .Include(p => p.ProductColors)
             .Include(p => p.Reviews)
             .ToListAsync();
         }
@@ -145,7 +146,62 @@ namespace TechZone.Server.Repositories.Implement
 
         public async Task<Product> DeleteProductAsync(int productId)
         {
-            return await DeleteAsync(p => p.ProductId == productId);
+            // Tìm product với các related entities
+            var product = await dbContext.Products
+                .Include(p => p.ProductImages)
+                .Include(p => p.ProductColors)
+                .Include(p => p.Reviews)
+                .FirstOrDefaultAsync(p => p.ProductId == productId);
+
+            if (product == null)
+            {
+                return null;
+            }
+
+            // Kiểm tra xem sản phẩm có trong đơn hàng nào không
+            var hasOrders = await dbContext.OrderDetails.AnyAsync(od => od.ProductColorId.HasValue && 
+                product.ProductColors.Select(pc => pc.ProductColorId).Contains(od.ProductColorId.Value));
+
+            if (hasOrders)
+            {
+                throw new InvalidOperationException("Cannot delete product that has been ordered. Product has existing order history.");
+            }
+
+            // Xóa các related entities trước
+            // 1. Xóa ProductImages
+            if (product.ProductImages.Any())
+            {
+                dbContext.ProductImages.RemoveRange(product.ProductImages);
+            }
+
+            // 2. Xóa Reviews
+            if (product.Reviews.Any())
+            {
+                dbContext.Reviews.RemoveRange(product.Reviews);
+            }
+
+            // 3. Xóa CartDetails liên quan đến ProductColors của product này
+            var productColorIds = product.ProductColors.Select(pc => pc.ProductColorId).ToList();
+            var cartDetailsToDelete = await dbContext.CartDetails
+                .Where(cd => cd.ProductColorId.HasValue && productColorIds.Contains(cd.ProductColorId.Value))
+                .ToListAsync();
+            
+            if (cartDetailsToDelete.Any())
+            {
+                dbContext.CartDetails.RemoveRange(cartDetailsToDelete);
+            }
+
+            // 4. Xóa ProductColors
+            if (product.ProductColors.Any())
+            {
+                dbContext.ProductColors.RemoveRange(product.ProductColors);
+            }
+
+            // 5. Cuối cùng xóa Product
+            dbContext.Products.Remove(product);
+            await dbContext.SaveChangesAsync();
+
+            return product;
         }
 
         public async Task<List<Product>> GetFeatureProductsAsync()

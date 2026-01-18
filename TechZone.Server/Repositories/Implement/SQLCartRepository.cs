@@ -30,7 +30,16 @@ namespace TechZone.Server.Repositories.Implement
             var cart = await dbContext.Carts
                 .FirstOrDefaultAsync(x => x.UserId == Convert.ToInt32(userId));
 
-
+            // Nếu user chưa có cart, tự động tạo mới
+            if (cart == null)
+            {
+                cart = new Cart
+                {
+                    UserId = Convert.ToInt32(userId)
+                };
+                dbContext.Carts.Add(cart);
+                await dbContext.SaveChangesAsync();
+            }
 
             return cart;
         }
