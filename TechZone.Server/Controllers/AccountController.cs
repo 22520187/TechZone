@@ -85,13 +85,25 @@ namespace TechZone.Server.Controllers
         [HttpDelete("DeleteUser/{userId}")]
         public async Task<IActionResult> DeleteUser(int userId)
         {
-            var user = await userRepository.DeleteUserAsync(userId);
-            if (user == null)
+            try
             {
-                return NotFound(new { status = "error", message = "User not found" });
+                var user = await userRepository.DeleteUserAsync(userId);
+                if (user == null)
+                {
+                    return NotFound(new { status = "error", message = "User not found" });
+                }
+                
+                return Ok(_mapper.Map<AdminUserDTO>(user));
             }
-            
-            return Ok(_mapper.Map<AdminUserDTO>(user));
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { status = "error", message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, 
+                    new { status = "error", message = "An error occurred while deleting user", details = ex.Message });
+            }
         }
 
         [HttpPost("register")]

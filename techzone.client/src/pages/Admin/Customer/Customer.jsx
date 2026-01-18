@@ -43,11 +43,15 @@ const CustomerStatusBadge = ({ status }) => {
 };
 
 const CustomerAvatar = ({ name }) => {
-    const initials = name
-        .split(" ")
-        .map((n) => n[0])
-        .join("")
-        .toUpperCase();
+    const initials = name && name.trim()
+        ? name
+            .split(" ")
+            .filter(n => n.length > 0)
+            .map((n) => n[0])
+            .join("")
+            .toUpperCase()
+            .substring(0, 2) // Limit to 2 characters
+        : "?";
 
     return (
         <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 text-xs font-medium">
@@ -94,27 +98,45 @@ export default function Customers() {
     }, [dispatch]);
     // UserId, FullName, Email, PasswordHash, Phone, City, District, Ward, AvatarImageUrl, Role, CreatedAt
     // Map API response data to the format expected by the component
-    const customersData = userItems.map((user) => ({
-        id: user.userId,
-        name: user.fullName || "No Name",
-        email: user.email || "No Email",
-        phone: user.phone || "No Phone",
-        city: user.city || "No City",
-        district: user.district || "No District",
-        ward: user.ward || "No Ward",
-        avatar: user.avatarImageUrl || "No Avatar",
-        role: user.role || "No Role",
-        created: user.createdAt
-            ? dayjs(user.createdAt).format("DD-MM-YYYY")
-            : "Unknown",
-    }));
+    const customersData = userItems.map((user) => {
+        // Normalize role: 'user'/'customer' -> 'Customer', 'admin'/'staff' -> 'Admin'
+        let normalizedRole = user.role || "Customer";
+        if (normalizedRole.toLowerCase() === "user" || normalizedRole.toLowerCase() === "customer") {
+            normalizedRole = "Customer";
+        } else if (normalizedRole.toLowerCase() === "admin" || normalizedRole.toLowerCase() === "staff") {
+            normalizedRole = "Admin";
+        }
+
+        return {
+            id: user.userId,
+            name: user.fullName || "",
+            email: user.email || "",
+            phone: user.phone || "",
+            city: user.city || "",
+            district: user.district || "",
+            ward: user.ward || "",
+            avatar: user.avatarImageUrl || "",
+            role: normalizedRole,
+            created: user.createdAt
+                ? dayjs(user.createdAt).format("DD-MM-YYYY")
+                : "Unknown",
+        };
+    });
 
     const filterCustomersData = customersData.filter(
-        (row) =>
-            row.name.toLowerCase().includes(searchQuery.toLowerCase()) &&
-            (filterStatus !== ""
-                ? row.role.toLowerCase() === filterStatus.toLowerCase()
-                : true)
+        (row) => {
+            // Search across multiple fields: name, email, phone
+            const matchesSearch = searchQuery.trim() === "" ||
+                row.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                row.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                row.phone.toLowerCase().includes(searchQuery.toLowerCase());
+
+            // Filter by role (exact match after normalization)
+            const matchesRole = filterStatus === "" ||
+                row.role === filterStatus;
+
+            return matchesSearch && matchesRole;
+        }
     );
 
     const totalItems = filterCustomersData.length;
@@ -172,6 +194,13 @@ export default function Customers() {
         }
     };
 
+    const showAddModal = () => {
+        setIsEditMode(false);
+        setCurrentCustomer(null);
+        setIsModalOpen(true);
+        form.resetFields();
+    };
+
     const showEditModal = (customer) => {
         setIsEditMode(true);
         setCurrentCustomer(customer);
@@ -181,6 +210,11 @@ export default function Customers() {
         const userData = userItems.find((user) => user.userId === customer.id);
 
         form.setFieldsValue({
+            fullName: userData.fullName || "",
+            phone: userData.phone || "",
+            city: userData.city || "",
+            district: userData.district || "",
+            ward: userData.ward || "",
             role: userData.role,
         });
     };
@@ -194,24 +228,37 @@ export default function Customers() {
         try {
             setSubmitting(true);
             const userData = {
-                fullName: currentCustomer.name,
-                phone: currentCustomer.phone || "",
-                city: currentCustomer.city || "",
-                district: currentCustomer.district || "",
-                ward: currentCustomer.ward || "",
-                role: values.role || "customer",
+                fullName: values.fullName,
+                email: values.email || "",
+                password: values.password || "",
+                phone: values.phone || "",
+                city: values.city || "",
+                district: values.district || "",
+                ward: values.ward || "",
+                role: values.role || "Customer",
             };
 
             if (isEditMode && currentCustomer) {
-                //Update existing customer
+                // Update existing customer
+                const updateData = {
+                    fullName: userData.fullName,
+                    phone: userData.phone,
+                    city: userData.city,
+                    district: userData.district,
+                    ward: userData.ward,
+                    role: userData.role,
+                };
                 await dispatch(
                     updateUser({
                         userId: currentCustomer.id,
-                        ...userData,
+                        ...updateData,
                     })
                 ).unwrap();
                 message.success("Customer updated successfully");
-                setSubmitting(false);
+            } else {
+                // Add new customer
+                await dispatch(addUser(userData)).unwrap();
+                message.success("Customer added successfully");
             }
 
             setIsModalOpen(false);
@@ -223,11 +270,15 @@ export default function Customers() {
             // Log for debugging only
             console.error("Error in handleSubmit:", err);
 
-            // Simple user-friendly message
-            const action = isEditMode ? "update" : "add";
-            message.error(`Unable to ${action} customer. Please try again.`);
+            // Display specific error message
+            const errorMessage = typeof err === "string" 
+                ? err 
+                : err.message || `Unable to ${isEditMode ? "update" : "add"} customer. Please try again.`;
+            
+            message.error(errorMessage);
 
             // Don't close the modal on error
+        } finally {
             setSubmitting(false);
         }
     };
@@ -243,8 +294,12 @@ export default function Customers() {
             // Log for debugging only
             console.error("Error deleting customer:", err);
 
-            // Simple user-friendly message
-            message.error("Unable to delete customer. Please try again.");
+            // Display the specific error message from backend
+            const errorMessage = typeof err === "string" 
+                ? err 
+                : err.message || "Unable to delete customer. Please try again.";
+            
+            message.error(errorMessage, 5); // Display for 5 seconds
         }
     };
 
@@ -290,7 +345,7 @@ export default function Customers() {
                         value={searchQuery}
                         onChange={(e) => {
                             setSearchQuery(e.target.value);
-                            console.log(searchQuery);
+                            setCurrentPage(0); // Reset to first page when searching
                         }}
                     />
                 </div>
@@ -332,13 +387,13 @@ export default function Customers() {
                         <span className="cursor-pointer">Reset Filter</span>
                     </button>
 
-                    {/* <button
+                    <button
                         className="flex items-center py-2 px-5 text-white bg-primary rounded-lg font-bold text-sm hover:scale-105 active:scale-95 transition-all duration-100"
                         onClick={showAddModal}
                     >
                         <Plus size={16} className="mr-1" />
                         <span className="cursor-pointer">Add Customer</span>
-                    </button> */}
+                    </button>
                 </div>
             </div>
             {/* Table */}
@@ -489,30 +544,30 @@ export default function Customers() {
                                                     />
                                                     <div className="ml-4 flex items-center">
                                                         <CustomerAvatar
-                                                            name={customer.name}
+                                                            name={customer.name || "N/A"}
                                                         />
                                                         <div className="ml-3">
                                                             <div className="text-sm font-medium text-gray-900">
-                                                                {customer.name}
+                                                                {customer.name || "-"}
                                                             </div>
                                                             <div className="text-sm text-gray-500">
-                                                                {customer.email}
+                                                                {customer.email || "-"}
                                                             </div>
                                                         </div>
                                                     </div>
                                                 </div>
                                             </td>
                                             <td className="px-6 py-2 whitespace-nowrap text-sm text-gray-500">
-                                                {customer.phone}
+                                                {customer.phone || "-"}
                                             </td>
                                             <td className="px-6 py-2 whitespace-nowrap text-sm text-gray-500">
-                                                {customer.city}
+                                                {customer.city || "-"}
                                             </td>
                                             <td className="px-6 py-2 whitespace-nowrap text-sm text-gray-500">
-                                                {customer.district}
+                                                {customer.district || "-"}
                                             </td>
                                             <td className="px-6 py-2 whitespace-nowrap text-sm text-gray-500">
-                                                {customer.ward}
+                                                {customer.ward || "-"}
                                             </td>
                                             <td className="px-6 py-2 whitespace-nowrap text-sm text-gray-500">
                                                 {customer.role}
@@ -566,17 +621,8 @@ export default function Customers() {
                                         key={`empty-${i}`}
                                         className="h-[7.5vh]"
                                     >
-                                        <td className="px-4 py-2 text-sm text-gray-300 text-center">
-                                            -
-                                        </td>
-                                        <td className="px-4 py-2 text-sm text-gray-300">
-                                            -
-                                        </td>
-                                        <td className="px-4 py-2 text-sm text-gray-300">
-                                            -
-                                        </td>
-                                        <td className="px-4 py-2 text-sm text-gray-300">
-                                            -
+                                        <td className="px-4 py-2 text-sm text-gray-300 text-center" colSpan="8">
+                                            
                                         </td>
                                     </tr>
                                 ))}
@@ -665,7 +711,7 @@ export default function Customers() {
                 open={isModalOpen}
                 onCancel={handleCancel}
                 footer={null}
-                width={400}
+                width={500}
             >
                 <Form
                     form={form}
@@ -674,12 +720,97 @@ export default function Customers() {
                     className="mt-4"
                 >
                     <Form.Item
+                        name="fullName"
+                        label="Full Name"
+                        rules={[
+                            {
+                                required: true,
+                                message: "Please enter full name",
+                            },
+                        ]}
+                    >
+                        <Input placeholder="Enter full name" />
+                    </Form.Item>
+
+                    {!isEditMode && (
+                        <>
+                            <Form.Item
+                                name="email"
+                                label="Email"
+                                rules={[
+                                    {
+                                        required: true,
+                                        message: "Please enter email",
+                                    },
+                                    {
+                                        type: "email",
+                                        message: "Please enter valid email",
+                                    },
+                                ]}
+                            >
+                                <Input placeholder="Enter email" />
+                            </Form.Item>
+
+                            <Form.Item
+                                name="password"
+                                label="Password"
+                                rules={[
+                                    {
+                                        required: true,
+                                        message: "Please enter password",
+                                    },
+                                    {
+                                        min: 6,
+                                        message:
+                                            "Password must be at least 6 characters",
+                                    },
+                                ]}
+                            >
+                                <Input.Password placeholder="Enter password" />
+                            </Form.Item>
+                        </>
+                    )}
+
+                    <Form.Item
+                        name="phone"
+                        label="Phone"
+                        rules={[
+                            {
+                                pattern: /^[0-9]{10,11}$/,
+                                message: "Please enter valid phone number",
+                            },
+                        ]}
+                    >
+                        <Input placeholder="Enter phone number" />
+                    </Form.Item>
+
+                    <div className="flex gap-3">
+                        <Form.Item name="city" label="City" className="flex-1">
+                            <Input placeholder="Enter city" />
+                        </Form.Item>
+
+                        <Form.Item
+                            name="district"
+                            label="District"
+                            className="flex-1"
+                        >
+                            <Input placeholder="Enter district" />
+                        </Form.Item>
+                    </div>
+
+                    <Form.Item name="ward" label="Ward">
+                        <Input placeholder="Enter ward" />
+                    </Form.Item>
+
+                    <Form.Item
                         name="role"
                         label="Role"
-                        className="flex-1"
-                        initialValue="customer"
+                        rules={[
+                            { required: true, message: "Please select role" },
+                        ]}
+                        initialValue="Customer"
                     >
-                        <Select>
+                        <Select placeholder="Select role">
                             <Select.Option value="Customer">
                                 Customer
                             </Select.Option>
