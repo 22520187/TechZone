@@ -71,9 +71,21 @@ export const deleteUser = createAsyncThunk(
             );
             return response.data;
         } catch (error) {
-            return rejectWithValue(
-                error.response?.data || "Something went wrong"
-            );
+            // Log for debugging
+            console.error("Error in deleteUser thunk:", error);
+
+            // Extract the error message from backend response
+            let errorMessage = "Unable to delete user";
+
+            if (error.response?.data?.message) {
+                errorMessage = error.response.data.message;
+            } else if (error.response?.data) {
+                errorMessage = typeof error.response.data === "string" 
+                    ? error.response.data 
+                    : "Something went wrong";
+            }
+
+            return rejectWithValue(errorMessage);
         }
     }
 );

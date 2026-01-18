@@ -143,8 +143,39 @@ namespace TechZone.Server.Repositories.Implement
 
         public async Task<User?> DeleteUserAsync(int userId)
         {
-            var user = await _context.Users.FindAsync(userId);
+            var user = await _context.Users
+                .Include(u => u.Orders)
+                .Include(u => u.Carts)
+                .Include(u => u.Reviews)
+                .Include(u => u.ChatHistories)
+                .Include(u => u.WarrantyClaims)
+                .FirstOrDefaultAsync(u => u.UserId == userId);
+            
             if (user == null) return null;
+
+            // Check if user has any related data
+            if (user.Orders.Any())
+            {
+                throw new InvalidOperationException("Cannot delete user with existing orders. Please contact system administrator.");
+            }
+
+            // Delete related data first
+            if (user.Carts.Any())
+            {
+                _context.Carts.RemoveRange(user.Carts);
+            }
+            if (user.Reviews.Any())
+            {
+                _context.Reviews.RemoveRange(user.Reviews);
+            }
+            if (user.ChatHistories.Any())
+            {
+                _context.ChatHistories.RemoveRange(user.ChatHistories);
+            }
+            if (user.WarrantyClaims.Any())
+            {
+                _context.WarrantyClaims.RemoveRange(user.WarrantyClaims);
+            }
 
             _context.Users.Remove(user);
             await _context.SaveChangesAsync();
