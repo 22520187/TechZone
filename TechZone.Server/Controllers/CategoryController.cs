@@ -7,7 +7,7 @@ using TechZone.Server.Models.DTO.ADD;
 using TechZone.Server.Models.Domain;
 using TechZone.Server.Models.DTO.UPDATE;
 
-namespace HealthBuddy.Server.Controllers
+namespace TechZone.Server.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]

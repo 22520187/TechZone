@@ -122,6 +122,18 @@ namespace TechZone.Server.Repositories.Implement
             return true;
         }
 
+        public async Task<List<Order>> GetAllOrdersAsync()
+        {
+            return await dbContext.Orders
+                .Include(o => o.User)
+                .Include(o => o.OrderDetails)
+                    .ThenInclude(od => od.ProductColor)
+                        .ThenInclude(pc => pc.Product)
+                .Include(o => o.Promotion)
+                .OrderByDescending(o => o.OrderDate)
+                .ToListAsync();
+        }
+
         // Tạo đơn hàng mới từ giỏ hàng
 		public async Task<Order> CreateOrderFromCartAsync(CreateOrderRequestDTO createOrderRequest)
 		{

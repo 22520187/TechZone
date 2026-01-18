@@ -82,6 +82,19 @@ namespace TechZone.Server.Controllers
                 return BadRequest(new { message = ex.Message });
             }
         }
+
+        [HttpGet("get-all")]
+        public async Task<ActionResult> GetAllOrders()
+        {
+            var orders = await _orderRepository.GetAllOrdersAsync();
+            if (orders == null || orders.Count == 0)
+            {
+                return Ok(new List<OrderDTO>());
+            }
+            
+            var orderDTOs = _mapper.Map<List<OrderDTO>>(orders);
+            return Ok(orderDTOs);
+        }
     }
 
 }

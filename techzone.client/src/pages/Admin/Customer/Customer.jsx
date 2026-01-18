@@ -456,6 +456,7 @@ export default function Customers() {
                                 </tr>
                             </thead>
                             <motion.tbody
+                                key={currentPage}
                                 variants={containerVariants}
                                 initial="hidden"
                                 animate="visible"

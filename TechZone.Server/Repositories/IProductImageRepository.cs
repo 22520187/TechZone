@@ -7,5 +7,7 @@ namespace TechZone.Server.Repositories
         Task AddProductImagesAsync(List<ProductImage> productImages);
 
         Task<List<ProductImage>> GetProductImagesByProductIdAsync(int productId);
+
+        Task DeleteProductImagesByProductIdAsync(int productId);
     }
 }

@@ -95,8 +95,10 @@ const Products = ({ initialSearchTerm = "", initialCategory = null }) => {
         rating: product.rating || 0,
         reviewCount: product.reviewCount || 0,
         image:
-          product.imageUrl ||
-          `https://picsum.photos/300/300?random=${product.productId}`,
+          // Kiểm tra nếu imageUrl hợp lệ (không rỗng và không phải cdn.techzone.com giả)
+          (product.imageUrl && !product.imageUrl.includes('cdn.techzone.com'))
+            ? product.imageUrl
+            : `https://picsum.photos/300/300?random=${product.productId}`,
         category: product.category.categoryName,
         categoryId: product.category.categoryId,
         brand: product.brand.brandName,

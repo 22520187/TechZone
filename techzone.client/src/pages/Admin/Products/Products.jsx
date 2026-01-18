@@ -210,13 +210,18 @@ export default function Products() {
       }
 
       // Upload image if a file is selected
-      let updatedImageUrls = [...imageUrls];
+      let updatedImageUrls = [];
       if (selectedFile) {
         const uploadedImageUrl = await handleImageUpload(selectedFile);
         if (uploadedImageUrl) {
-          // Add the uploaded image URL to the beginning of the array
-          updatedImageUrls = [uploadedImageUrl, ...updatedImageUrls.filter(url => url !== "")];
+          // Replace with new image only
+          updatedImageUrls = [uploadedImageUrl];
+          console.log("Using new image:", uploadedImageUrl);
         }
+      } else {
+        // Keep existing images if no new file selected
+        updatedImageUrls = [...imageUrls.filter(url => url !== "")];
+        console.log("Keeping existing images:", updatedImageUrls);
       }
 
 
@@ -266,7 +271,10 @@ export default function Products() {
       await fetchProducts();
     } catch (err) {
       console.error("Error deleting product:", err);
-      message.error("Unable to delete product. Please try again.");
+      
+      // Hiển thị message chi tiết từ server
+      const errorMessage = err?.message || err || "Unable to delete product. Please try again.";
+      message.error(errorMessage, 5); // Hiển thị 5 giây để user đọc được
     }
   };
 
@@ -277,15 +285,19 @@ export default function Products() {
       const formData = new FormData();
       formData.append('file', file);
 
-      // Call the upload API
-      const response = await api.post('/api/Upload/UploadImage', formData, {
+      console.log("Uploading file:", file.name);
+
+      // Call the upload API with extended timeout
+      const response = await api.post('/api/Image/upload/product', formData, {
         headers: {
           'Content-Type': 'multipart/form-data'
-        }
+        },
+        timeout: 60000, // 60 giây timeout cho upload ảnh (Cloudinary có thể chậm)
       });
 
       // Get the image URL from the response
       const imageUrl = response.data.imageUrl;
+      console.log("Uploaded image URL:", imageUrl);
 
       // Update the image preview
       setImagePreview(imageUrl);
@@ -294,7 +306,18 @@ export default function Products() {
       return imageUrl;
     } catch (error) {
       console.error("Error uploading image:", error);
-      message.error("Failed to upload image: " + (error.response?.data || error.message));
+      
+      // Hiển thị message chi tiết hơn
+      let errorMessage = "Failed to upload image";
+      if (error.code === 'ECONNABORTED') {
+        errorMessage = "Upload timeout. Please try with a smaller image or check your connection.";
+      } else if (error.response?.data) {
+        errorMessage = error.response.data;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      message.error(errorMessage, 5);
       return null;
     }
   };
@@ -507,16 +530,14 @@ export default function Products() {
               >
                 {imagePreview ? (
                   <img
-                    src={imagePreview.startsWith('/api')
-                      ? `${api.defaults.baseURL}${imagePreview}`
-                      : imagePreview}
-                    alt="Preview"
-                    className="object-cover w-full h-full"
-                    onError={(e) => {
+                  src={imagePreview}
+                  alt="Preview"
+                  className="object-cover w-full h-full"
+                  onError={(e) => {
                       e.target.onerror = null;
                       e.target.src = "https://placehold.co/300x300?text=No+Image";
-                    }}
-                  />
+                  }}
+              />
                 ) : (
                   <div className="text-gray-400 text-sm text-center flex flex-col items-center justify-center">
                     <UploadIcon size={20} className="mb-1" />

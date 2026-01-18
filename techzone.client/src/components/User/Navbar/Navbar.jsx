@@ -3,18 +3,28 @@ import { ShoppingCart, User, Search, Menu, X } from "lucide-react";
 import { Link } from "react-router-dom";
 import SearchBar from "./Searchbar";
 import GradientText from "../../ReactBitsComponent/GradientText";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
+import { fetchCartDetailsByCustomerId } from "../../../features/Cart/Cart";
 
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const dispatch = useDispatch();
   const userId = useSelector((state) => state.auth.user);
+  const isAuthenticated = useSelector((state) => state.auth.isAuthenticated);
   const cartItems = useSelector((state) => state.cart?.items || []);
   
   // Tính tổng số lượng sản phẩm trong giỏ hàng
   const cartItemCount = cartItems.reduce((total, item) => {
     return total + (item.quantity || 0);
   }, 0);
+
+  // Fetch cart khi user authenticated
+  useEffect(() => {
+    if (isAuthenticated && userId) {
+      dispatch(fetchCartDetailsByCustomerId(userId));
+    }
+  }, [dispatch, userId, isAuthenticated]);
 
   useEffect(() => {
     const handleScroll = () => {

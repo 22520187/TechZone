@@ -35,9 +35,13 @@ namespace TechZone.Server.Mapping
                 .ReverseMap();
 
             CreateMap<Product, CustomerProductDTO>()
-           .ForMember(dest => dest.ReviewCount, opt => opt.MapFrom(src => src.Reviews.Count))
-           .ForMember(dest => dest.Rating, opt => opt.MapFrom(src => src.Reviews.Any() ? src.Reviews.Average(r => r.Rating ?? 0) : 0))
-           .ReverseMap();
+                .ForMember(dest => dest.ReviewCount, opt => opt.MapFrom(src => src.Reviews.Count))
+                .ForMember(dest => dest.Rating, opt => opt.MapFrom(src => src.Reviews.Any() ? src.Reviews.Average(r => r.Rating ?? 0) : 0))
+                .ForMember(dest => dest.ProductImages, opt => opt.MapFrom(src => src.ProductImages))
+                .ForMember(dest => dest.Promotions, opt => opt.MapFrom(src => src.Promotions))
+                .ForMember(dest => dest.Brand, opt => opt.MapFrom(src => src.Brand))
+                .ForMember(dest => dest.Category, opt => opt.MapFrom(src => src.Category))
+                .ReverseMap();
             CreateMap<Product, CustomerDetailProductDTO>()
                 .ForMember(dest => dest.ReviewCount, opt => opt.MapFrom(src => src.Reviews.Count))
                 .ForMember(dest => dest.Rating, opt => opt.MapFrom(src => src.Reviews.Any() ? src.Reviews.Average(r => r.Rating ?? 0) : 0))
@@ -45,6 +49,7 @@ namespace TechZone.Server.Mapping
             CreateMap<Product, AdminProductDTO>()
               .ForMember(dest => dest.ReviewCount, opt => opt.MapFrom(src => src.Reviews.Count))
               .ForMember(dest => dest.Rating, opt => opt.MapFrom(src => src.Reviews.Any() ? src.Reviews.Average(r => r.Rating ?? 0) : 0))
+              .ForMember(dest => dest.ProductColors, opt => opt.MapFrom(src => src.ProductColors))
               .ReverseMap();
             CreateMap<Product, AdminDetailProductDTO>()
               .ForMember(dest => dest.ReviewCount, opt => opt.MapFrom(src => src.Reviews.Count))
@@ -130,6 +135,46 @@ namespace TechZone.Server.Mapping
                 .ForMember(dest => dest.Promotion, opt => opt.Ignore())
                 .ForMember(dest => dest.User, opt => opt.Ignore());
 
+            // Promotion mappings
+
+            CreateMap<Promotion, AdminPromotionDTO>()
+                .ForMember(dest => dest.ProductIDs, 
+                    opt => opt.MapFrom(src => src.Products.Select(p => p.ProductId.ToString()).ToList()))
+                .ReverseMap();
+
+            CreateMap<AdminAddPromotionDTO, Promotion>()
+                .ForMember(dest => dest.Products, opt => opt.Ignore())
+                .ForMember(dest => dest.Orders, opt => opt.Ignore())
+                .ReverseMap();
+
+            CreateMap<AdminUpdatePromotionDTO, Promotion>()
+                .ForMember(dest => dest.Products, opt => opt.Ignore())
+                .ForMember(dest => dest.Orders, opt => opt.Ignore())
+                .ReverseMap();
+
+            CreateMap<Promotion, CustomerPromotionDTO>().ReverseMap();
+            
+            CreateMap<Promotion, CustomerProductPromotionDTO>().ReverseMap();
+
+            //Profile mappings:
+
+            CreateMap<User, AdminUserDTO>().ReverseMap();
+
+
+            CreateMap<AdminAddUserDTO, User>()
+                .ForMember(dest => dest.PasswordHash, 
+                    opt => opt.MapFrom(src => BCrypt.Net.BCrypt.HashPassword(src.Password)))
+                .ForMember(dest => dest.UserId, opt => opt.Ignore())
+                .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(src => DateTime.UtcNow))
+                .ReverseMap();
+
+            CreateMap<AdminUpdateUserDTO, User>()
+                .ForMember(dest => dest.PasswordHash, opt => opt.Ignore())
+                .ForMember(dest => dest.Email, opt => opt.Ignore())
+                .ForMember(dest => dest.UserId, opt => opt.Ignore())
+                .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
+                .ReverseMap();
+                
             // Warranty mappings
             CreateMap<Warranty, WarrantyDTO>()
                 .ForMember(dest => dest.Product, opt => opt.MapFrom(src => src.Product))

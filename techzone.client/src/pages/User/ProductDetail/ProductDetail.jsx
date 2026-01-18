@@ -159,6 +159,12 @@ const ProductDetail = () => {
         `/api/Product/CustomerGetProductById/${productIdNumber}`
       );
       const data = response.data;
+      
+      // Debug: Xem data từ API
+      console.log("=== Product Detail API Response ===");
+      console.log("Product Name:", data.name);
+      console.log("Product Images:", data.productImages);
+      console.log("===================================");
       const mappedData = {
         id: data.productId,
         name: data.name,
@@ -173,12 +179,19 @@ const ProductDetail = () => {
         brandName: data.brand.brandName,
         rating: data.rating || 0,
         reviewCount: data.reviewCount || 0,
-        images: [
-          "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?q=80&w=2070&auto=format&fit=crop",
-          "https://images.unsplash.com/photo-1577174881658-0f30ed549adc?q=80&w=1974&auto=format&fit=crop",
-          "https://images.unsplash.com/photo-1524678606370-a47ad25cb82a?q=80&w=2069&auto=format&fit=crop",
-          "https://images.unsplash.com/photo-1484704849700-f032a568e944?q=80&w=2070&auto=format&fit=crop",
-        ],
+        images: (() => {
+          if (data.productImages && data.productImages.length > 0) {
+            const validImages = data.productImages
+              .filter(img => img.imageUrl && !img.imageUrl.includes('cdn.techzone.com'))
+              .map(img => img.imageUrl);
+            
+            // Nếu có ảnh hợp lệ sau khi filter, return; nếu không, return placeholder
+            return validImages.length > 0 
+              ? validImages 
+              : [`https://picsum.photos/800/600?random=${data.productId}`];
+          }
+          return [`https://picsum.photos/800/600?random=${data.productId}`];
+        })(),
         productColors: data.productColors.map((color) => ({
           id: color.productColorId,
           name: color.color,

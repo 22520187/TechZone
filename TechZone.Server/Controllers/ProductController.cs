@@ -6,8 +6,10 @@ using TechZone.Server.Models.DTO.GET;
 using TechZone.Server.Models.DTO.ADD;
 using TechZone.Server.Models.Domain;
 using TechZone.Server.Models.DTO.UPDATE;
+using TechZone.Server.Models;
+using Microsoft.EntityFrameworkCore;
 
-namespace HealthBuddy.Server.Controllers
+namespace TechZone.Server.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
@@ -17,17 +19,20 @@ namespace HealthBuddy.Server.Controllers
         private readonly IProductImageRepository _productImageRepository;
         private readonly IProductColorRepository _productColorRepository;
         private readonly IMapper _mapper;
+        private readonly TechZoneDbContext _context;
 
         public ProductController(
             IProductRepository productRepository,
             IProductImageRepository productImageRepository,
             IProductColorRepository productColorRepository,
-            IMapper mapper)
+            IMapper mapper,
+            TechZoneDbContext context)
         {
             _productRepository = productRepository;
             _productImageRepository = productImageRepository;
             _productColorRepository = productColorRepository;
             _mapper = mapper;
+            _context = context;
         }
 
         [HttpGet("CustomerGetAllProduct")]
@@ -149,28 +154,59 @@ namespace HealthBuddy.Server.Controllers
         {
             try
             {
+                // Validate input
+                if (adminAddProductDTO.Colors == null || !adminAddProductDTO.Colors.Any())
+                {
+                    return BadRequest("Product must have at least one color variant");
+                }
+
                 var product = _mapper.Map<Product>(adminAddProductDTO);
                 int productId = (await _productRepository.AddProductAsync(product)).ProductId;
 
-                var productImages = adminAddProductDTO.ImageUrls.Select(url => new ProductImage
+                // Filter and add product images
+                var productImages = adminAddProductDTO.ImageUrls
+                    .Where(url => !string.IsNullOrWhiteSpace(url))
+                    .Select(url => new ProductImage
+                    {
+                        ProductId = productId,
+                        ImageUrl = url.Trim()
+                    }).ToList();
+
+                if (productImages.Any())
                 {
-                    ProductId = productId,
-                    ImageUrl = url
-                }).ToList();
-                await _productImageRepository.AddProductImagesAsync(productImages);                var productColors = adminAddProductDTO.Colors.Select(color => new ProductColor
+                    await _productImageRepository.AddProductImagesAsync(productImages);
+                }
+
+                // Add product colors
+                var productColors = adminAddProductDTO.Colors
+                    .Where(c => !string.IsNullOrWhiteSpace(c.Color))
+                    .Select(color => new ProductColor
+                    {
+                        ProductId = productId,
+                        Color = color.Color,
+                        ColorCode = color.ColorCode,
+                        StockQuantity = color.StockQuantity
+                    }).ToList();
+
+                if (productColors.Any())
                 {
-                    ProductId = productId,
-                    Color = color.Color,
-                    ColorCode = color.ColorCode,
-                    StockQuantity = color.StockQuantity
-                }).ToList();
-                await _productColorRepository.AddProductColorsAsync(productColors);
+                    await _productColorRepository.AddProductColorsAsync(productColors);
+                }
+                else
+                {
+                    return BadRequest("Product must have at least one valid color variant");
+                }
 
                 return await AdminGetProductById(productId);
             }
             catch (Exception ex)
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+                return StatusCode(StatusCodes.Status500InternalServerError, 
+                    new { 
+                        message = "Error adding product", 
+                        error = ex.Message,
+                        innerError = ex.InnerException?.Message 
+                    });
             }
         }
 
@@ -183,6 +219,14 @@ namespace HealthBuddy.Server.Controllers
                 {
                     return BadRequest("Invalid product data.");
                 }
+
+                // Validate colors
+                if (adminUpdateProductDTO.Colors == null || !adminUpdateProductDTO.Colors.Any())
+                {
+                    return BadRequest("Product must have at least one color variant");
+                }
+
+                // Update product basic info
                 var updatedProduct = _mapper.Map<Product>(adminUpdateProductDTO);
                 var product = await _productRepository.UpdateProductAsync(id, updatedProduct);
                 if (product == null)
@@ -190,11 +234,78 @@ namespace HealthBuddy.Server.Controllers
                     return NotFound("Product not found.");
                 }
 
-                return Ok(await AdminGetProductById(id));
+                // Update product images - Always safe to delete and recreate
+                await _productImageRepository.DeleteProductImagesByProductIdAsync(id);
+
+                var productImages = adminUpdateProductDTO.ImageUrls
+                    .Where(url => !string.IsNullOrWhiteSpace(url))
+                    .Select(url => new ProductImage
+                    {
+                        ProductId = id,
+                        ImageUrl = url.Trim()
+                    }).ToList();
+
+                if (productImages.Any())
+                {
+                    await _productImageRepository.AddProductImagesAsync(productImages);
+                }
+
+                // For colors: Smart update strategy
+                // 1. Get existing colors
+                var existingColors = await _productColorRepository.GetProductColorsByProductIdAsync(id);
+                var existingColorIds = existingColors.Select(c => c.ProductColorId).ToList();
+
+                // 2. Check which colors are in OrderDetails (cannot be deleted)
+                var orderedColorIds = await _context.OrderDetails
+                    .Where(od => od.ProductColorId.HasValue && existingColorIds.Contains(od.ProductColorId.Value))
+                    .Select(od => od.ProductColorId.Value)
+                    .Distinct()
+                    .ToListAsync();
+
+                // 3. Delete colors that are NOT in orders
+                var colorIdsToDelete = existingColors
+                    .Where(c => !orderedColorIds.Contains(c.ProductColorId))
+                    .Select(c => c.ProductColorId)
+                    .ToList();
+
+                foreach (var colorId in colorIdsToDelete)
+                {
+                    await _productColorRepository.DeleteAsync(c => c.ProductColorId == colorId);
+                }
+
+                // 4. Add new colors from DTO
+                var newProductColors = adminUpdateProductDTO.Colors
+                    .Where(c => !string.IsNullOrWhiteSpace(c.Color))
+                    .Select(color => new ProductColor
+                    {
+                        ProductId = id,
+                        Color = color.Color,
+                        ColorCode = color.ColorCode,
+                        StockQuantity = color.StockQuantity
+                    }).ToList();
+
+                if (newProductColors.Any())
+                {
+                    await _productColorRepository.AddProductColorsAsync(newProductColors);
+                }
+
+                var resultMessage = orderedColorIds.Any() 
+                    ? "Product updated successfully. Note: Some colors cannot be deleted as they exist in orders."
+                    : "Product updated successfully.";
+
+                return Ok(new { 
+                    message = resultMessage,
+                    product = await AdminGetProductById(id)
+                });
             }
             catch (Exception ex)
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+                return StatusCode(StatusCodes.Status500InternalServerError, 
+                    new { 
+                        message = "Error updating product", 
+                        error = ex.Message,
+                        innerError = ex.InnerException?.Message 
+                    });
             }
         }
 
@@ -211,9 +322,20 @@ namespace HealthBuddy.Server.Controllers
 
                 return Ok("Product deleted successfully.");
             }
+            catch (InvalidOperationException ex)
+            {
+                // Lỗi business logic (ví dụ: sản phẩm đã có đơn hàng)
+                return BadRequest(new { message = ex.Message });
+            }
             catch (Exception ex)
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+                // Lỗi hệ thống
+                return StatusCode(StatusCodes.Status500InternalServerError, 
+                    new { 
+                        message = "Error deleting product", 
+                        error = ex.Message,
+                        innerError = ex.InnerException?.Message 
+                    });
             }
         }
     }

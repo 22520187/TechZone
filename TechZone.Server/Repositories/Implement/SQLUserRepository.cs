@@ -117,5 +117,38 @@ namespace TechZone.Server.Repositories.Implement
                 throw;
             }
         }
+
+        public async Task<List<User>> GetAllUsersAsync()
+        {
+            return await _context.Users.ToListAsync();
+        }
+
+        public async Task<bool> UpdateUserAsync(int userId, AdminUpdateUserDTO adminUpdateUserDTO)
+        {
+            var user = await _context.Users.FindAsync(userId);
+            if (user == null) return false;
+
+            user.FullName = adminUpdateUserDTO.FullName;
+            user.Phone = adminUpdateUserDTO.Phone;
+            user.City = adminUpdateUserDTO.City;
+            user.District = adminUpdateUserDTO.District;
+            user.Ward = adminUpdateUserDTO.Ward;
+            user.AvatarImageUrl = adminUpdateUserDTO.AvatarImageUrl;
+            user.Role = adminUpdateUserDTO.Role ?? user.Role;
+
+            _context.Users.Update(user);
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<User?> DeleteUserAsync(int userId)
+        {
+            var user = await _context.Users.FindAsync(userId);
+            if (user == null) return null;
+
+            _context.Users.Remove(user);
+            await _context.SaveChangesAsync();
+            return user;
+        }
     }
 }
