@@ -1,0 +1,258 @@
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using TechZone.Server.Models;
+using TechZone.Server.Models.DTO.GET;
+
+namespace TechZone.Server.Controllers
+{
+    [Route("api/[controller]")]
+    [ApiController]
+    public class DashboardController : ControllerBase
+    {
+        private readonly TechZoneDbContext _context;
+
+        public DashboardController(TechZoneDbContext context)
+        {
+            _context = context;
+        }
+
+        [HttpGet("statistics")]
+        public async Task<ActionResult<DashboardStatisticsDTO>> GetStatistics()
+        {
+            try
+            {
+                var now = DateTime.Now;
+                var yesterday = now.AddDays(-1);
+                var lastWeek = now.AddDays(-7);
+
+                // Total Users
+                var totalUsers = await _context.Users.CountAsync();
+                var usersYesterday = await _context.Users
+                    .Where(u => u.CreatedAt < yesterday)
+                    .CountAsync();
+                var userGrowth = usersYesterday > 0 
+                    ? ((decimal)(totalUsers - usersYesterday) / usersYesterday) * 100 
+                    : 0;
+
+                // Total Orders
+                var totalOrders = await _context.Orders.CountAsync();
+                var ordersLastWeek = await _context.Orders
+                    .Where(o => o.OrderDate < lastWeek)
+                    .CountAsync();
+                var orderGrowth = ordersLastWeek > 0 
+                    ? ((decimal)(totalOrders - ordersLastWeek) / ordersLastWeek) * 100 
+                    : 0;
+
+                // Total Sales
+                var totalSales = await _context.Orders
+                    .Where(o => o.Status != "CANCELLED")
+                    .SumAsync(o => o.TotalAmount ?? 0);
+                var salesYesterday = await _context.Orders
+                    .Where(o => o.OrderDate < yesterday && o.Status != "CANCELLED")
+                    .SumAsync(o => o.TotalAmount ?? 0);
+                var salesGrowth = salesYesterday > 0 
+                    ? ((totalSales - salesYesterday) / salesYesterday) * 100 
+                    : 0;
+
+                // Total Pending Orders
+                var totalPending = await _context.Orders
+                    .Where(o => o.Status == "PENDING")
+                    .CountAsync();
+                var pendingYesterday = await _context.Orders
+                    .Where(o => o.Status == "PENDING" && o.OrderDate < yesterday)
+                    .CountAsync();
+                var pendingGrowth = pendingYesterday > 0 
+                    ? ((decimal)(totalPending - pendingYesterday) / pendingYesterday) * 100 
+                    : 0;
+
+                var statistics = new DashboardStatisticsDTO
+                {
+                    TotalUsers = totalUsers,
+                    TotalOrders = totalOrders,
+                    TotalSales = totalSales,
+                    TotalPending = totalPending,
+                    UserGrowthPercentage = Math.Round(userGrowth, 1),
+                    OrderGrowthPercentage = Math.Round(orderGrowth, 1),
+                    SalesGrowthPercentage = Math.Round(salesGrowth, 1),
+                    PendingGrowthPercentage = Math.Round(pendingGrowth, 1)
+                };
+
+                return Ok(statistics);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, 
+                    new { message = "Error retrieving statistics", error = ex.Message });
+            }
+        }
+
+        [HttpGet("sales-chart")]
+        public async Task<ActionResult<SalesChartDataDTO>> GetSalesChart([FromQuery] int days = 30)
+        {
+            try
+            {
+                var endDate = DateTime.Now.Date;
+                var startDate = endDate.AddDays(-days);
+
+                // Get orders and group in memory to avoid LINQ translation issues
+                var orders = await _context.Orders
+                    .Where(o => o.OrderDate >= startDate && o.OrderDate <= endDate && o.Status != "CANCELLED")
+                    .Select(o => new { o.OrderDate, o.TotalAmount })
+                    .ToListAsync();
+
+                var salesData = orders
+                    .Where(o => o.OrderDate.HasValue)
+                    .GroupBy(o => o.OrderDate.Value.Date)
+                    .Select(g => new SalesDataPointDTO
+                    {
+                        Date = g.Key.ToString("yyyy-MM-dd"),
+                        Amount = g.Sum(o => o.TotalAmount ?? 0),
+                        OrderCount = g.Count()
+                    })
+                    .OrderBy(s => s.Date)
+                    .ToList();
+
+                // Fill missing dates with zero values
+                var allDates = Enumerable.Range(0, days + 1)
+                    .Select(i => startDate.AddDays(i))
+                    .ToList();
+
+                var completeData = allDates.Select(date =>
+                {
+                    var existing = salesData.FirstOrDefault(s => s.Date == date.ToString("yyyy-MM-dd"));
+                    return existing ?? new SalesDataPointDTO
+                    {
+                        Date = date.ToString("yyyy-MM-dd"),
+                        Amount = 0,
+                        OrderCount = 0
+                    };
+                }).ToList();
+
+                return Ok(new SalesChartDataDTO { SalesData = completeData });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, 
+                    new { message = "Error retrieving sales chart data", error = ex.Message });
+            }
+        }
+
+        [HttpGet("recent-orders")]
+        public async Task<ActionResult<List<RecentOrderDTO>>> GetRecentOrders([FromQuery] int limit = 10)
+        {
+            try
+            {
+                var recentOrders = await _context.Orders
+                    .Include(o => o.User)
+                    .Include(o => o.OrderDetails)
+                        .ThenInclude(od => od.ProductColor)
+                            .ThenInclude(pc => pc.Product)
+                                .ThenInclude(p => p.ProductImages)
+                    .OrderByDescending(o => o.OrderDate)
+                    .Take(limit)
+                    .Select(o => new RecentOrderDTO
+                    {
+                        OrderId = o.OrderId,
+                        ProductName = o.OrderDetails.FirstOrDefault() != null 
+                            ? o.OrderDetails.First().ProductColor.Product.Name 
+                            : "N/A",
+                        ProductImage = o.OrderDetails.FirstOrDefault() != null 
+                            && o.OrderDetails.First().ProductColor.Product.ProductImages.Any()
+                            ? o.OrderDetails.First().ProductColor.Product.ProductImages.First().ImageUrl
+                            : "",
+                        CustomerName = o.User.FullName ?? "Guest",
+                        ShippingAddress = o.ShippingAddress,
+                        OrderDate = o.OrderDate ?? DateTime.Now,
+                        Quantity = o.OrderDetails.Sum(od => od.Quantity),
+                        TotalAmount = o.TotalAmount ?? 0,
+                        Status = o.Status
+                    })
+                    .ToListAsync();
+
+                return Ok(recentOrders);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, 
+                    new { message = "Error retrieving recent orders", error = ex.Message });
+            }
+        }
+
+        [HttpGet("inventory-report")]
+        public async Task<ActionResult<InventoryReportDTO>> GetInventoryReport([FromQuery] string? category = null, [FromQuery] string? search = null)
+        {
+            try
+            {
+                // Query products with filters
+                var productsQuery = _context.Products
+                    .Include(p => p.ProductColors)
+                    .Include(p => p.ProductImages)
+                    .Include(p => p.Category)
+                    .Include(p => p.Brand)
+                    .AsQueryable();
+
+                if (!string.IsNullOrEmpty(category))
+                {
+                    productsQuery = productsQuery.Where(p => p.Category.CategoryName == category);
+                }
+
+                if (!string.IsNullOrEmpty(search))
+                {
+                    productsQuery = productsQuery.Where(p => p.Name.Contains(search));
+                }
+
+                var products = await productsQuery.ToListAsync();
+
+                // Calculate statistics
+                var totalProducts = products.Count;
+                var totalInventoryValue = products.Sum(p => p.Price * (p.ProductColors.Sum(pc => pc.StockQuantity ?? 0)));
+
+                var productStocks = products.Select(p =>
+                {
+                    var totalStock = p.ProductColors.Sum(pc => pc.StockQuantity ?? 0);
+                    var stockStatus = totalStock == 0 ? "Out of Stock" 
+                                    : totalStock < 10 ? "Low Stock" 
+                                    : "In Stock";
+
+                    return new ProductStockDTO
+                    {
+                        ProductId = p.ProductId,
+                        ProductName = p.Name,
+                        ProductImage = p.ProductImages.FirstOrDefault()?.ImageUrl,
+                        CategoryName = p.Category?.CategoryName,
+                        BrandName = p.Brand?.BrandName,
+                        Price = p.Price,
+                        TotalStock = totalStock,
+                        ColorStocks = p.ProductColors.Select(pc => new ColorStockDTO
+                        {
+                            ProductColorId = pc.ProductColorId,
+                            Color = pc.Color,
+                            ColorCode = pc.ColorCode,
+                            StockQuantity = pc.StockQuantity ?? 0
+                        }).ToList(),
+                        StockStatus = stockStatus
+                    };
+                }).OrderBy(p => p.TotalStock).ToList();
+
+                var lowStockProducts = productStocks.Count(p => p.StockStatus == "Low Stock");
+                var outOfStockProducts = productStocks.Count(p => p.StockStatus == "Out of Stock");
+
+                var report = new InventoryReportDTO
+                {
+                    TotalProducts = totalProducts,
+                    LowStockProducts = lowStockProducts,
+                    OutOfStockProducts = outOfStockProducts,
+                    TotalInventoryValue = totalInventoryValue,
+                    ProductStocks = productStocks
+                };
+
+                return Ok(report);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, 
+                    new { message = "Error retrieving inventory report", error = ex.Message });
+            }
+        }
+    }
+}
