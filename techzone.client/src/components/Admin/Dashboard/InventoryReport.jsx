@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Package, Search, AlertCircle, TrendingUp, TrendingDown } from "lucide-react";
+import { Package, Search, AlertCircle, TrendingUp, TrendingDown, ChevronLeft, ChevronRight } from "lucide-react";
 import { fetchInventoryReport } from "../../../features/Admin/Dashboard/Dashboard";
 
 const InventoryReport = () => {
@@ -9,6 +9,8 @@ const InventoryReport = () => {
     const { inventoryReport, loading } = useSelector((state) => state.dashboard);
     const [searchTerm, setSearchTerm] = useState("");
     const [categoryFilter, setCategoryFilter] = useState("");
+    const [currentPage, setCurrentPage] = useState(0);
+    const [itemsPerPage] = useState(10);
 
     useEffect(() => {
         dispatch(fetchInventoryReport({ search: searchTerm, category: categoryFilter }));
@@ -31,6 +33,44 @@ const InventoryReport = () => {
             "Out of Stock": "text-red-800 bg-red-100",
         };
         return badges[status] || "text-gray-800 bg-gray-100";
+    };
+
+    // Pagination logic
+    const products = inventoryReport?.productStocks || [];
+    const totalItems = products.length;
+    const totalPages = Math.ceil(totalItems / itemsPerPage);
+    const startIndex = currentPage * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    const currentProducts = products.slice(startIndex, endIndex);
+
+    // Reset to first page when search/filter changes
+    useEffect(() => {
+        setCurrentPage(0);
+    }, [searchTerm, categoryFilter]);
+
+    // Pagination numbers
+    const getPaginationNumbers = () => {
+        const pages = [];
+        const maxDisplayedPages = 5;
+
+        if (totalPages <= maxDisplayedPages) {
+            for (let i = 0; i < totalPages; i++) {
+                pages.push(i);
+            }
+        } else {
+            let startPage = Math.max(0, currentPage - Math.floor(maxDisplayedPages / 2));
+            let endPage = Math.min(totalPages - 1, startPage + maxDisplayedPages - 1);
+
+            if (endPage - startPage < maxDisplayedPages - 1) {
+                startPage = Math.max(0, endPage - maxDisplayedPages + 1);
+            }
+
+            for (let i = startPage; i <= endPage; i++) {
+                pages.push(i);
+            }
+        }
+
+        return pages;
     };
 
     return (
@@ -189,7 +229,7 @@ const InventoryReport = () => {
                                 </tr>
                             </thead>
                             <tbody>
-                                {inventoryReport.productStocks.map((product) => (
+                                {currentProducts.map((product) => (
                                     <tr key={product.productId} className="border-b border-gray-100 hover:bg-gray-50">
                                         <td className="px-4 py-4">
                                             <div className="flex items-center">
@@ -258,6 +298,49 @@ const InventoryReport = () => {
                         </div>
                     )}
                 </div>
+
+                {/* Pagination */}
+                {!loading.inventoryReport && totalPages > 1 && (
+                    <div className="flex items-center justify-between mt-6 pt-6 border-t border-gray-200">
+                        <div className="text-sm text-gray-500">
+                            Showing {startIndex + 1}-{Math.min(endIndex, totalItems)} of {totalItems} products
+                        </div>
+
+                        <div className="flex items-center space-x-2">
+                            <button
+                                className="p-2 rounded-md hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed border border-gray-300"
+                                disabled={currentPage === 0}
+                                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 0))}
+                            >
+                                <ChevronLeft size={18} className="text-gray-600" />
+                            </button>
+
+                            {getPaginationNumbers().map((page) => (
+                                <motion.button
+                                    key={page}
+                                    whileHover={{ scale: 1.1 }}
+                                    whileTap={{ scale: 0.9 }}
+                                    className={`w-10 h-10 rounded-full flex items-center justify-center cursor-pointer transition-colors ${
+                                        currentPage === page
+                                            ? "bg-primary-500 text-white"
+                                            : "border border-gray-300 text-gray-600 hover:bg-gray-100"
+                                    }`}
+                                    onClick={() => setCurrentPage(page)}
+                                >
+                                    {page + 1}
+                                </motion.button>
+                            ))}
+
+                            <button
+                                className="p-2 rounded-md hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed border border-gray-300"
+                                disabled={currentPage >= totalPages - 1}
+                                onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages - 1))}
+                            >
+                                <ChevronRight size={18} className="text-gray-600" />
+                            </button>
+                        </div>
+                    </div>
+                )}
             </motion.div>
         </div>
     );

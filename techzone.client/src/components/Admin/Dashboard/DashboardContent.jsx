@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import SalesChart from "./SaleChart";
 import InventoryReport from "./InventoryReport";
+import TopProducts from "./TopProducts";
 import { 
     fetchDashboardStatistics, 
     fetchRecentOrders 
@@ -339,6 +340,15 @@ const DashboardContent = () => {
                 transition={{ duration: 0.3, delay: 0.6 }}
             >
                 <InventoryReport />
+            </motion.div>
+
+            {/* Top Products Section */}
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: 0.7 }}
+            >
+                <TopProducts />
             </motion.div>
         </div>
     );

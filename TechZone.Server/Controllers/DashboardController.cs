@@ -30,8 +30,8 @@ namespace TechZone.Server.Controllers
                 var usersYesterday = await _context.Users
                     .Where(u => u.CreatedAt < yesterday)
                     .CountAsync();
-                var userGrowth = usersYesterday > 0 
-                    ? ((decimal)(totalUsers - usersYesterday) / usersYesterday) * 100 
+                var userGrowth = usersYesterday > 0
+                    ? ((decimal)(totalUsers - usersYesterday) / usersYesterday) * 100
                     : 0;
 
                 // Total Orders
@@ -39,30 +39,34 @@ namespace TechZone.Server.Controllers
                 var ordersLastWeek = await _context.Orders
                     .Where(o => o.OrderDate < lastWeek)
                     .CountAsync();
-                var orderGrowth = ordersLastWeek > 0 
-                    ? ((decimal)(totalOrders - ordersLastWeek) / ordersLastWeek) * 100 
+                var orderGrowth = ordersLastWeek > 0
+                    ? ((decimal)(totalOrders - ordersLastWeek) / ordersLastWeek) * 100
                     : 0;
 
                 // Total Sales
                 var totalSales = await _context.Orders
                     .Where(o => o.Status != "CANCELLED")
                     .SumAsync(o => o.TotalAmount ?? 0);
+
                 var salesYesterday = await _context.Orders
                     .Where(o => o.OrderDate < yesterday && o.Status != "CANCELLED")
                     .SumAsync(o => o.TotalAmount ?? 0);
-                var salesGrowth = salesYesterday > 0 
-                    ? ((totalSales - salesYesterday) / salesYesterday) * 100 
+
+                var salesGrowth = salesYesterday > 0
+                    ? ((totalSales - salesYesterday) / salesYesterday) * 100
                     : 0;
 
                 // Total Pending Orders
                 var totalPending = await _context.Orders
                     .Where(o => o.Status == "PENDING")
                     .CountAsync();
+
                 var pendingYesterday = await _context.Orders
                     .Where(o => o.Status == "PENDING" && o.OrderDate < yesterday)
                     .CountAsync();
-                var pendingGrowth = pendingYesterday > 0 
-                    ? ((decimal)(totalPending - pendingYesterday) / pendingYesterday) * 100 
+
+                var pendingGrowth = pendingYesterday > 0
+                    ? ((decimal)(totalPending - pendingYesterday) / pendingYesterday) * 100
                     : 0;
 
                 var statistics = new DashboardStatisticsDTO
@@ -81,11 +85,12 @@ namespace TechZone.Server.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, 
+                return StatusCode(StatusCodes.Status500InternalServerError,
                     new { message = "Error retrieving statistics", error = ex.Message });
             }
         }
 
+        // ================= FIXED HERE =================
         [HttpGet("sales-chart")]
         public async Task<ActionResult<SalesChartDataDTO>> GetSalesChart([FromQuery] int days = 30)
         {
@@ -94,9 +99,10 @@ namespace TechZone.Server.Controllers
                 var endDate = DateTime.Now.Date;
                 var startDate = endDate.AddDays(-days);
 
-                // Get orders and group in memory to avoid LINQ translation issues
                 var orders = await _context.Orders
-                    .Where(o => o.OrderDate >= startDate && o.OrderDate <= endDate && o.Status != "CANCELLED")
+                    .Where(o => o.OrderDate >= startDate &&
+                                o.OrderDate <= endDate &&
+                                o.Status != "CANCELLED")
                     .Select(o => new { o.OrderDate, o.TotalAmount })
                     .ToListAsync();
 
@@ -112,17 +118,18 @@ namespace TechZone.Server.Controllers
                     .OrderBy(s => s.Date)
                     .ToList();
 
-                // Fill missing dates with zero values
                 var allDates = Enumerable.Range(0, days + 1)
                     .Select(i => startDate.AddDays(i))
                     .ToList();
 
                 var completeData = allDates.Select(date =>
                 {
-                    var existing = salesData.FirstOrDefault(s => s.Date == date.ToString("yyyy-MM-dd"));
+                    var key = date.ToString("yyyy-MM-dd");
+                    var existing = salesData.FirstOrDefault(s => s.Date == key);
+
                     return existing ?? new SalesDataPointDTO
                     {
-                        Date = date.ToString("yyyy-MM-dd"),
+                        Date = key,
                         Amount = 0,
                         OrderCount = 0
                     };
@@ -132,7 +139,7 @@ namespace TechZone.Server.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, 
+                return StatusCode(StatusCodes.Status500InternalServerError,
                     new { message = "Error retrieving sales chart data", error = ex.Message });
             }
         }
@@ -153,13 +160,14 @@ namespace TechZone.Server.Controllers
                     .Select(o => new RecentOrderDTO
                     {
                         OrderId = o.OrderId,
-                        ProductName = o.OrderDetails.FirstOrDefault() != null 
-                            ? o.OrderDetails.First().ProductColor.Product.Name 
+                        ProductName = o.OrderDetails.FirstOrDefault() != null
+                            ? o.OrderDetails.First().ProductColor.Product.Name
                             : "N/A",
-                        ProductImage = o.OrderDetails.FirstOrDefault() != null 
-                            && o.OrderDetails.First().ProductColor.Product.ProductImages.Any()
-                            ? o.OrderDetails.First().ProductColor.Product.ProductImages.First().ImageUrl
-                            : "",
+                        ProductImage =
+                            o.OrderDetails.FirstOrDefault() != null &&
+                            o.OrderDetails.First().ProductColor.Product.ProductImages.Any()
+                                ? o.OrderDetails.First().ProductColor.Product.ProductImages.First().ImageUrl
+                                : "",
                         CustomerName = o.User.FullName ?? "Guest",
                         ShippingAddress = o.ShippingAddress,
                         OrderDate = o.OrderDate ?? DateTime.Now,
@@ -173,17 +181,18 @@ namespace TechZone.Server.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, 
+                return StatusCode(StatusCodes.Status500InternalServerError,
                     new { message = "Error retrieving recent orders", error = ex.Message });
             }
         }
 
         [HttpGet("inventory-report")]
-        public async Task<ActionResult<InventoryReportDTO>> GetInventoryReport([FromQuery] string? category = null, [FromQuery] string? search = null)
+        public async Task<ActionResult<InventoryReportDTO>> GetInventoryReport(
+            [FromQuery] string? category = null,
+            [FromQuery] string? search = null)
         {
             try
             {
-                // Query products with filters
                 var productsQuery = _context.Products
                     .Include(p => p.ProductColors)
                     .Include(p => p.ProductImages)
@@ -193,26 +202,29 @@ namespace TechZone.Server.Controllers
 
                 if (!string.IsNullOrEmpty(category))
                 {
-                    productsQuery = productsQuery.Where(p => p.Category.CategoryName == category);
+                    productsQuery = productsQuery
+                        .Where(p => p.Category.CategoryName == category);
                 }
 
                 if (!string.IsNullOrEmpty(search))
                 {
-                    productsQuery = productsQuery.Where(p => p.Name.Contains(search));
+                    productsQuery = productsQuery
+                        .Where(p => p.Name.Contains(search));
                 }
 
                 var products = await productsQuery.ToListAsync();
 
-                // Calculate statistics
                 var totalProducts = products.Count;
-                var totalInventoryValue = products.Sum(p => p.Price * (p.ProductColors.Sum(pc => pc.StockQuantity ?? 0)));
+                var totalInventoryValue = products.Sum(p =>
+                    p.Price * p.ProductColors.Sum(pc => pc.StockQuantity ?? 0));
 
                 var productStocks = products.Select(p =>
                 {
                     var totalStock = p.ProductColors.Sum(pc => pc.StockQuantity ?? 0);
-                    var stockStatus = totalStock == 0 ? "Out of Stock" 
-                                    : totalStock < 10 ? "Low Stock" 
-                                    : "In Stock";
+                    var stockStatus =
+                        totalStock == 0 ? "Out of Stock" :
+                        totalStock < 10 ? "Low Stock" :
+                        "In Stock";
 
                     return new ProductStockDTO
                     {
@@ -223,25 +235,24 @@ namespace TechZone.Server.Controllers
                         BrandName = p.Brand?.BrandName,
                         Price = p.Price,
                         TotalStock = totalStock,
+                        StockStatus = stockStatus,
                         ColorStocks = p.ProductColors.Select(pc => new ColorStockDTO
                         {
                             ProductColorId = pc.ProductColorId,
                             Color = pc.Color,
                             ColorCode = pc.ColorCode,
                             StockQuantity = pc.StockQuantity ?? 0
-                        }).ToList(),
-                        StockStatus = stockStatus
+                        }).ToList()
                     };
-                }).OrderBy(p => p.TotalStock).ToList();
-
-                var lowStockProducts = productStocks.Count(p => p.StockStatus == "Low Stock");
-                var outOfStockProducts = productStocks.Count(p => p.StockStatus == "Out of Stock");
+                })
+                .OrderBy(p => p.TotalStock)
+                .ToList();
 
                 var report = new InventoryReportDTO
                 {
                     TotalProducts = totalProducts,
-                    LowStockProducts = lowStockProducts,
-                    OutOfStockProducts = outOfStockProducts,
+                    LowStockProducts = productStocks.Count(p => p.StockStatus == "Low Stock"),
+                    OutOfStockProducts = productStocks.Count(p => p.StockStatus == "Out of Stock"),
                     TotalInventoryValue = totalInventoryValue,
                     ProductStocks = productStocks
                 };
@@ -250,8 +261,75 @@ namespace TechZone.Server.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, 
+                return StatusCode(StatusCodes.Status500InternalServerError,
                     new { message = "Error retrieving inventory report", error = ex.Message });
+            }
+        }
+
+        [HttpGet("top-products")]
+        public async Task<ActionResult<TopProductsDTO>> GetTopProducts([FromQuery] int limit = 10)
+        {
+            try
+            {
+                var productSalesQuery =
+                    from od in _context.OrderDetails
+                    join o in _context.Orders on od.OrderId equals o.OrderId
+                    where o.Status != "CANCELLED"
+                    group od by od.ProductColorId into g
+                    select new
+                    {
+                        ProductColorId = g.Key,
+                        TotalSold = g.Sum(x => x.Quantity),
+                        TotalRevenue = g.Sum(x => x.Quantity * (x.Price ?? 0))
+                    };
+
+                var productSales = await productSalesQuery.ToListAsync();
+
+                var products = await _context.Products
+                    .Include(p => p.ProductColors)
+                    .Include(p => p.Category)
+                    .Include(p => p.Brand)
+                    .Include(p => p.ProductImages)
+                    .ToListAsync();
+
+                var productSalesList = products.Select(p =>
+                {
+                    var colorIds = p.ProductColors.Select(pc => pc.ProductColorId).ToList();
+                    var sales = productSales.Where(ps => ps.ProductColorId.HasValue && colorIds.Contains(ps.ProductColorId.Value));
+
+                    return new ProductSalesDTO
+                    {
+                        ProductId = p.ProductId,
+                        ProductName = p.Name,
+                        ProductImage = p.ProductImages.FirstOrDefault()?.ImageUrl,
+                        CategoryName = p.Category?.CategoryName,
+                        BrandName = p.Brand?.BrandName,
+                        Price = p.Price,
+                        TotalSold = sales.Sum(s => s.TotalSold),
+                        TotalRevenue = sales.Sum(s => s.TotalRevenue),
+                        TotalStock = p.ProductColors.Sum(pc => pc.StockQuantity ?? 0)
+                    };
+                }).ToList();
+
+                return Ok(new TopProductsDTO
+                {
+                    BestSellers = productSalesList
+                        .Where(p => p.TotalSold > 0)
+                        .OrderByDescending(p => p.TotalSold)
+                        .Take(limit)
+                        .ToList(),
+
+                    LeastSellers = productSalesList
+                        .Where(p => p.TotalStock > 0)
+                        .OrderBy(p => p.TotalSold)
+                        .Take(limit)
+                        .ToList()
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError,
+                    new { message = "Error retrieving top products", error = ex.Message });
             }
         }
     }

@@ -59,6 +59,19 @@ export const fetchInventoryReport = createAsyncThunk(
     }
 );
 
+// Fetch top products (best sellers & least sellers)
+export const fetchTopProducts = createAsyncThunk(
+    "dashboard/fetchTopProducts",
+    async (limit = 10, { rejectWithValue }) => {
+        try {
+            const response = await api.get(`${apiBaseUrl}/top-products?limit=${limit}`);
+            return response.data;
+        } catch (error) {
+            return rejectWithValue(error.response?.data || "Failed to fetch top products");
+        }
+    }
+);
+
 const dashboardSlice = createSlice({
     name: "dashboard",
     initialState: {
@@ -66,17 +79,20 @@ const dashboardSlice = createSlice({
         salesChart: null,
         recentOrders: [],
         inventoryReport: null,
+        topProducts: null,
         loading: {
             statistics: false,
             salesChart: false,
             recentOrders: false,
             inventoryReport: false,
+            topProducts: false,
         },
         error: {
             statistics: null,
             salesChart: null,
             recentOrders: null,
             inventoryReport: null,
+            topProducts: null,
         },
     },
     reducers: {
@@ -86,6 +102,7 @@ const dashboardSlice = createSlice({
                 salesChart: null,
                 recentOrders: null,
                 inventoryReport: null,
+                topProducts: null,
             };
         },
     },
@@ -148,6 +165,21 @@ const dashboardSlice = createSlice({
             .addCase(fetchInventoryReport.rejected, (state, action) => {
                 state.loading.inventoryReport = false;
                 state.error.inventoryReport = action.payload;
+            });
+
+        // Fetch Top Products
+        builder
+            .addCase(fetchTopProducts.pending, (state) => {
+                state.loading.topProducts = true;
+                state.error.topProducts = null;
+            })
+            .addCase(fetchTopProducts.fulfilled, (state, action) => {
+                state.loading.topProducts = false;
+                state.topProducts = action.payload;
+            })
+            .addCase(fetchTopProducts.rejected, (state, action) => {
+                state.loading.topProducts = false;
+                state.error.topProducts = action.payload;
             });
     },
 });
