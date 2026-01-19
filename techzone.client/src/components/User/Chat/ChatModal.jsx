@@ -7,7 +7,8 @@ import {
   saveChatMessage, 
   getRecentChatHistory,
   deleteChatHistory,
-  clearChatHistory
+  clearChatHistory,
+  chatWithGemini
 } from '../../../features/Chatbot/Chatbot';
 import { getAuthCookies } from '../../../features/AxiosInstance/Cookies/CookiesHelper';
 
@@ -65,13 +66,13 @@ const ChatModal = ({ isOpen, onClose }) => {
           if (chat.message && chat.response) {
             return [
               {
-                id: chat.chatHistoryId * 2 || index * 2 + 1,
+                id: `user-${chat.chatHistoryId || index}-${chat.createdAt || Date.now()}`,
                 type: 'user',
                 content: chat.message,
                 timestamp: new Date(chat.createdAt)
               },
               {
-                id: chat.chatHistoryId * 2 + 1 || index * 2 + 2,
+                id: `bot-${chat.chatHistoryId || index}-${chat.createdAt || Date.now()}`,
                 type: 'bot',
                 content: chat.response,
                 timestamp: new Date(chat.createdAt)
@@ -79,9 +80,10 @@ const ChatModal = ({ isOpen, onClose }) => {
             ];
           }
           // Otherwise, use messageType to determine type
+          const messageType = chat.messageType || (chat.message ? 'user' : 'bot');
           return {
-            id: chat.chatHistoryId || index + 1,
-            type: chat.messageType || (chat.message ? 'user' : 'bot'),
+            id: `${messageType}-${chat.chatHistoryId || index}-${chat.createdAt || Date.now()}`,
+            type: messageType,
             content: chat.message || chat.response,
             timestamp: new Date(chat.createdAt)
           };
@@ -137,57 +139,46 @@ const ChatModal = ({ isOpen, onClose }) => {
     setInputMessage('');
     setIsTyping(true);
 
-    // Get bot response
-    const botResponseContent = getBotResponse(userMessageContent);
+    try {
+      // Call Gemini AI API
+      const response = await dispatch(chatWithGemini({
+        message: userMessageContent,
+        userId: userId,
+        historyLimit: 5
+      })).unwrap();
 
-    // Simulate AI response delay
-    setTimeout(async () => {
       const botResponse = {
         id: messages.length + 2,
         type: 'bot',
-        content: botResponseContent,
+        content: response.response || "Xin lỗi, tôi không thể xử lý yêu cầu của bạn lúc này.",
         timestamp: new Date()
       };
 
       setMessages(prev => [...prev, botResponse]);
       setIsTyping(false);
 
-      // Save to database
+      // Refresh chat history to include the new messages
       if (userId) {
         try {
-          // Save user message
-          await dispatch(saveChatMessage({
-            message: userMessageContent,
-            response: '',
-            messageType: 'user'
-          })).unwrap();
-
-          // Save bot response
-          await dispatch(saveChatMessage({
-            message: '',
-            response: botResponseContent,
-            messageType: 'bot'
-          })).unwrap();
+          await dispatch(getRecentChatHistory({ userId, limit: 50 })).unwrap();
         } catch (error) {
-          console.error("Error saving chat message:", error);
+          console.error("Error refreshing chat history:", error);
         }
       }
-    }, 1500);
-  };
+    } catch (error) {
+      console.error("Error getting AI response:", error);
+      
+      // Fallback response if API fails
+      const botResponse = {
+        id: messages.length + 2,
+        type: 'bot',
+        content: "Xin lỗi, có lỗi xảy ra khi kết nối với AI. Vui lòng thử lại sau.",
+        timestamp: new Date()
+      };
 
-  const getBotResponse = (userInput) => {
-    const input = userInput.toLowerCase();
-    
-    if (input.includes('sản phẩm') || input.includes('product')) {
-      return 'TechZone có nhiều sản phẩm công nghệ như laptop, điện thoại, phụ kiện... Bạn đang tìm loại sản phẩm nào cụ thể?';
-    } else if (input.includes('giá') || input.includes('price')) {
-      return 'Chúng tôi có nhiều mức giá phù hợp với mọi ngân sách. Bạn có thể xem chi tiết giá sản phẩm trên trang chủ hoặc cho tôi biết sản phẩm cụ thể bạn quan tâm.';
-    } else if (input.includes('giao hàng') || input.includes('shipping')) {
-      return 'TechZone hỗ trợ giao hàng toàn quốc với thời gian 1-3 ngày làm việc. Miễn phí giao hàng cho đơn hàng trên 500.000đ.';
-    } else if (input.includes('bảo hành') || input.includes('warranty')) {
-      return 'Tất cả sản phẩm tại TechZone đều có chế độ bảo hành chính hãng từ 12-24 tháng tùy theo từng loại sản phẩm.';
-    } else {
-      return 'Cảm ơn bạn đã liên hệ! Tôi sẽ cố gắng hỗ trợ bạn tốt nhất. Bạn có thể hỏi tôi về sản phẩm, giá cả, giao hàng, bảo hành hoặc bất kỳ thông tin nào về TechZone.';
+      setMessages(prev => [...prev, botResponse]);
+      setIsTyping(false);
+      antMessage.error('Không thể kết nối với AI. Vui lòng thử lại.');
     }
   };
 
@@ -402,3 +393,4 @@ const ChatModal = ({ isOpen, onClose }) => {
 };
 
 export default ChatModal;
+

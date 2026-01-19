@@ -5,6 +5,7 @@ using TechZone.Server.Models.DTO.ADD;
 using TechZone.Server.Models.DTO.GET;
 using TechZone.Server.Models.Domain;
 using TechZone.Server.Repositories;
+using TechZone.Server.Services;
 
 namespace TechZone.Server.Controllers
 {
@@ -14,11 +15,16 @@ namespace TechZone.Server.Controllers
     {
         private readonly IChatHistoryRepository _chatHistoryRepository;
         private readonly IMapper _mapper;
+        private readonly IOpenAIService _openAIService;
 
-        public ChatbotController(IChatHistoryRepository chatHistoryRepository, IMapper mapper)
+        public ChatbotController(
+            IChatHistoryRepository chatHistoryRepository, 
+            IMapper mapper,
+            IOpenAIService openAIService)
         {
             _chatHistoryRepository = chatHistoryRepository;
             _mapper = mapper;
+            _openAIService = openAIService;
         }
 
         [HttpPost("SaveMessage")]
@@ -84,6 +90,87 @@ namespace TechZone.Server.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
             }
         }
+
+        [HttpPost("Chat")]
+        public async Task<ActionResult> Chat([FromBody] ChatRequestDto request)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(request.Message))
+                {
+                    return BadRequest(new { error = "Message is required" });
+                }
+
+                // Get conversation history for context if userId is provided
+                List<(string role, string content)>? conversationHistory = null;
+                
+                if (request.UserId.HasValue)
+                {
+                    var chatHistories = await _chatHistoryRepository.GetRecentChatHistoryByUserIdAsync(
+                        request.UserId.Value, 
+                        request.HistoryLimit ?? 5
+                    );
+
+                    conversationHistory = chatHistories
+                        .SelectMany(ch => new List<(string role, string content)>
+                        {
+                            ("user", ch.Message ?? ""),
+                            ("bot", ch.Response ?? "")
+                        })
+                        .Where(item => !string.IsNullOrEmpty(item.content))
+                        .ToList();
+                }
+
+                // Generate AI response using OpenAI
+                var aiResponse = await _openAIService.GenerateResponseAsync(
+                    request.Message, 
+                    conversationHistory
+                );
+
+                // Save to database if userId is provided
+                if (request.UserId.HasValue)
+                {
+                    var chatHistory = new ChatHistory
+                    {
+                        UserId = request.UserId.Value,
+                        Message = request.Message,
+                        Response = aiResponse,
+                        MessageType = "conversation",
+                        CreatedAt = DateTime.UtcNow
+                    };
+
+                    await _chatHistoryRepository.AddChatMessageAsync(chatHistory);
+                }
+
+                return Ok(new ChatResponseDto
+                {
+                    Response = aiResponse,
+                    Timestamp = DateTime.UtcNow
+                });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in Chat endpoint: {ex.Message}");
+                return StatusCode(StatusCodes.Status500InternalServerError, new { 
+                    error = "An error occurred while processing your request",
+                    details = ex.Message 
+                });
+            }
+        }
+    }
+
+    // DTOs for Chat endpoint
+    public class ChatRequestDto
+    {
+        public string Message { get; set; } = string.Empty;
+        public int? UserId { get; set; }
+        public int? HistoryLimit { get; set; } = 5;
+    }
+
+    public class ChatResponseDto
+    {
+        public string Response { get; set; } = string.Empty;
+        public DateTime Timestamp { get; set; }
     }
 }
 

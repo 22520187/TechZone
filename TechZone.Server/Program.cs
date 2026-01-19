@@ -48,6 +48,7 @@ builder.Services.AddScoped<IWarrantyRepository, SQLWarrantyRepository>();
 builder.Services.AddScoped<IWarrantyClaimRepository, SQLWarrantyClaimRepository>();
 builder.Services.AddScoped<VNPayService>();
 //builder.Services.AddScoped<IGeminiService, GeminiService>();
+builder.Services.AddScoped<IOpenAIService, OpenAIService>();
 
 
 

@@ -65,13 +65,13 @@ const Chatbot = () => {
           if (chat.message && chat.response) {
             return [
               {
-                id: chat.chatHistoryId * 2 || index * 2 + 1,
+                id: `user-${chat.chatHistoryId || index}-${chat.createdAt || Date.now()}`,
                 type: 'user',
                 content: chat.message,
                 timestamp: new Date(chat.createdAt)
               },
               {
-                id: chat.chatHistoryId * 2 + 1 || index * 2 + 2,
+                id: `bot-${chat.chatHistoryId || index}-${chat.createdAt || Date.now()}`,
                 type: 'bot',
                 content: chat.response,
                 timestamp: new Date(chat.createdAt)
@@ -79,9 +79,10 @@ const Chatbot = () => {
             ];
           }
           // Otherwise, use messageType to determine type
+          const messageType = chat.messageType || (chat.message ? 'user' : 'bot');
           return {
-            id: chat.chatHistoryId || index + 1,
-            type: chat.messageType || (chat.message ? 'user' : 'bot'),
+            id: `${messageType}-${chat.chatHistoryId || index}-${chat.createdAt || Date.now()}`,
+            type: messageType,
             content: chat.message || chat.response,
             timestamp: new Date(chat.createdAt)
           };
