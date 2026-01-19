@@ -301,6 +301,48 @@ export default function Customers() {
         }
     };
 
+    const handleBulkDelete = async () => {
+        if (selectedCustomers.length === 0) {
+            message.warning("Please select customers to delete");
+            return;
+        }
+
+        Modal.confirm({
+            title: `Delete ${selectedCustomers.length} customer${selectedCustomers.length > 1 ? 's' : ''}?`,
+            content: 'Are you sure you want to delete the selected customers? This action cannot be undone.',
+            okText: 'Yes, Delete',
+            cancelText: 'Cancel',
+            okButtonProps: { danger: true },
+            onOk: async () => {
+                let successCount = 0;
+                let errorCount = 0;
+                const errors = [];
+
+                for (const customerId of selectedCustomers) {
+                    try {
+                        await dispatch(deleteUser(customerId)).unwrap();
+                        successCount++;
+                    } catch (err) {
+                        errorCount++;
+                        const customerName = customersData.find(c => c.id === customerId)?.name || `ID ${customerId}`;
+                        errors.push(customerName);
+                    }
+                }
+
+                if (successCount > 0) {
+                    message.success(`Successfully deleted ${successCount} customer${successCount > 1 ? 's' : ''}`);
+                }
+
+                if (errorCount > 0) {
+                    message.error(`Failed to delete ${errorCount} customer${errorCount > 1 ? 's' : ''}: ${errors.join(', ')}`, 5);
+                }
+
+                setSelectedCustomers([]);
+                await fetchCustomers();
+            },
+        });
+    };
+
     const containerVariants = {
         hidden: { opacity: 0 },
         visible: {
@@ -326,6 +368,37 @@ export default function Customers() {
         <div className="space-y-4">
             <h1 className="text-2xl font-semibold text-gray-800">Customers</h1>{" "}
             {/* Header */}
+            
+            {/* Bulk Action Bar - Show when items are selected */}
+            {selectedCustomers.length > 0 && (
+                <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-center justify-between"
+                >
+                    <div className="flex items-center space-x-2">
+                        <span className="text-sm font-medium text-blue-900">
+                            {selectedCustomers.length} customer{selectedCustomers.length > 1 ? 's' : ''} selected
+                        </span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                        <button
+                            onClick={() => setSelectedCustomers([])}
+                            className="px-4 py-2 cursor-pointer text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+                        >
+                            Clear Selection
+                        </button>
+                        <button
+                            onClick={handleBulkDelete}
+                            className="px-4 py-2 cursor-pointer text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 transition-colors flex items-center space-x-2"
+                        >
+                            <Trash2 size={16} />
+                            <span>Delete Selected</span>
+                        </button>
+                    </div>
+                </motion.div>
+            )}
+
             {/* Search and Filter */}
             <div className="flex justify-between">
                 <div
