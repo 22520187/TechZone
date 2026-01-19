@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using TechZone.Server.Models;
 using TechZone.Server.Models.Domain;
 using TechZone.Server.Models.DTO.UPDATE;

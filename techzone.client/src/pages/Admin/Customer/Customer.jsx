@@ -123,21 +123,16 @@ export default function Customers() {
         };
     });
 
-    const filterCustomersData = customersData.filter(
-        (row) => {
-            // Search across multiple fields: name, email, phone
-            const matchesSearch = searchQuery.trim() === "" ||
-                row.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                row.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                row.phone.toLowerCase().includes(searchQuery.toLowerCase());
+    const filterCustomersData = customersData.filter((row) => {
+        const matchesSearch = searchQuery.trim() === "" ||
+            row.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            row.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            row.phone.toLowerCase().includes(searchQuery.toLowerCase());
 
-            // Filter by role (exact match after normalization)
-            const matchesRole = filterStatus === "" ||
-                row.role === filterStatus;
+        const matchesRole = filterStatus === "" || row.role === filterStatus;
 
-            return matchesSearch && matchesRole;
-        }
-    );
+        return matchesSearch && matchesRole;
+    });
 
     const totalItems = filterCustomersData.length;
     const totalPages = Math.ceil(totalItems / itemsPerPage);
@@ -511,7 +506,7 @@ export default function Customers() {
                                 </tr>
                             </thead>
                             <motion.tbody
-                                key={currentPage}
+                                key={`customer-table-${searchQuery}-${filterStatus}-${currentPage}`}
                                 variants={containerVariants}
                                 initial="hidden"
                                 animate="visible"
