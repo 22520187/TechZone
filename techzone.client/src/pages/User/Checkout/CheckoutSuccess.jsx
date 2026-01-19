@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Button, Card } from "antd";
+import { Button, Card, Skeleton, message } from "antd";
 import { ShoppingBag, Home, CheckCircle } from "lucide-react";
 import { motion } from "framer-motion";
+import api from "../../../features/AxiosInstance/AxiosInstance";
+import ProductCard from "../../../components/User/Products/ProductCard";
 
 const CheckoutSuccess = () => {
   const navigate = useNavigate();
@@ -11,6 +13,8 @@ const CheckoutSuccess = () => {
     orderNumber: "",
     total: "0.00",
   });
+  const [recommendedProducts, setRecommendedProducts] = useState([]);
+  const [isLoadingProducts, setIsLoadingProducts] = useState(true);
 
   useEffect(() => {
     // Get order details from URL query params
@@ -24,8 +28,82 @@ const CheckoutSuccess = () => {
     window.scrollTo(0, 0);
   }, [location]);
 
+  // Fetch recommended products based on order
+  useEffect(() => {
+    const fetchRecommendedProducts = async () => {
+      setIsLoadingProducts(true);
+      try {
+        // Get orderId from URL params
+        const searchParams = new URLSearchParams(location.search);
+        const orderId = searchParams.get("orderNumber");
+        
+        let response;
+        
+        // If orderId exists, use the new recommended products API
+        if (orderId && !isNaN(parseInt(orderId))) {
+          try {
+            response = await api.get(`/api/Product/GetRecommendedProductsByOrderId/${orderId}`);
+            console.log("Recommended products by order API response:", response.data);
+          } catch (orderError) {
+            console.warn("Failed to get recommended products by order, falling back to featured products:", orderError);
+            // Fallback to featured products if order-based recommendation fails
+            response = await api.get("/api/Product/GetFeatureProducts");
+          }
+        } else {
+          // If no orderId, use featured products
+          response = await api.get("/api/Product/GetFeatureProducts");
+          console.log("Featured products API response:", response.data);
+        }
+        
+        const data = response.data;
+        
+        // Check if data is valid array
+        if (!data || !Array.isArray(data) || data.length === 0) {
+          console.warn("No products returned from API");
+          setRecommendedProducts([]);
+          setIsLoadingProducts(false);
+          return;
+        }
+        
+        // Map and transform the product data to match ProductCard format
+        const mappedData = data.map((product) => {
+          // Handle imageUrl - check if it's valid
+          const imageUrl = product.imageUrl && !product.imageUrl.includes('cdn.techzone.com')
+            ? product.imageUrl
+            : `https://picsum.photos/300/300?random=${product.productId}`;
+          
+          return {
+            id: product.productId,
+            name: product.name || "Unnamed Product",
+            price: product.salePrice || product.price || 0,
+            oldPrice: product.price || 0,
+            rating: product.rating || 0,
+            reviewCount: product.reviewCount || 0,
+            image: imageUrl,
+            category: product.category?.categoryName || "",
+            brand: product.brand?.brandName || "",
+          };
+        });
+        
+        console.log("Mapped recommended products:", mappedData);
+        
+        // Limit to 4 products for recommendation
+        setRecommendedProducts(mappedData.slice(0, 4));
+      } catch (error) {
+        console.error("Error fetching recommended products:", error);
+        console.error("Error details:", error.response?.data || error.message);
+        message.error("Không thể tải sản phẩm gợi ý");
+        setRecommendedProducts([]);
+      } finally {
+        setIsLoadingProducts(false);
+      }
+    };
+
+    fetchRecommendedProducts();
+  }, [location.search]);
+
   return (
-    <div className="container mx-auto px-4 md:px-6 py-20 max-w-3xl">
+    <div className="container mx-auto px-4 md:px-6 py-20 max-w-7xl">
       <Card>
         <div className="bg-primary/10 p-8 flex flex-col items-center justify-center text-center">
           <motion.div
@@ -114,6 +192,54 @@ const CheckoutSuccess = () => {
           </div>
         </div>
       </Card>
+
+      {/* Recommended Products Section */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.7, duration: 0.5 }}
+        className="mt-12"
+      >
+        <div className="text-center mb-8">
+          <h2 className="text-2xl font-bold mb-2">
+            Gợi ý sản phẩm cho bạn
+          </h2>
+          <p className="text-muted-foreground">
+            Khám phá thêm những sản phẩm tuyệt vời khác
+          </p>
+        </div>
+
+        {isLoadingProducts ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {Array.from({ length: 4 }).map((_, index) => (
+              <Card key={index} className="border rounded-lg overflow-hidden">
+                <Skeleton.Image className="w-full aspect-[4/3]" />
+                <Skeleton active paragraph={{ rows: 3 }} className="p-4" />
+              </Card>
+            ))}
+          </div>
+        ) : recommendedProducts.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {recommendedProducts.map((product) => (
+              <ProductCard key={product.id} product={product} />
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-8">
+            <p className="text-muted-foreground">
+              Hiện tại chưa có sản phẩm gợi ý. Vui lòng quay lại sau!
+            </p>
+            <Button
+              type="primary"
+              onClick={() => navigate("/products")}
+              className="mt-4"
+              icon={<ShoppingBag className="mr-2 h-4 w-4" />}
+            >
+              Xem tất cả sản phẩm
+            </Button>
+          </div>
+        )}
+      </motion.div>
     </div>
   );
 };
