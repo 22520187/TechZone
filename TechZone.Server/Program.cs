@@ -31,6 +31,7 @@ builder.Services.AddCors(options =>
 
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IUserRepository, SQLUserRepository>();
+builder.Services.AddScoped<IStaffRepository, SQLStaffRepository>();
 builder.Services.AddScoped<IOrderRepository, SQLOrderRepository>();
 builder.Services.AddScoped<IOrderDetailRepository, SQLOrderDetailRepository>();
 builder.Services.AddScoped<IReviewRepository, SQLReviewRepository>();

@@ -174,6 +174,24 @@ namespace TechZone.Server.Mapping
                 .ForMember(dest => dest.UserId, opt => opt.Ignore())
                 .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
                 .ReverseMap();
+
+            CreateMap<User, AdminStaffDTO>().ReverseMap();
+
+            CreateMap<AdminAddStaffDTO, User>()
+                .ForMember(dest => dest.PasswordHash, 
+                    opt => opt.MapFrom(src => src.Password))
+                .ForMember(dest => dest.Role, opt => opt.MapFrom(src => "staff"))
+                .ForMember(dest => dest.UserId, opt => opt.Ignore())
+                .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(src => DateTime.UtcNow))
+                .ReverseMap();
+
+            CreateMap<AdminUpdateStaffDTO, User>()
+                .ForMember(dest => dest.PasswordHash, opt => opt.Ignore())
+                .ForMember(dest => dest.Email, opt => opt.Ignore())
+                .ForMember(dest => dest.Role, opt => opt.Ignore())
+                .ForMember(dest => dest.UserId, opt => opt.Ignore())
+                .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
+                .ReverseMap();
                 
             // Warranty mappings
             CreateMap<Warranty, WarrantyDTO>()
