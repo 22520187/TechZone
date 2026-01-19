@@ -8,7 +8,8 @@ import {
   Boxes,
   Users2,
   TicketPercent,
-  Shield
+  Shield,
+  UserCog
 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import GradientText from "../../ReactBitsComponent/GradientText";
@@ -73,6 +74,7 @@ const AdminSidebar = ({ isCollapsed, toggleSidebar }) => {
     { icon: Slack, label: "Brands", path: "/brands" },
     { icon: Boxes, label: "Categories", path: "/categories" },
     { icon: Users2, label: "Customers", path: "/customers" },
+    { icon: UserCog, label: "Staff", path: "/staff" },
     { icon: TicketPercent, label: "Promotions", path: "/promotions" },
     { icon: Shield, label: "Warranty Claims", path: "/warranty-claims" },
     { icon: Settings, label: "Settings", path: "/settings" },

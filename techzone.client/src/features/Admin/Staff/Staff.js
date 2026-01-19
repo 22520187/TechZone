@@ -1,13 +1,13 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import api from "../../AxiosInstance/AxiosInstance";
 
-const apiBaseUrl = "/api/Account";
+const apiBaseUrl = "/api/Staff";
 
-export const fetchAllUser = createAsyncThunk(
-    "user/fetchAllUser",
+export const fetchAllStaff = createAsyncThunk(
+    "staff/fetchAllStaff",
     async (_, { rejectWithValue }) => {
         try {
-            const response = await api.get(`${apiBaseUrl}/AdminGetAllUsers`);
+            const response = await api.get(`${apiBaseUrl}/GetAllStaffs`);
             return response.data;
         } catch (error) {
             return rejectWithValue(
@@ -17,25 +17,22 @@ export const fetchAllUser = createAsyncThunk(
     }
 );
 
-export const addUser = createAsyncThunk(
-    "user/addUser",
-    async (userData, { rejectWithValue }) => {
+export const addStaff = createAsyncThunk(
+    "staff/addStaff",
+    async (staffData, { rejectWithValue }) => {
         try {
-            const response = await api.post(`${apiBaseUrl}/AddUser`, userData);
+            const response = await api.post(`${apiBaseUrl}/AddStaff`, staffData);
             return response.data;
         } catch (error) {
-            // For debugging only (not visible to users)
-            console.error("Error in addUser thunk:", error);
+            console.error("Error in addStaff thunk:", error);
 
-            // Use a simple user-friendly message
-            let errorMessage = "Unable to add user";
+            let errorMessage = "Unable to add staff member";
 
-            // Check specifically for email duplication error
             if (
                 error.response &&
                 error.response.data &&
                 error.response.data.message &&
-                error.response.data.message.includes("Email đã tồn tại")
+                error.response.data.message.includes("Email already exists")
             ) {
                 errorMessage = "Email already exists";
             }
@@ -45,13 +42,13 @@ export const addUser = createAsyncThunk(
     }
 );
 
-export const updateUser = createAsyncThunk(
-    "user/updateUser",
-    async (userData, { rejectWithValue }) => {
+export const updateStaff = createAsyncThunk(
+    "staff/updateStaff",
+    async (staffData, { rejectWithValue }) => {
         try {
             const response = await api.put(
-                `${apiBaseUrl}/UpdateUser/${userData.userId}`,
-                userData
+                `${apiBaseUrl}/UpdateStaff/${staffData.userId}`,
+                staffData
             );
             return response.data;
         } catch (error) {
@@ -62,20 +59,18 @@ export const updateUser = createAsyncThunk(
     }
 );
 
-export const deleteUser = createAsyncThunk(
-    "user/deleteUser",
-    async (userId, { rejectWithValue }) => {
+export const deleteStaff = createAsyncThunk(
+    "staff/deleteStaff",
+    async (staffId, { rejectWithValue }) => {
         try {
             const response = await api.delete(
-                `${apiBaseUrl}/DeleteUser/${userId}`
+                `${apiBaseUrl}/DeleteStaff/${staffId}`
             );
             return response.data;
         } catch (error) {
-            // Log for debugging
-            console.error("Error in deleteUser thunk:", error);
+            console.error("Error in deleteStaff thunk:", error);
 
-            // Extract the error message from backend response
-            let errorMessage = "Unable to delete user";
+            let errorMessage = "Unable to delete staff member";
 
             if (error.response?.data?.message) {
                 errorMessage = error.response.data.message;
@@ -91,69 +86,69 @@ export const deleteUser = createAsyncThunk(
 );
 
 const initialState = {
-    userItems: [],
+    staffItems: [],
     status: "idle", // 'idle' | 'loading' | 'succeeded' | 'failed'
     error: null,
 };
 
-const userSlice = createSlice({
-    name: "user",
+const staffSlice = createSlice({
+    name: "staff",
     initialState,
     reducers: {},
     extraReducers: (builder) => {
         builder
-            .addCase(fetchAllUser.pending, (state) => {
+            .addCase(fetchAllStaff.pending, (state) => {
                 state.status = "loading";
             })
-            .addCase(fetchAllUser.fulfilled, (state, action) => {
+            .addCase(fetchAllStaff.fulfilled, (state, action) => {
                 state.status = "succeeded";
-                state.userItems = action.payload;
+                state.staffItems = action.payload;
             })
-            .addCase(fetchAllUser.rejected, (state, action) => {
+            .addCase(fetchAllStaff.rejected, (state, action) => {
                 state.status = "failed";
                 state.error = action.payload;
             })
-            .addCase(addUser.pending, (state) => {
+            .addCase(addStaff.pending, (state) => {
                 state.status = "loading";
             })
-            .addCase(addUser.fulfilled, (state, action) => {
+            .addCase(addStaff.fulfilled, (state, action) => {
                 state.status = "succeeded";
-                state.userItems.push(action.payload);
+                state.staffItems.push(action.payload);
             })
-            .addCase(addUser.rejected, (state, action) => {
+            .addCase(addStaff.rejected, (state, action) => {
                 state.status = "failed";
                 state.error = action.payload;
             })
-            .addCase(updateUser.pending, (state) => {
+            .addCase(updateStaff.pending, (state) => {
                 state.status = "loading";
             })
-            .addCase(updateUser.fulfilled, (state, action) => {
+            .addCase(updateStaff.fulfilled, (state, action) => {
                 state.status = "succeeded";
-                const index = state.userItems.findIndex(
-                    (user) => user.userId === action.payload.userId
+                const index = state.staffItems.findIndex(
+                    (staff) => staff.userId === action.payload.userId
                 );
                 if (index !== -1) {
-                    state.userItems[index] = action.payload;
+                    state.staffItems[index] = action.payload;
                 }
             })
-            .addCase(updateUser.rejected, (state, action) => {
+            .addCase(updateStaff.rejected, (state, action) => {
                 state.status = "failed";
                 state.error = action.payload;
             })
-            .addCase(deleteUser.pending, (state) => {
+            .addCase(deleteStaff.pending, (state) => {
                 state.status = "loading";
             })
-            .addCase(deleteUser.fulfilled, (state, action) => {
+            .addCase(deleteStaff.fulfilled, (state, action) => {
                 state.status = "succeeded";
-                state.userItems = state.userItems.filter(
-                    (user) => user.userId !== action.payload.userId
+                state.staffItems = state.staffItems.filter(
+                    (staff) => staff.userId !== action.payload.userId
                 );
             })
-            .addCase(deleteUser.rejected, (state, action) => {
+            .addCase(deleteStaff.rejected, (state, action) => {
                 state.status = "failed";
                 state.error = action.payload;
             });
     },
 });
 
-export default userSlice.reducer;
+export default staffSlice.reducer;
