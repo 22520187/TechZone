@@ -32,9 +32,14 @@ export const fetchSalesChart = createAsyncThunk(
 // Fetch recent orders
 export const fetchRecentOrders = createAsyncThunk(
     "dashboard/fetchRecentOrders",
-    async (limit = 10, { rejectWithValue }) => {
+    async ({ limit = 10, month = null, year = null } = {}, { rejectWithValue }) => {
         try {
-            const response = await api.get(`${apiBaseUrl}/recent-orders?limit=${limit}`);
+            const params = new URLSearchParams();
+            params.append('limit', limit);
+            if (month !== null) params.append('month', month);
+            if (year !== null) params.append('year', year);
+            
+            const response = await api.get(`${apiBaseUrl}/recent-orders?${params.toString()}`);
             return response.data;
         } catch (error) {
             return rejectWithValue(error.response?.data || "Failed to fetch recent orders");
@@ -59,7 +64,6 @@ export const fetchInventoryReport = createAsyncThunk(
     }
 );
 
-// Fetch top products (best sellers & least sellers)
 export const fetchTopProducts = createAsyncThunk(
     "dashboard/fetchTopProducts",
     async (limit = 10, { rejectWithValue }) => {
@@ -167,7 +171,6 @@ const dashboardSlice = createSlice({
                 state.error.inventoryReport = action.payload;
             });
 
-        // Fetch Top Products
         builder
             .addCase(fetchTopProducts.pending, (state) => {
                 state.loading.topProducts = true;

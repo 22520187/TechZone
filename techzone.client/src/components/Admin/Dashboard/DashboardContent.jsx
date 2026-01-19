@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
     Users,
@@ -22,11 +22,38 @@ const DashboardContent = () => {
     const { statistics, recentOrders, loading } = useSelector(
         (state) => state.dashboard
     );
+    
+    const [selectedMonth, setSelectedMonth] = useState(() => {
+        const now = new Date();
+        return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    });
+
+    const generateMonthOptions = () => {
+        const months = [];
+        const now = new Date();
+        
+        for (let i = 0; i < 12; i++) {
+            const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+            const value = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+            const label = date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+            months.push({ value, label });
+        }
+        
+        return months;
+    };
+
+    const monthOptions = generateMonthOptions();
 
     useEffect(() => {
         dispatch(fetchDashboardStatistics());
-        dispatch(fetchRecentOrders(5));
-    }, [dispatch]);
+        
+        const [year, month] = selectedMonth.split('-').map(Number);
+        dispatch(fetchRecentOrders({ limit: 10, month, year }));
+    }, [dispatch, selectedMonth]);
+
+    const handleMonthChange = (e) => {
+        setSelectedMonth(e.target.value);
+    };
 
     // Format currency
     const formatCurrency = (amount) => {
@@ -213,10 +240,16 @@ const DashboardContent = () => {
                         Deals Details
                     </h2>
                     <div className="relative">
-                        <select className="appearance-none pl-4 pr-8 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white">
-                            <option>October</option>
-                            <option>September</option>
-                            <option>August</option>
+                        <select 
+                            className="appearance-none pl-4 pr-8 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white"
+                            value={selectedMonth}
+                            onChange={handleMonthChange}
+                        >
+                            {monthOptions.map((option) => (
+                                <option key={option.value} value={option.value}>
+                                    {option.label}
+                                </option>
+                            ))}
                         </select>
                         <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
                             <svg
