@@ -3,18 +3,39 @@ import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Package, Search, AlertCircle, TrendingUp, TrendingDown, ChevronLeft, ChevronRight } from "lucide-react";
 import { fetchInventoryReport } from "../../../features/Admin/Dashboard/Dashboard";
+import api from "../../../features/AxiosInstance/AxiosInstance";
 
 const InventoryReport = () => {
     const dispatch = useDispatch();
     const { inventoryReport, loading } = useSelector((state) => state.dashboard);
     const [searchTerm, setSearchTerm] = useState("");
     const [categoryFilter, setCategoryFilter] = useState("");
+    const [brandFilter, setBrandFilter] = useState("");
+    const [statusFilter, setStatusFilter] = useState("");
     const [currentPage, setCurrentPage] = useState(0);
     const [itemsPerPage] = useState(10);
+    const [allCategories, setAllCategories] = useState([]);
+    const [allBrands, setAllBrands] = useState([]);
 
     useEffect(() => {
         dispatch(fetchInventoryReport({ search: searchTerm, category: categoryFilter }));
-    }, [dispatch, searchTerm, categoryFilter]);
+    }, [dispatch, searchTerm, categoryFilter, brandFilter, statusFilter]);
+
+    useEffect(() => {
+        const fetchFiltersData = async () => {
+            try {
+                const [categoriesRes, brandsRes] = await Promise.all([
+                    api.get('/api/Category/GetAllCategory'),
+                    api.get('/api/Brand/GetAllBrand')
+                ]);
+                setAllCategories(categoriesRes.data.map(c => c.categoryName));
+                setAllBrands(brandsRes.data.map(b => b.brandName));
+            } catch (error) {
+                console.error('Failed to fetch filters data:', error);
+            }
+        };
+        fetchFiltersData();
+    }, []);
 
     // Format currency
     const formatCurrency = (amount) => {
@@ -35,20 +56,25 @@ const InventoryReport = () => {
         return badges[status] || "text-gray-800 bg-gray-100";
     };
 
-    // Pagination logic
-    const products = inventoryReport?.productStocks || [];
+    const allProducts = inventoryReport?.productStocks || [];
+    
+    const filteredProducts = allProducts.filter(product => {
+        if (brandFilter && product.brandName !== brandFilter) return false;
+        if (statusFilter && product.stockStatus !== statusFilter) return false;
+        return true;
+    });
+    
+    const products = filteredProducts;
     const totalItems = products.length;
     const totalPages = Math.ceil(totalItems / itemsPerPage);
     const startIndex = currentPage * itemsPerPage;
     const endIndex = startIndex + itemsPerPage;
     const currentProducts = products.slice(startIndex, endIndex);
 
-    // Reset to first page when search/filter changes
     useEffect(() => {
         setCurrentPage(0);
-    }, [searchTerm, categoryFilter]);
+    }, [searchTerm, categoryFilter, brandFilter, statusFilter]);
 
-    // Pagination numbers
     const getPaginationNumbers = () => {
         const pages = [];
         const maxDisplayedPages = 5;
@@ -174,16 +200,78 @@ const InventoryReport = () => {
                 <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
                     <h2 className="text-lg font-medium text-gray-800">Product Inventory</h2>
                     
-                    <div className="flex gap-3">
+                    <div className="flex flex-wrap gap-3">
+                        {/* Search Input */}
                         <div className="relative">
                             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                             <input
                                 type="text"
                                 placeholder="Search products..."
-                                className="pl-10 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                className="pl-10 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-48"
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                             />
+                        </div>
+
+                        {/* Category Filter */}
+                        <div className="relative">
+                            <select
+                                className="appearance-none pl-4 pr-8 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white min-w-[140px]"
+                                value={categoryFilter}
+                                onChange={(e) => setCategoryFilter(e.target.value)}
+                            >
+                                <option value="">All Categories</option>
+                                {allCategories.map((category) => (
+                                    <option key={category} value={category}>
+                                        {category}
+                                    </option>
+                                ))}
+                            </select>
+                            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
+                                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                                </svg>
+                            </div>
+                        </div>
+
+                        {/* Brand Filter */}
+                        <div className="relative">
+                            <select
+                                className="appearance-none pl-4 pr-8 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white min-w-[140px]"
+                                value={brandFilter}
+                                onChange={(e) => setBrandFilter(e.target.value)}
+                            >
+                                <option value="">All Brands</option>
+                                {allBrands.map((brand) => (
+                                    <option key={brand} value={brand}>
+                                        {brand}
+                                    </option>
+                                ))}
+                            </select>
+                            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
+                                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                                </svg>
+                            </div>
+                        </div>
+
+                        {/* Status Filter */}
+                        <div className="relative">
+                            <select
+                                className="appearance-none pl-4 pr-8 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white min-w-[140px]"
+                                value={statusFilter}
+                                onChange={(e) => setStatusFilter(e.target.value)}
+                            >
+                                <option value="">All Status</option>
+                                <option value="In Stock">In Stock</option>
+                                <option value="Low Stock">Low Stock</option>
+                                <option value="Out of Stock">Out of Stock</option>
+                            </select>
+                            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
+                                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                                </svg>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -202,7 +290,8 @@ const InventoryReport = () => {
                             ))}
                         </div>
                     ) : inventoryReport?.productStocks && inventoryReport.productStocks.length > 0 ? (
-                        <table className="w-full">
+                        currentProducts.length > 0 ? (
+                            <table className="w-full">
                             <thead>
                                 <tr className="bg-gray-100">
                                     <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 rounded-l-lg">
@@ -292,6 +381,11 @@ const InventoryReport = () => {
                                 ))}
                             </tbody>
                         </table>
+                        ) : (
+                            <div className="text-center py-8 text-gray-500">
+                                No products found matching the selected filters
+                            </div>
+                        )
                     ) : (
                         <div className="text-center py-8 text-gray-500">
                             No inventory data available
