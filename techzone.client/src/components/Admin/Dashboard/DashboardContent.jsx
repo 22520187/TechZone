@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
     Users,
@@ -22,11 +22,51 @@ const DashboardContent = () => {
     const { statistics, recentOrders, loading } = useSelector(
         (state) => state.dashboard
     );
+    
+    const [selectedMonth, setSelectedMonth] = useState(() => {
+        const now = new Date();
+        return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    });
+
+    const [statusFilter, setStatusFilter] = useState("");
+
+    const generateMonthOptions = () => {
+        const months = [];
+        const now = new Date();
+        
+        for (let i = 0; i < 12; i++) {
+            const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+            const value = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+            const label = date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+            months.push({ value, label });
+        }
+        
+        return months;
+    };
+
+    const monthOptions = generateMonthOptions();
 
     useEffect(() => {
         dispatch(fetchDashboardStatistics());
-        dispatch(fetchRecentOrders(5));
-    }, [dispatch]);
+        
+        const [year, month] = selectedMonth.split('-').map(Number);
+        dispatch(fetchRecentOrders({ limit: 10, month, year }));
+    }, [dispatch, selectedMonth]);
+
+    const handleMonthChange = (e) => {
+        setSelectedMonth(e.target.value);
+    };
+
+    const handleStatusFilterChange = (e) => {
+        setStatusFilter(e.target.value);
+    };
+
+    const filteredOrders = recentOrders && recentOrders.length > 0 
+        ? recentOrders.filter(order => {
+            if (statusFilter === "") return true;
+            return order.status === statusFilter;
+        })
+        : [];
 
     // Format currency
     const formatCurrency = (amount) => {
@@ -212,26 +252,65 @@ const DashboardContent = () => {
                     <h2 className="text-lg font-medium text-gray-800">
                         Deals Details
                     </h2>
-                    <div className="relative">
-                        <select className="appearance-none pl-4 pr-8 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white">
-                            <option>October</option>
-                            <option>September</option>
-                            <option>August</option>
-                        </select>
-                        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
-                            <svg
-                                className="h-4 w-4"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
+                    <div className="flex items-center space-x-3">
+                        {/* Status Filter */}
+                        <div className="relative">
+                            <select 
+                                className="appearance-none pl-4 pr-8 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white"
+                                value={statusFilter}
+                                onChange={handleStatusFilterChange}
                             >
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth="2"
-                                    d="M19 9l-7 7-7-7"
-                                />
-                            </svg>
+                                <option value="">All Status</option>
+                                <option value="PENDING">Pending</option>
+                                <option value="COMPLETED">Completed</option>
+                                <option value="CANCELLED">Cancelled</option>
+                                <option value="PROCESSING">Processing</option>
+                            </select>
+                            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
+                                <svg
+                                    className="h-4 w-4"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth="2"
+                                        d="M19 9l-7 7-7-7"
+                                    />
+                                </svg>
+                            </div>
+                        </div>
+
+                        {/* Month Filter */}
+                        <div className="relative">
+                            <select 
+                                className="appearance-none pl-4 pr-8 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white"
+                                value={selectedMonth}
+                                onChange={handleMonthChange}
+                            >
+                                {monthOptions.map((option) => (
+                                    <option key={option.value} value={option.value}>
+                                        {option.label}
+                                    </option>
+                                ))}
+                            </select>
+                            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
+                                <svg
+                                    className="h-4 w-4"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth="2"
+                                        d="M19 9l-7 7-7-7"
+                                    />
+                                </svg>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -250,31 +329,32 @@ const DashboardContent = () => {
                             ))}
                         </div>
                     ) : recentOrders && recentOrders.length > 0 ? (
-                        <table className="w-full">
-                            <thead>
-                                <tr className="bg-gray-100">
-                                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 rounded-l-lg">
-                                        Product Name
-                                    </th>
-                                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">
-                                        Customer
-                                    </th>
-                                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">
-                                        Date - Time
-                                    </th>
-                                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">
-                                        Quantity
-                                    </th>
-                                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">
-                                        Amount
-                                    </th>
-                                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 rounded-r-lg">
-                                        Status
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {recentOrders.map((order) => (
+                        filteredOrders.length > 0 ? (
+                            <table className="w-full">
+                                <thead>
+                                    <tr className="bg-gray-100">
+                                        <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 rounded-l-lg">
+                                            Product Name
+                                        </th>
+                                        <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">
+                                            Customer
+                                        </th>
+                                        <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">
+                                            Date - Time
+                                        </th>
+                                        <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">
+                                            Quantity
+                                        </th>
+                                        <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">
+                                            Amount
+                                        </th>
+                                        <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 rounded-r-lg">
+                                            Status
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {filteredOrders.map((order) => (
                                     <tr key={order.orderId} className="">
                                         <td className="px-4 py-4">
                                             <div className="flex items-center">
@@ -325,6 +405,11 @@ const DashboardContent = () => {
                                 ))}
                             </tbody>
                         </table>
+                        ) : (
+                            <div className="text-center py-8 text-gray-500">
+                                No orders found for the selected status
+                            </div>
+                        )
                     ) : (
                         <div className="text-center py-8 text-gray-500">
                             No recent orders available

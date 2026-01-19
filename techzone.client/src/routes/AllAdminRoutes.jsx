@@ -7,6 +7,7 @@ import Brands from "../pages/Admin/Brands";
 import Categories from "../pages/Admin/Categories";
 import Order from "../pages/Admin/Order/Order";
 import Customers from "../pages/Admin/Customer";
+import Staff from "../pages/Admin/Staff";
 import Promotions from "../pages/Admin/Promotions";
 import PromotionDetail from "../pages/Admin/PromotionDetail";
 import ProductDetail from "../pages/Admin/ProductDetail";
@@ -23,6 +24,7 @@ const AllAdminRoutes = () => {
       <Route path="/categories" element={<Categories/>} />
       <Route path="/orders" element={<Order/>}/>
       <Route path="/customers" element={<Customers/>}/>
+      <Route path="/staff" element={<Staff/>}/>
       <Route path="/promotions" element={<Promotions/>}/>
       <Route path="/promotions/:promotionId" element={<PromotionDetail/>}/>
       <Route path="/warranty-claims" element={<WarrantyClaims/>}/>

@@ -90,7 +90,6 @@ namespace TechZone.Server.Controllers
             }
         }
 
-        // ================= FIXED HERE =================
         [HttpGet("sales-chart")]
         public async Task<ActionResult<SalesChartDataDTO>> GetSalesChart([FromQuery] int days = 30)
         {
@@ -145,16 +144,30 @@ namespace TechZone.Server.Controllers
         }
 
         [HttpGet("recent-orders")]
-        public async Task<ActionResult<List<RecentOrderDTO>>> GetRecentOrders([FromQuery] int limit = 10)
+        public async Task<ActionResult<List<RecentOrderDTO>>> GetRecentOrders(
+            [FromQuery] int limit = 10, 
+            [FromQuery] int? month = null, 
+            [FromQuery] int? year = null)
         {
             try
             {
-                var recentOrders = await _context.Orders
+                var ordersQuery = _context.Orders
                     .Include(o => o.User)
                     .Include(o => o.OrderDetails)
                         .ThenInclude(od => od.ProductColor)
                             .ThenInclude(pc => pc.Product)
                                 .ThenInclude(p => p.ProductImages)
+                    .AsQueryable();
+
+                if (month.HasValue && year.HasValue)
+                {
+                    ordersQuery = ordersQuery.Where(o => 
+                        o.OrderDate.HasValue && 
+                        o.OrderDate.Value.Month == month.Value && 
+                        o.OrderDate.Value.Year == year.Value);
+                }
+
+                var recentOrders = await ordersQuery
                     .OrderByDescending(o => o.OrderDate)
                     .Take(limit)
                     .Select(o => new RecentOrderDTO

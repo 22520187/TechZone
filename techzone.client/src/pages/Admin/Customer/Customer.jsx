@@ -20,6 +20,7 @@ import {
     deleteUser,
 } from "../../../features/Admin/Users/User";
 import dayjs from "dayjs";
+import useDebounce from "../../../hooks/useDebounce";
 
 const CustomerStatusBadge = ({ status }) => {
     const getStatusStyles = () => {
@@ -70,6 +71,8 @@ export default function Customers() {
     const [selectedCustomers, setSelectedCustomers] = useState([]);
     const [filterStatus, setFilterStatus] = useState("");
     const [loading, setLoading] = useState(true);
+
+    const debouncedSearchQuery = useDebounce(searchQuery, 300);
 
     // Modal state
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -123,21 +126,16 @@ export default function Customers() {
         };
     });
 
-    const filterCustomersData = customersData.filter(
-        (row) => {
-            // Search across multiple fields: name, email, phone
-            const matchesSearch = searchQuery.trim() === "" ||
-                row.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                row.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                row.phone.toLowerCase().includes(searchQuery.toLowerCase());
+    const filterCustomersData = customersData.filter((row) => {
+        const matchesSearch = debouncedSearchQuery.trim() === "" ||
+            row.name.toLowerCase().includes(debouncedSearchQuery.toLowerCase()) ||
+            row.email.toLowerCase().includes(debouncedSearchQuery.toLowerCase()) ||
+            row.phone.toLowerCase().includes(debouncedSearchQuery.toLowerCase());
 
-            // Filter by role (exact match after normalization)
-            const matchesRole = filterStatus === "" ||
-                row.role === filterStatus;
+        const matchesRole = filterStatus === "" || row.role === filterStatus;
 
-            return matchesSearch && matchesRole;
-        }
-    );
+        return matchesSearch && matchesRole;
+    });
 
     const totalItems = filterCustomersData.length;
     const totalPages = Math.ceil(totalItems / itemsPerPage);
@@ -511,7 +509,7 @@ export default function Customers() {
                                 </tr>
                             </thead>
                             <motion.tbody
-                                key={currentPage}
+                                key={`customer-table-${debouncedSearchQuery}-${filterStatus}-${currentPage}`}
                                 variants={containerVariants}
                                 initial="hidden"
                                 animate="visible"
