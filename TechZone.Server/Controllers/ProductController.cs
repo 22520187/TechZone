@@ -149,6 +149,20 @@ namespace TechZone.Server.Controllers
             }
         }
 
+        [HttpGet("GetRecommendedProductsByOrderId/{orderId}")]
+        public async Task<ActionResult> GetRecommendedProductsByOrderId(int orderId)
+        {
+            try
+            {
+                var products = await _productRepository.GetRecommendedProductsByOrderIdAsync(orderId);
+                return Ok(_mapper.Map<List<CustomerProductDTO>>(products));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+            }
+        }
+
         [HttpPost("AddProduct")]
         public async Task<ActionResult> AddProduct([FromBody] AdminAddProductDTO adminAddProductDTO)
         {

@@ -64,8 +64,8 @@ namespace TechZone.Server.Repositories.Implement
         public async Task<ICollection<string>> GetUserRole(int userId)
         {
             var result = await _context.Users
-                .Where(ur => ur.UserId == userId)
-                .Select(ur => ur.Role)
+                .Where(ur => ur.UserId == userId && ur.Role != null)
+                .Select(ur => ur.Role!)
                 .ToListAsync();
             return result;
         }

@@ -72,6 +72,25 @@ export const deleteChatHistory = createAsyncThunk(
     }
 );
 
+// Chat with Gemini AI
+export const chatWithGemini = createAsyncThunk(
+    "chatbot/chatWithGemini",
+    async ({ message, userId = null, historyLimit = 5 }, { rejectWithValue }) => {
+        try {
+            const response = await api.post(`${apiBaseUrl}/Chat`, {
+                message: message,
+                userId: userId,
+                historyLimit: historyLimit
+            });
+            return response.data;
+        } catch (error) {
+            return rejectWithValue(
+                error.response?.data || "Error communicating with AI"
+            );
+        }
+    }
+);
+
 const initialState = {
     chatHistory: [],
     status: "idle", // 'idle' | 'loading' | 'succeeded' | 'failed'
@@ -133,6 +152,17 @@ const chatbotSlice = createSlice({
                 state.chatHistory = [];
             })
             .addCase(deleteChatHistory.rejected, (state, action) => {
+                state.status = "failed";
+                state.error = action.payload;
+            })
+            // Chat with Gemini
+            .addCase(chatWithGemini.pending, (state) => {
+                state.status = "loading";
+            })
+            .addCase(chatWithGemini.fulfilled, (state, action) => {
+                state.status = "succeeded";
+            })
+            .addCase(chatWithGemini.rejected, (state, action) => {
                 state.status = "failed";
                 state.error = action.payload;
             });

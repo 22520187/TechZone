@@ -21,5 +21,7 @@ namespace TechZone.Server.Repositories
         Task<Product?> UpdateProductAsync(int productId, Product updatedProduct);
 
         Task<List<Product>> GetFeatureProductsAsync();
+
+        Task<List<Product>> GetRecommendedProductsByOrderIdAsync(int orderId);
     }
 }
