@@ -20,6 +20,7 @@ import {
     deleteStaff,
 } from "../../../features/Admin/Staff/Staff";
 import dayjs from "dayjs";
+import useDebounce from "../../../hooks/useDebounce";
 
 const StaffAvatar = ({ name }) => {
     const initials = name && name.trim()
@@ -48,6 +49,8 @@ export default function Staff() {
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedStaff, setSelectedStaff] = useState([]);
     const [loading, setLoading] = useState(true);
+
+    const debouncedSearchQuery = useDebounce(searchQuery, 300);
 
     // Modal state
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -88,13 +91,13 @@ export default function Staff() {
     }));
 
     const filteredStaffData = staffData.filter((row) => {
-        if (searchQuery.trim() === "") {
+        if (debouncedSearchQuery.trim() === "") {
             return true;
         }
         return (
-            row.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            row.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            row.phone.toLowerCase().includes(searchQuery.toLowerCase())
+            row.name.toLowerCase().includes(debouncedSearchQuery.toLowerCase()) ||
+            row.email.toLowerCase().includes(debouncedSearchQuery.toLowerCase()) ||
+            row.phone.toLowerCase().includes(debouncedSearchQuery.toLowerCase())
         );
     });
 
@@ -403,7 +406,7 @@ export default function Staff() {
                                 </tr>
                             </thead>
                             <motion.tbody
-                                key={`staff-table-${searchQuery}-${currentPage}`}
+                                key={`staff-table-${debouncedSearchQuery}-${currentPage}`}
                                 className="bg-white divide-y divide-gray-200"
                                 variants={containerVariants}
                                 initial="hidden"

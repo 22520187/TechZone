@@ -4,6 +4,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { Package, Search, AlertCircle, TrendingUp, TrendingDown, ChevronLeft, ChevronRight } from "lucide-react";
 import { fetchInventoryReport } from "../../../features/Admin/Dashboard/Dashboard";
 import api from "../../../features/AxiosInstance/AxiosInstance";
+import useDebounce from "../../../hooks/useDebounce";
 
 const InventoryReport = () => {
     const dispatch = useDispatch();
@@ -17,9 +18,11 @@ const InventoryReport = () => {
     const [allCategories, setAllCategories] = useState([]);
     const [allBrands, setAllBrands] = useState([]);
 
+    const debouncedSearchTerm = useDebounce(searchTerm, 500);
+
     useEffect(() => {
-        dispatch(fetchInventoryReport({ search: searchTerm, category: categoryFilter }));
-    }, [dispatch, searchTerm, categoryFilter, brandFilter, statusFilter]);
+        dispatch(fetchInventoryReport({ search: debouncedSearchTerm, category: categoryFilter }));
+    }, [dispatch, debouncedSearchTerm, categoryFilter, brandFilter, statusFilter]);
 
     useEffect(() => {
         const fetchFiltersData = async () => {
@@ -73,7 +76,7 @@ const InventoryReport = () => {
 
     useEffect(() => {
         setCurrentPage(0);
-    }, [searchTerm, categoryFilter, brandFilter, statusFilter]);
+    }, [debouncedSearchTerm, categoryFilter, brandFilter, statusFilter]);
 
     const getPaginationNumbers = () => {
         const pages = [];

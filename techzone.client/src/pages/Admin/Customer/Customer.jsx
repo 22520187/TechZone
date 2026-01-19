@@ -20,6 +20,7 @@ import {
     deleteUser,
 } from "../../../features/Admin/Users/User";
 import dayjs from "dayjs";
+import useDebounce from "../../../hooks/useDebounce";
 
 const CustomerStatusBadge = ({ status }) => {
     const getStatusStyles = () => {
@@ -70,6 +71,8 @@ export default function Customers() {
     const [selectedCustomers, setSelectedCustomers] = useState([]);
     const [filterStatus, setFilterStatus] = useState("");
     const [loading, setLoading] = useState(true);
+
+    const debouncedSearchQuery = useDebounce(searchQuery, 300);
 
     // Modal state
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -124,10 +127,10 @@ export default function Customers() {
     });
 
     const filterCustomersData = customersData.filter((row) => {
-        const matchesSearch = searchQuery.trim() === "" ||
-            row.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            row.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            row.phone.toLowerCase().includes(searchQuery.toLowerCase());
+        const matchesSearch = debouncedSearchQuery.trim() === "" ||
+            row.name.toLowerCase().includes(debouncedSearchQuery.toLowerCase()) ||
+            row.email.toLowerCase().includes(debouncedSearchQuery.toLowerCase()) ||
+            row.phone.toLowerCase().includes(debouncedSearchQuery.toLowerCase());
 
         const matchesRole = filterStatus === "" || row.role === filterStatus;
 
@@ -506,7 +509,7 @@ export default function Customers() {
                                 </tr>
                             </thead>
                             <motion.tbody
-                                key={`customer-table-${searchQuery}-${filterStatus}-${currentPage}`}
+                                key={`customer-table-${debouncedSearchQuery}-${filterStatus}-${currentPage}`}
                                 variants={containerVariants}
                                 initial="hidden"
                                 animate="visible"

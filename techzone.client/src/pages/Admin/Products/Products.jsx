@@ -9,6 +9,7 @@ import { fetchAllProduct, addProduct, updateProduct, deleteProduct } from "../..
 import { fetchAllBrand } from "../../../features/Admin/Brands/Brand";
 import { fetchAllCategory } from "../../../features/Admin/Categories/Category";
 import api from "../../../features/AxiosInstance/AxiosInstance";
+import useDebounce from "../../../hooks/useDebounce";
 
 export default function Products() {
   const dispatch = useDispatch();
@@ -18,6 +19,8 @@ export default function Products() {
 
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
+
+  const debouncedSearchQuery = useDebounce(searchQuery, 300);
 
   // Modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -102,7 +105,7 @@ export default function Products() {
   }));
 
   const filterProductsData = products.filter(row =>
-    row.name.toLowerCase().includes(searchQuery.toLowerCase())
+    row.name.toLowerCase().includes(debouncedSearchQuery.toLowerCase())
   );
 
   // Modal handling functions
