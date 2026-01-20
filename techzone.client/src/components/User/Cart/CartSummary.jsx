@@ -69,7 +69,7 @@ const CartSummary = ({
                     : 0}{" "}
                   items)
                 </Text>
-                <Text>${cartTotal.toFixed(2)}</Text>
+                <Text>{cartTotal.toLocaleString('vi-VN')} ₫</Text>
               </div>
 
               <AnimatePresence>
@@ -81,7 +81,7 @@ const CartSummary = ({
                     style={{ display: "flex", justifyContent: "space-between" }}
                   >
                     <Text type="success">Savings</Text>
-                    <Text type="success">-${totalSavings.toFixed(2)}</Text>
+                    <Text type="success">-{totalSavings.toLocaleString('vi-VN')} ₫</Text>
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -102,7 +102,7 @@ const CartSummary = ({
             }}
           >
             <Text>Total</Text>
-            <Text style={{ fontSize: "1.25rem" }}>${cartTotal.toFixed(2)}</Text>
+            <Text style={{ fontSize: "1.25rem" }}>{cartTotal.toLocaleString('vi-VN')} ₫</Text>
           </motion.div>
 
           {/* Checkout Button */}

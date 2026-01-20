@@ -426,12 +426,12 @@ export default function Products() {
             >
               <InputNumber
                 min={0}
-                step={0.01}
-                precision={2}
+                step={1000}
+                precision={0}
                 style={{ width: '100%' }}
                 placeholder="Enter price"
-                formatter={value => `$ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                parser={value => value.replace(/\$\s?|(,*)/g, '')}
+                formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',') + ' ₫'}
+                parser={value => value.replace(/₫\s?|(,*)/g, '')}
               />
             </Form.Item>
           </div>
