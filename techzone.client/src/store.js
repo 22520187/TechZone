@@ -9,6 +9,7 @@ import promotionReducer from "@/features/Admin/Promotions/Promotion";
 import cartReducer from "@/features/Cart/Cart";
 import chatbotReducer from "@/features/Chatbot/Chatbot";
 import dashboardReducer from "@/features/Admin/Dashboard/Dashboard";
+import blogReducer from "@/features/Admin/Blog/Blog";
 
 export const store = configureStore({
     reducer: {
@@ -22,5 +23,6 @@ export const store = configureStore({
         cart: cartReducer,
         chatbot: chatbotReducer,
         dashboard: dashboardReducer,
+        blog: blogReducer,
     },
 });

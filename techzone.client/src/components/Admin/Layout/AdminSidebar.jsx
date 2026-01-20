@@ -9,11 +9,12 @@ import {
   Users2,
   TicketPercent,
   Shield,
-  UserCog
+  UserCog,
+  BookOpen
 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import GradientText from "../../ReactBitsComponent/GradientText";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { logout } from "../../../features/AxiosInstance/Auth/Auth";
 import { toast } from "sonner";
 
@@ -56,6 +57,7 @@ const SidebarItem = ({ icon: Icon, label, path, isActive = false, isCollapsed, o
 const AdminSidebar = ({ isCollapsed, toggleSidebar }) => {
   const location = useLocation();
   const dispatch = useDispatch();
+  const userRole = useSelector((state) => state.auth.userRole);
 
   const handleLogout = () => {
     // Show confirmation message before logout
@@ -67,19 +69,26 @@ const AdminSidebar = ({ isCollapsed, toggleSidebar }) => {
     }
   };
 
-  const sidebarItems = [
-    { icon: LayoutDashboard, label: "Dashboard", path: "/admin/dashboard" },
-    { icon: ShoppingBag, label: "Products", path: "/admin/products" },
-    { icon: ListOrdered, label: "Order Lists", path: "/admin/orders" },
-    { icon: Slack, label: "Brands", path: "/admin/brands" },
-    { icon: Boxes, label: "Categories", path: "/admin/categories" },
-    { icon: Users2, label: "Customers", path: "/admin/customers" },
-    { icon: UserCog, label: "Staff", path: "/admin/staff" },
-    { icon: TicketPercent, label: "Promotions", path: "/admin/promotions" },
-    { icon: Shield, label: "Warranty Claims", path: "/admin/warranty-claims" },
-    { icon: Settings, label: "Settings", path: "/admin/settings" },
-    { icon: LogOut, label: "Logout", path: "/logout" },
+  // Define menu items for different roles
+  const allMenuItems = [
+    { icon: LayoutDashboard, label: "Dashboard", path: "/admin/dashboard", roles: ["Admin"] },
+    { icon: ShoppingBag, label: "Products", path: "/admin/products", roles: ["Admin"] },
+    { icon: ListOrdered, label: "Order Management", path: "/admin/orders", roles: ["Admin", "Staff"] },
+    { icon: BookOpen, label: "Blog Posts", path: "/admin/blog", roles: ["Admin", "Staff"] },
+    { icon: Slack, label: "Brands", path: "/admin/brands", roles: ["Admin"] },
+    { icon: Boxes, label: "Categories", path: "/admin/categories", roles: ["Admin"] },
+    { icon: Users2, label: "Customers", path: "/admin/customers", roles: ["Admin"] },
+    { icon: UserCog, label: "Staff", path: "/admin/staff", roles: ["Admin"] },
+    { icon: TicketPercent, label: "Promotions", path: "/admin/promotions", roles: ["Admin"] },
+    { icon: Shield, label: "Warranty Claims", path: "/admin/warranty-claims", roles: ["Admin"] },
+    { icon: Settings, label: "Settings", path: "/admin/settings", roles: ["Admin", "Staff"] },
+    { icon: LogOut, label: "Logout", path: "/logout", roles: ["Admin", "Staff"] },
   ];
+
+  // Filter menu items based on user role (case-insensitive)
+  const sidebarItems = allMenuItems.filter(item => 
+    item.roles.some(role => role.toLowerCase() === userRole?.toLowerCase())
+  );
 
   const pageItems = [
     { icon: Tag, label: "Pricing", path: "/pricing" },
@@ -116,14 +125,14 @@ const AdminSidebar = ({ isCollapsed, toggleSidebar }) => {
         </button>
       </div>
 
-      <nav className="mt-auto h-full flex-1">
+      <nav className="mt-4 flex-1 overflow-y-auto">
         <motion.div
-          className="ps-2 pe-3 h-full flex-1"
+          className="ps-2 pe-3"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ staggerChildren: 0.05, delayChildren: 0.1 }}
         >
-          <div className="flex flex-col justify-around h-9/10">
+          <div className="flex flex-col space-y-2">
             {sidebarItems.map((item) => (
               <div key={item.path}>
                 <SidebarItem
