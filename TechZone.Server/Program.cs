@@ -11,6 +11,7 @@ builder.Services.AddDbContext<TechZoneDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("TechZone"), sqlOptions =>
     {
         sqlOptions.EnableRetryOnFailure();
+        sqlOptions.CommandTimeout(120); // Increase timeout to 120 seconds (2 minutes)
     }));
 
 builder.Services.AddCors(options =>
@@ -50,6 +51,7 @@ builder.Services.AddScoped<IWarrantyClaimRepository, SQLWarrantyClaimRepository>
 builder.Services.AddScoped<VNPayService>();
 //builder.Services.AddScoped<IGeminiService, GeminiService>();
 builder.Services.AddScoped<IOpenAIService, OpenAIService>();
+builder.Services.AddScoped<IChatbotKnowledgeService, ChatbotKnowledgeService>();
 
 
 

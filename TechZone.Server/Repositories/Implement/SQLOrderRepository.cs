@@ -53,6 +53,8 @@ namespace TechZone.Server.Repositories.Implement
         {
             var order = await _context.Orders
                 .Include(o => o.OrderDetails)
+                    .ThenInclude(od => od.ProductColor)
+                        .ThenInclude(pc => pc.Product)
                 .FirstOrDefaultAsync(o => o.OrderId == orderId);
             
             if (order == null)
@@ -71,20 +73,24 @@ namespace TechZone.Server.Repositories.Implement
                 !oldStatus.Equals("Delivered", StringComparison.OrdinalIgnoreCase) &&
                 !oldStatus.Equals("Completed", StringComparison.OrdinalIgnoreCase))
             {
-                await CreateWarrantiesForOrderAsync(orderId);
+                await CreateWarrantiesForOrderAsync(order);
             }
 
             return true;
         }
 
         // Helper method to create warranties for all order details
-        private async Task CreateWarrantiesForOrderAsync(int orderId)
+        private async Task CreateWarrantiesForOrderAsync(Order order)
         {
-            var order = await _context.Orders
-                .Include(o => o.OrderDetails)
-                .FirstOrDefaultAsync(o => o.OrderId == orderId);
+            if (order == null || order.OrderDetails == null || order.OrderDetails.Count == 0)
+            {
+                Console.WriteLine($"Order {order?.OrderId} has no order details to create warranties for");
+                return;
+            }
 
-            if (order == null || order.OrderDetails == null) return;
+            int createdCount = 0;
+            int skippedCount = 0;
+            var errors = new List<string>();
 
             foreach (var orderDetail in order.OrderDetails)
             {
@@ -92,18 +98,49 @@ namespace TechZone.Server.Repositories.Implement
                 var existingWarranty = await _context.Warranties
                     .FirstOrDefaultAsync(w => w.OrderDetailId == orderDetail.OrderDetailId);
 
-                if (existingWarranty == null)
+                if (existingWarranty != null)
                 {
-                    try
-                    {
-                        await _warrantyRepository.CreateWarrantyForOrderDetailAsync(orderDetail.OrderDetailId);
-                    }
-                    catch (Exception ex)
-                    {
-                        // Log error but continue with other order details
-                        Console.WriteLine($"Error creating warranty for OrderDetail {orderDetail.OrderDetailId}: {ex.Message}");
-                    }
+                    skippedCount++;
+                    Console.WriteLine($"Warranty already exists for OrderDetail {orderDetail.OrderDetailId}");
+                    continue;
                 }
+
+                // Check if order detail has product color and product
+                if (orderDetail.ProductColor == null)
+                {
+                    var errorMsg = $"OrderDetail {orderDetail.OrderDetailId} has no ProductColor";
+                    errors.Add(errorMsg);
+                    Console.WriteLine($"Error: {errorMsg}");
+                    continue;
+                }
+
+                if (orderDetail.ProductColor.Product == null)
+                {
+                    var errorMsg = $"OrderDetail {orderDetail.OrderDetailId} has no Product";
+                    errors.Add(errorMsg);
+                    Console.WriteLine($"Error: {errorMsg}");
+                    continue;
+                }
+
+                try
+                {
+                    await _warrantyRepository.CreateWarrantyForOrderDetailAsync(orderDetail.OrderDetailId);
+                    createdCount++;
+                    Console.WriteLine($"Successfully created warranty for OrderDetail {orderDetail.OrderDetailId}");
+                }
+                catch (Exception ex)
+                {
+                    var errorMsg = $"Error creating warranty for OrderDetail {orderDetail.OrderDetailId}: {ex.Message}";
+                    errors.Add(errorMsg);
+                    Console.WriteLine($"Error: {errorMsg}");
+                    Console.WriteLine($"Stack trace: {ex.StackTrace}");
+                }
+            }
+
+            Console.WriteLine($"Warranty creation summary for Order {order.OrderId}: Created={createdCount}, Skipped={skippedCount}, Errors={errors.Count}");
+            if (errors.Count > 0)
+            {
+                Console.WriteLine($"Errors: {string.Join("; ", errors)}");
             }
         }
 

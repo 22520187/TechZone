@@ -16,15 +16,21 @@ namespace TechZone.Server.Controllers
         private readonly IChatHistoryRepository _chatHistoryRepository;
         private readonly IMapper _mapper;
         private readonly IOpenAIService _openAIService;
+        private readonly IChatbotKnowledgeService _knowledgeService;
+        private readonly IConfiguration _configuration;
 
         public ChatbotController(
             IChatHistoryRepository chatHistoryRepository, 
             IMapper mapper,
-            IOpenAIService openAIService)
+            IOpenAIService openAIService,
+            IChatbotKnowledgeService knowledgeService,
+            IConfiguration configuration)
         {
             _chatHistoryRepository = chatHistoryRepository;
             _mapper = mapper;
             _openAIService = openAIService;
+            _knowledgeService = knowledgeService;
+            _configuration = configuration;
         }
 
         [HttpPost("SaveMessage")]
@@ -101,6 +107,9 @@ namespace TechZone.Server.Controllers
                     return BadRequest(new { error = "Message is required" });
                 }
 
+                // Mode: DatabaseOnly | Hybrid | ExternalOnly (default: DatabaseOnly for safety)
+                var mode = (_configuration["Chatbot:Mode"] ?? "Hybrid").Trim();
+
                 // Get conversation history for context if userId is provided
                 List<(string role, string content)>? conversationHistory = null;
                 
@@ -121,11 +130,42 @@ namespace TechZone.Server.Controllers
                         .ToList();
                 }
 
-                // Generate AI response using OpenAI
-                var aiResponse = await _openAIService.GenerateResponseAsync(
-                    request.Message, 
-                    conversationHistory
-                );
+                string aiResponse;
+
+                if (mode.Equals("DatabaseOnly", StringComparison.OrdinalIgnoreCase))
+                {
+                    // Database-only mode is kept for debugging, but default behavior should be Hybrid (OpenAI grounded by DB).
+                    aiResponse = await _knowledgeService.TryAnswerFromDatabaseAsync(request.Message, request.UserId)
+                                 ?? "Mình chưa có đủ dữ liệu trong hệ thống để trả lời câu hỏi này từ database TechZone.";
+                }
+                else if (mode.Equals("Hybrid", StringComparison.OrdinalIgnoreCase))
+                {
+                    // Always use OpenAI, but STRICTLY grounded by internal DB context (RAG-style).
+                    var dbContext = await _knowledgeService.BuildDatabaseContextAsync(request.Message, request.UserId);
+
+                    var strictSystemPrompt =
+                        "Bạn là TechZone AI Assistant.\n" +
+                        "QUY TẮC BẮT BUỘC:\n" +
+                        "- Chỉ được dùng dữ liệu trong phần 'Dữ liệu nội bộ TechZone (trích từ database)' để trả lời.\n" +
+                        "- Không được bịa, không suy đoán, không lấy dữ liệu bên ngoài.\n" +
+                        "- Nếu thiếu dữ liệu để trả lời (ví dụ không có giá/không thấy sản phẩm), hãy nói rõ: 'Không có dữ liệu trong hệ thống TechZone để trả lời câu này' và gợi ý người dùng cung cấp thông tin.\n" +
+                        "- Trả lời ngắn gọn, đúng trọng tâm, tiếng Việt.\n\n" +
+                        dbContext;
+
+                    aiResponse = await _openAIService.GenerateResponseWithContextAsync(
+                        request.Message,
+                        strictSystemPrompt,
+                        conversationHistory
+                    );
+                }
+                else // ExternalOnly
+                {
+                    // Generate AI response using OpenAI
+                    aiResponse = await _openAIService.GenerateResponseAsync(
+                        request.Message,
+                        conversationHistory
+                    );
+                }
 
                 // Save to database if userId is provided
                 if (request.UserId.HasValue)

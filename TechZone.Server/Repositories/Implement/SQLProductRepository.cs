@@ -244,126 +244,60 @@ namespace TechZone.Server.Repositories.Implement
 
         public async Task<List<Product>> GetRecommendedProductsByOrderIdAsync(int orderId)
         {
-            var now = DateTime.UtcNow;
-
-            // Get order details to find purchased products
-            var order = await dbContext.Orders
-                .Include(o => o.OrderDetails)
-                    .ThenInclude(od => od.ProductColor)
-                        .ThenInclude(pc => pc.Product)
-                            .ThenInclude(p => p.Category)
-                .Include(o => o.OrderDetails)
-                    .ThenInclude(od => od.ProductColor)
-                        .ThenInclude(pc => pc.Product)
-                            .ThenInclude(p => p.Brand)
-                .FirstOrDefaultAsync(o => o.OrderId == orderId);
-
-            if (order == null || !order.OrderDetails.Any())
+            try
             {
-                // If order not found, fallback to featured products
-                return await GetFeatureProductsAsync();
-            }
+                // Simplified approach: Get purchased product IDs first (lightweight query)
+                var purchasedProductIds = await dbContext.OrderDetails
+                    .Where(od => od.OrderId == orderId && od.ProductColorId.HasValue)
+                    .Join(dbContext.ProductColors,
+                        od => od.ProductColorId,
+                        pc => pc.ProductColorId,
+                        (od, pc) => pc.ProductId)
+                    .Where(productId => productId.HasValue)
+                    .Select(productId => productId!.Value)
+                    .Distinct()
+                    .ToListAsync();
 
-            // Get purchased product IDs to exclude
-            var purchasedProductIds = order.OrderDetails
-                .Where(od => od.ProductColor != null && od.ProductColor.Product != null)
-                .Select(od => od.ProductColor.Product.ProductId)
-                .Distinct()
-                .ToList();
+                // If no products found in order, return featured products
+                if (!purchasedProductIds.Any())
+                {
+                    return await GetFeatureProductsAsync();
+                }
 
-            // Get categories and brands from purchased products
-            var purchasedCategories = order.OrderDetails
-                .Where(od => od.ProductColor != null && od.ProductColor.Product != null && od.ProductColor.Product.CategoryId.HasValue)
-                .Select(od => od.ProductColor.Product.CategoryId!.Value)
-                .Distinct()
-                .ToList();
-
-            var purchasedBrands = order.OrderDetails
-                .Where(od => od.ProductColor != null && od.ProductColor.Product != null && od.ProductColor.Product.BrandId.HasValue)
-                .Select(od => od.ProductColor.Product.BrandId!.Value)
-                .Distinct()
-                .ToList();
-
-            // Try to get recommended products: same category or brand, excluding purchased products
-            var recommendedProducts = await dbContext.Products
-                .Include(p => p.Brand)
-                .Include(p => p.Category)
-                .Include(p => p.ProductImages)
-                .Include(p => p.Reviews)
-                    .ThenInclude(r => r.User)
-                .Include(p => p.Promotions.Where(promo =>
-                    promo.StartDate <= now && promo.EndDate >= now))
-                .Where(p => !purchasedProductIds.Contains(p.ProductId) &&
-                    p.CategoryId.HasValue && purchasedCategories.Contains(p.CategoryId.Value) ||
-                    p.BrandId.HasValue && purchasedBrands.Contains(p.BrandId.Value))
-                .OrderByDescending(p => p.Promotions
-                    .Where(promo => promo.StartDate <= now && promo.EndDate >= now)
-                    .Select(promo => promo.DiscountPercentage)
-                    .DefaultIfEmpty(0)
-                    .Max())
-                .ThenByDescending(p => p.Reviews.Any() ? p.Reviews.Average(r => r.Rating) : 0)
-                .Take(4)
-                .ToListAsync();
-
-            // If we have enough recommended products, return them
-            if (recommendedProducts.Count >= 4)
-            {
-                return recommendedProducts;
-            }
-
-            // If not enough, try to get products with promotions (excluding purchased)
-            var productsWithPromotions = await dbContext.Products
-                .Include(p => p.Brand)
-                .Include(p => p.Category)
-                .Include(p => p.ProductImages)
-                .Include(p => p.Reviews)
-                    .ThenInclude(r => r.User)
-                .Include(p => p.Promotions.Where(promo =>
-                    promo.StartDate <= now && promo.EndDate >= now))
-                .Where(p => !purchasedProductIds.Contains(p.ProductId) &&
-                    p.Promotions.Any(promo =>
-                        promo.StartDate <= now && promo.EndDate >= now))
-                .OrderByDescending(p => p.Promotions
-                    .Where(promo => promo.StartDate <= now && promo.EndDate >= now)
-                    .Max(promo => promo.DiscountPercentage))
-                .Take(4 - recommendedProducts.Count)
-                .ToListAsync();
-
-            recommendedProducts.AddRange(productsWithPromotions);
-
-            // If still not enough, get any products excluding purchased ones
-            if (recommendedProducts.Count < 4)
-            {
-                var recommendedProductIds = recommendedProducts.Select(rp => rp.ProductId).ToList();
-                var additionalProducts = await dbContext.Products
+                // Get recommended products: exclude purchased ones, include necessary relations
+                var recommendedProducts = await dbContext.Products
                     .Include(p => p.Brand)
                     .Include(p => p.Category)
-                    .Include(p => p.Promotions)
                     .Include(p => p.ProductImages)
                     .Include(p => p.Reviews)
                         .ThenInclude(r => r.User)
-                    .Where(p => !purchasedProductIds.Contains(p.ProductId) &&
-                        !recommendedProductIds.Contains(p.ProductId))
-                    .OrderByDescending(p => p.Reviews.Any() ? p.Reviews.Average(r => r.Rating) : 0)
-                    .Take(4 - recommendedProducts.Count)
+                    .Include(p => p.Promotions)
+                    .Where(p => !purchasedProductIds.Contains(p.ProductId))
+                    .OrderByDescending(p => p.CreatedAt)
+                    .Take(4)
                     .ToListAsync();
 
-                recommendedProducts.AddRange(additionalProducts);
-            }
+                // If not enough, supplement with featured products
+                if (recommendedProducts.Count < 4)
+                {
+                    var featuredProducts = await GetFeatureProductsAsync();
+                    var recommendedIds = recommendedProducts.Select(p => p.ProductId).ToList();
+                    var additional = featuredProducts
+                        .Where(p => !purchasedProductIds.Contains(p.ProductId) &&
+                                   !recommendedIds.Contains(p.ProductId))
+                        .Take(4 - recommendedProducts.Count)
+                        .ToList();
+                    recommendedProducts.AddRange(additional);
+                }
 
-            // If still not enough (very rare), fallback to featured products
-            if (recommendedProducts.Count < 4)
+                return recommendedProducts.Take(4).ToList();
+            }
+            catch (Exception ex)
             {
-                var featuredProducts = await GetFeatureProductsAsync();
-                var featuredNotPurchased = featuredProducts
-                    .Where(p => !purchasedProductIds.Contains(p.ProductId) &&
-                        !recommendedProducts.Select(rp => rp.ProductId).Contains(p.ProductId))
-                    .Take(4 - recommendedProducts.Count)
-                    .ToList();
-                recommendedProducts.AddRange(featuredNotPurchased);
+                // Log error and fallback to featured products
+                Console.WriteLine($"Error in GetRecommendedProductsByOrderIdAsync: {ex.Message}");
+                return await GetFeatureProductsAsync();
             }
-
-            return recommendedProducts.Take(4).ToList();
         }
     }
 }
