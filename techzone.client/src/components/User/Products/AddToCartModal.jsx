@@ -173,11 +173,11 @@ const AddToCartModal = ({
               </div>
               <div className="flex items-baseline mt-1">
                 <span className="text-lg font-medium">
-                  ${productDetail.price.toFixed(2)}
+                  {productDetail.price.toLocaleString('vi-VN')} ₫
                 </span>
                 {productDetail.oldPrice > productDetail.price && (
                   <span className="text-sm text-gray-500 line-through ml-2">
-                    ${productDetail.oldPrice.toFixed(2)}
+                    {productDetail.oldPrice.toLocaleString('vi-VN')} ₫
                   </span>
                 )}
               </div>

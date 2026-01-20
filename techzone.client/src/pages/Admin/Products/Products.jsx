@@ -35,9 +35,9 @@ export default function Products() {
   // Image URLs state
   const [imageUrls, setImageUrls] = useState([]);
 
-  // Image upload state
-  const [selectedFile, setSelectedFile] = useState(null);
-  const [imagePreview, setImagePreview] = useState(null);
+  const [selectedFiles, setSelectedFiles] = useState([]);
+  const [imagePreviews, setImagePreviews] = useState([]);
+  const [uploadingImages, setUploadingImages] = useState(false);
 
   // Function to fetch products data
   const fetchProducts = async () => {
@@ -115,8 +115,8 @@ export default function Products() {
     setIsModalOpen(true);
     setColors([{ color: "", colorCode: "#000000", stockQuantity: 0 }]);
     setImageUrls([]);
-    setImagePreview(null);
-    setSelectedFile(null);
+    setImagePreviews([]);
+    setSelectedFiles([]);
     form.resetFields();
   };
 
@@ -124,7 +124,7 @@ export default function Products() {
     setIsEditMode(true);
     setCurrentProduct(product);
     setIsModalOpen(true);
-    setSelectedFile(null);
+    setSelectedFiles([]);
 
     // Find the original product data
     const productData = productItems.find(p => p.productId === product.id);
@@ -152,18 +152,17 @@ export default function Products() {
     if (productData && productData.productImages && productData.productImages.length > 0) {
       const urls = productData.productImages.map(img => img.imageUrl);
       setImageUrls(urls);
-      // Set the first image as preview
-      setImagePreview(urls[0]);
+      setImagePreviews(urls);
     } else {
       setImageUrls([]);
-      setImagePreview(null);
+      setImagePreviews([]);
     }
   };
 
   const handleCancel = () => {
     setIsModalOpen(false);
-    setImagePreview(null);
-    setSelectedFile(null);
+    setImagePreviews([]);
+    setSelectedFiles([]);
     form.resetFields();
   };
 
@@ -212,21 +211,24 @@ export default function Products() {
         return;
       }
 
-      // Upload image if a file is selected
       let updatedImageUrls = [];
-      if (selectedFile) {
-        const uploadedImageUrl = await handleImageUpload(selectedFile);
-        if (uploadedImageUrl) {
-          // Replace with new image only
-          updatedImageUrls = [uploadedImageUrl];
-          console.log("Using new image:", uploadedImageUrl);
+      if (selectedFiles.length > 0) {
+        setUploadingImages(true);
+        const uploadedUrls = await handleMultipleImageUpload(selectedFiles);
+        if (uploadedUrls.length > 0) {
+          if (isEditMode) {
+            updatedImageUrls = [...imageUrls.filter(url => url !== ""), ...uploadedUrls];
+            console.log("Combined images (existing + new):", updatedImageUrls);
+          } else {
+            updatedImageUrls = uploadedUrls;
+            console.log("Using new images:", updatedImageUrls);
+          }
         }
+        setUploadingImages(false);
       } else {
-        // Keep existing images if no new file selected
         updatedImageUrls = [...imageUrls.filter(url => url !== "")];
         console.log("Keeping existing images:", updatedImageUrls);
       }
-
 
       const productData = {
         name: values.name,
@@ -253,8 +255,8 @@ export default function Products() {
       }
 
       setIsModalOpen(false);
-      setImagePreview(null);
-      setSelectedFile(null);
+      setImagePreviews([]);
+      setSelectedFiles([]);
       form.resetFields();
     } catch (err) {
       console.error("Error submitting product:", err);
@@ -262,6 +264,7 @@ export default function Products() {
       message.error(`Unable to ${action} product. Please try again.`);
     } finally {
       setSubmitting(false);
+      setUploadingImages(false);
     }
   };
 
@@ -281,47 +284,68 @@ export default function Products() {
     }
   };
 
-  // Handle image upload
-  const handleImageUpload = async (file) => {
-    try {
-      // Create FormData to send the file
-      const formData = new FormData();
-      formData.append('file', file);
+  const handleMultipleImageUpload = async (files) => {
+    const uploadedUrls = [];
+    const totalFiles = files.length;
+    
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      try {
+        const formData = new FormData();
+        formData.append('file', file);
 
-      console.log("Uploading file:", file.name);
+        console.log(`Uploading file ${i + 1}/${totalFiles}:`, file.name);
+        message.loading(`Uploading image ${i + 1}/${totalFiles}...`, 0);
 
-      // Call the upload API with extended timeout
-      const response = await api.post('/api/Image/upload/product', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        },
-        timeout: 60000, // 60 giây timeout cho upload ảnh (Cloudinary có thể chậm)
-      });
+        const response = await api.post('/api/Image/upload/product', formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          },
+          timeout: 60000,
+        });
 
-      // Get the image URL from the response
-      const imageUrl = response.data.imageUrl;
-      console.log("Uploaded image URL:", imageUrl);
-
-      // Update the image preview
-      setImagePreview(imageUrl);
-
-      message.success("Image uploaded successfully");
-      return imageUrl;
-    } catch (error) {
-      console.error("Error uploading image:", error);
-      
-      // Hiển thị message chi tiết hơn
-      let errorMessage = "Failed to upload image";
-      if (error.code === 'ECONNABORTED') {
-        errorMessage = "Upload timeout. Please try with a smaller image or check your connection.";
-      } else if (error.response?.data) {
-        errorMessage = error.response.data;
-      } else if (error.message) {
-        errorMessage = error.message;
+        const imageUrl = response.data.imageUrl;
+        console.log("Uploaded image URL:", imageUrl);
+        uploadedUrls.push(imageUrl);
+        
+        message.destroy();
+        message.success(`Image ${i + 1}/${totalFiles} uploaded successfully`);
+      } catch (error) {
+        message.destroy();
+        console.error(`Error uploading image ${i + 1}:`, error);
+        
+        let errorMessage = `Failed to upload image ${i + 1}`;
+        if (error.code === 'ECONNABORTED') {
+          errorMessage = `Upload timeout for image ${i + 1}. Please try with a smaller image.`;
+        } else if (error.response?.data) {
+          errorMessage = error.response.data;
+        } else if (error.message) {
+          errorMessage = error.message;
+        }
+        
+        message.error(errorMessage, 3);
       }
-      
-      message.error(errorMessage, 5);
-      return null;
+    }
+    
+    return uploadedUrls;
+  };
+
+  const handleRemoveImage = (index) => {
+    const newPreviews = [...imagePreviews];
+    newPreviews.splice(index, 1);
+    setImagePreviews(newPreviews);
+    
+    if (index < imageUrls.length) {
+      const newUrls = [...imageUrls];
+      newUrls.splice(index, 1);
+      setImageUrls(newUrls);
+    }
+    
+    const newFilesIndex = index - imageUrls.length;
+    if (newFilesIndex >= 0 && newFilesIndex < selectedFiles.length) {
+      const newFiles = [...selectedFiles];
+      newFiles.splice(newFilesIndex, 1);
+      setSelectedFiles(newFiles);
     }
   };
 
@@ -426,12 +450,14 @@ export default function Products() {
             >
               <InputNumber
                 min={0}
-                step={0.01}
-                precision={2}
+                step={1000}
+                precision={0}
                 style={{ width: '100%' }}
                 placeholder="Enter price"
-                formatter={value => `$ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                parser={value => value.replace(/\$\s?|(,*)/g, '')}
+                formatter={(value) =>
+                  value ? value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",") : ""}
+                parser={(value) => value.replace(/,/g, "")}
+                addonAfter="đ"
               />
             </Form.Item>
           </div>
@@ -524,56 +550,80 @@ export default function Products() {
 
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Image Upload
+              Product Images (Multiple)
             </label>
-            <div className="flex items-center gap-4 mb-4">
-              <div
-                onClick={() => document.getElementById("productImageUpload").click()}
-                className="w-24 h-24 rounded border border-gray-200 cursor-pointer overflow-hidden flex items-center justify-center hover:bg-gray-50 transition"
-              >
-                {imagePreview ? (
+            
+            {/* Display existing and new images */}
+            <div className="grid grid-cols-4 gap-4 mb-4">
+              {imagePreviews.map((preview, index) => (
+                <div key={index} className="relative w-24 h-24 rounded border border-gray-200 overflow-hidden group">
                   <img
-                  src={imagePreview}
-                  alt="Preview"
-                  className="object-cover w-full h-full"
-                  onError={(e) => {
+                    src={preview}
+                    alt={`Preview ${index + 1}`}
+                    className="object-cover w-full h-full"
+                    onError={(e) => {
                       e.target.onerror = null;
                       e.target.src = "https://placehold.co/300x300?text=No+Image";
-                  }}
-              />
-                ) : (
-                  <div className="text-gray-400 text-sm text-center flex flex-col items-center justify-center">
-                    <UploadIcon size={20} className="mb-1" />
-                    <span>Upload</span>
-                  </div>
-                )}
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveImage(index)}
+                    className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+              
+              {/* Upload button */}
+              <div
+                onClick={() => document.getElementById("productImageUpload").click()}
+                className="w-24 h-24 rounded border-2 border-dashed border-gray-300 cursor-pointer flex items-center justify-center hover:bg-gray-50 transition"
+              >
+                <div className="text-gray-400 text-sm text-center flex flex-col items-center justify-center">
+                  <UploadIcon size={20} className="mb-1" />
+                  <span>Add</span>
+                </div>
               </div>
+            </div>
 
-              <div className="flex flex-col text-sm">
-                <span className="font-medium">Upload new image</span>
-                <span className="text-gray-500 text-xs">JPG, JPEG or PNG. Max 5MB.</span>
-              </div>
+            <div className="flex flex-col text-sm text-gray-500">
+              <span className="font-medium">Upload product images</span>
+              <span className="text-xs">JPG, JPEG or PNG. Max 5MB per image. You can select multiple files.</span>
             </div>
 
             <input
               type="file"
               id="productImageUpload"
               accept="image/*"
+              multiple
               className="hidden"
               onChange={(e) => {
-                const file = e.target.files[0];
-                if (file) {
+                const files = Array.from(e.target.files);
+                const validFiles = [];
+                
+                for (const file of files) {
                   if (file.size > 5 * 1024 * 1024) {
-                    message.error("File size should not exceed 5MB");
-                    return;
+                    message.error(`${file.name} exceeds 5MB limit`);
+                    continue;
                   }
-                  setSelectedFile(file);
-                  const reader = new FileReader();
-                  reader.onloadend = () => {
-                    setImagePreview(reader.result);
-                  };
-                  reader.readAsDataURL(file);
+                  validFiles.push(file);
                 }
+                
+                if (validFiles.length > 0) {
+                  setSelectedFiles([...selectedFiles, ...validFiles]);
+                  
+                  validFiles.forEach(file => {
+                    const reader = new FileReader();
+                    reader.onloadend = () => {
+                      setImagePreviews(prev => [...prev, reader.result]);
+                    };
+                    reader.readAsDataURL(file);
+                  });
+                }
+                
+                e.target.value = '';
               }}
             />
           </div>

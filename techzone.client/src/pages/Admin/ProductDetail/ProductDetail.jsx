@@ -10,122 +10,12 @@ import ProductReviews from "../../../components/User/ProductDetail/ProductReview
 import api from "../../../features/AxiosInstance/AxiosInstance";
 import { addItemToCart } from "../../../features/Cart/Cart";
 
-// Mock product data - in a real app this would come from an API
-const mockProduct = {
-  id: 1,
-  name: "NextGen Pro Wireless Headphones",
-  description:
-    "Experience premium sound with our NextGen Pro Wireless Headphones. These over-ear headphones feature active noise cancellation, 40-hour battery life, and comfortable memory foam ear cushions. Perfect for music lovers, gamers, and professionals who need crystal clear audio.",
-  longDescription: `
-      <p>Experience premium sound quality with our NextGen Pro Wireless Headphones. These cutting-edge over-ear headphones combine sophisticated technology with exceptional comfort for an immersive audio experience.</p>
-
-      <h4>Key Features:</h4>
-      <ul>
-        <li>Active Noise Cancellation technology blocks out ambient noise</li>
-        <li>40-hour battery life on a single charge</li>
-        <li>Memory foam ear cushions for extended comfort</li>
-        <li>Voice assistant compatibility with Siri, Google Assistant, and Alexa</li>
-        <li>Bluetooth 5.2 with multi-device connection</li>
-        <li>Built-in high-quality microphone for calls</li>
-        <li>Touch controls for volume, track selection, and calls</li>
-        <li>Foldable design for easy storage and travel</li>
-      </ul>
-
-      <h4>Technical Specifications:</h4>
-      <ul>
-        <li>Driver Size: 40mm</li>
-        <li>Frequency Response: 20Hz - 20kHz</li>
-        <li>Impedance: 32 Ohm</li>
-        <li>Bluetooth Range: Up to 10 meters</li>
-        <li>Weight: 250g</li>
-        <li>Fast charging: 10 minutes charge for 5 hours playback</li>
-        <li>USB-C charging port</li>
-      </ul>
-    `,
-  price: 249.99,
-  oldPrice: 299.99,
-  stockQuantity: 45,
-  categoryId: 3,
-  categoryName: "Audio",
-  brandId: 2,
-  brandName: "NextGen Audio",
-  rating: 4.7,
-  reviewCount: 128,
-  images: [
-    "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?q=80&w=2070&auto=format&fit=crop",
-    "https://images.unsplash.com/photo-1577174881658-0f30ed549adc?q=80&w=1974&auto=format&fit=crop",
-    "https://images.unsplash.com/photo-1524678606370-a47ad25cb82a?q=80&w=2069&auto=format&fit=crop",
-    "https://images.unsplash.com/photo-1484704849700-f032a568e944?q=80&w=2070&auto=format&fit=crop",
-  ],
-  colors: ["Black", "Silver", "Blue"],
-  createdAt: "2023-11-15T14:48:00.000Z",
-  features: [
-    "Noise Cancellation",
-    "40hr Battery",
-    "Bluetooth 5.2",
-    "Voice Assistant",
-  ],
-};
-
-// Mock reviews data
-const mockReviews = [
-  {
-    id: 1,
-    userId: 101,
-    userName: "Alex Johnson",
-    userAvatar: "https://i.pravatar.cc/150?img=1",
-    productId: 1,
-    rating: 5,
-    comment:
-      "These headphones are amazing! The sound quality is crystal clear, and the noise cancellation works perfectly. I use them during work and commuting, and they've made a huge difference.",
-    createdAt: "2024-02-10T09:23:00.000Z",
-    helpfulCount: 24,
-  },
-  {
-    id: 2,
-    userId: 102,
-    userName: "Sarah Miller",
-    userAvatar: "https://i.pravatar.cc/150?img=5",
-    productId: 1,
-    rating: 4,
-    comment:
-      "Great headphones overall. The sound is excellent and the battery life is impressive. My only complaint is that they're a bit tight on my head, but they might loosen up over time.",
-    createdAt: "2024-01-25T15:41:00.000Z",
-    helpfulCount: 15,
-  },
-  {
-    id: 3,
-    userId: 103,
-    userName: "Michael Chen",
-    userAvatar: "https://i.pravatar.cc/150?img=8",
-    productId: 1,
-    rating: 5,
-    comment:
-      "Best headphones I've ever owned! The sound is balanced with great bass, and the noise cancellation is top notch. They're comfortable enough to wear all day, and I love the touch controls.",
-    createdAt: "2023-12-18T11:30:00.000Z",
-    helpfulCount: 32,
-  },
-  {
-    id: 4,
-    userId: 104,
-    userName: "Emily Rodriguez",
-    userAvatar: "https://i.pravatar.cc/150?img=9",
-    productId: 1,
-    rating: 4,
-    comment:
-      "Very good product that delivers on its promises. The sound quality is excellent and the battery lasts forever. The only downside is that the app is a bit buggy sometimes.",
-    createdAt: "2023-12-05T14:12:00.000Z",
-    helpfulCount: 8,
-  },
-];
-
 export default function ProductDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const cartId = useSelector((state) => state.cart.cartId);
   const cartItems = useSelector((state) => state.cart.items);
-  //const cartId = 5;
 
   const [product, setProduct] = useState({});
   const [reviews, setReviews] = useState([]);
@@ -138,7 +28,7 @@ export default function ProductDetail() {
   const fetchProduct = async () => {
     try {
       const response = await api.get(
-        `/api/Product/CustomerGetProductById/${id}`
+        `/api/Product/AdminGetProductById/${id}`
       );
       const data = response.data;
       const mappedData = {
@@ -146,7 +36,7 @@ export default function ProductDetail() {
         name: data.name,
         description: data.description,
         longDescription: data.longDescription || "",
-        price: data.salePrice,
+        price: data.salePrice || data.price,
         oldPrice: data.price,
         stockQuantity: data.stockQuantity,
         categoryId: data.category.categoryId,
@@ -155,12 +45,11 @@ export default function ProductDetail() {
         brandName: data.brand.brandName,
         rating: data.rating || 0,
         reviewCount: data.reviewCount || 0,
-        images: [
-          "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?q=80&w=2070&auto=format&fit=crop",
-          "https://images.unsplash.com/photo-1577174881658-0f30ed549adc?q=80&w=1974&auto=format&fit=crop",
-          "https://images.unsplash.com/photo-1524678606370-a47ad25cb82a?q=80&w=2069&auto=format&fit=crop",
-          "https://images.unsplash.com/photo-1484704849700-f032a568e944?q=80&w=2070&auto=format&fit=crop",
-        ],
+        images: data.productImages && data.productImages.length > 0
+          ? data.productImages.map(img => img.imageUrl)
+          : [
+              "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?q=80&w=2070&auto=format&fit=crop",
+            ],
         productColors: data.productColors.map((color) => ({
           id: color.productColorId,
           name: color.color,
@@ -178,7 +67,7 @@ export default function ProductDetail() {
       setProduct(mappedData);
       setAvailableStock(totalStock);
 
-      // Map reviews from API response
+      // Map reviews from API response if available
       if (data.reviews && data.reviews.length > 0) {
         const mappedReviews = data.reviews.map((review) => ({
           id: review.reviewId,
@@ -202,6 +91,7 @@ export default function ProductDetail() {
     } catch (error) {
       console.error(error);
       message.error("Error fetching product: " + error.message);
+      setLoading(false);
     }
   };
 
@@ -352,19 +242,19 @@ export default function ProductDetail() {
             {/* Price */}
             <div className="flex items-baseline space-x-2 mt-1">
               <span className="text-2xl font-bold">
-                ${product.price ? product.price.toFixed(2) : "0.00"}
+                {product.price ? product.price.toLocaleString('vi-VN') : "0"} ₫
               </span>
               {product.oldPrice && product.oldPrice > product.price && (
                 <span className="text-muted-foreground line-through">
-                  ${product.oldPrice ? product.oldPrice.toFixed(2) : "0.00"}
+                  {product.oldPrice ? product.oldPrice.toLocaleString('vi-VN') : "0"} ₫
                 </span>
               )}
               {product.oldPrice && product.oldPrice > product.price && (
                 <div className="ml-2 px-2 py-1 text-sm font-medium bg-red-300 rounded">
-                  Save $
+                  Tiết kiệm
                   {product.oldPrice && product.price
-                    ? (product.oldPrice - product.price).toFixed(2)
-                    : "0.00"}
+                    ? " " + (product.oldPrice - product.price).toLocaleString('vi-VN')
+                    : " 0"} ₫
                 </div>
               )}
             </div>

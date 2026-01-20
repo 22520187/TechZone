@@ -82,11 +82,11 @@ const ProductCard = ({ product }) => {
           <div className="flex items-baseline">
             {isSale && (
               <span className="text-sm text-gray-500 line-through mr-2">
-                ${product.oldPrice.toFixed(2)}
+                {product.oldPrice.toLocaleString('vi-VN')} ₫
               </span>
             )}
             <span className="text-lg font-medium">
-              ${product.price.toFixed(2)}
+              {product.price.toLocaleString('vi-VN')} ₫
             </span>
           </div>
 

@@ -10,8 +10,14 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<TechZoneDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("TechZone"), sqlOptions =>
     {
-        sqlOptions.EnableRetryOnFailure();
-        sqlOptions.CommandTimeout(120); // Increase timeout to 120 seconds (2 minutes)
+        sqlOptions.EnableRetryOnFailure(
+            maxRetryCount: 5,
+            maxRetryDelay: TimeSpan.FromSeconds(30),
+            errorNumbersToAdd: null);
+        
+        sqlOptions.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery);
+        
+        sqlOptions.CommandTimeout(60);
     }));
 
 builder.Services.AddCors(options =>

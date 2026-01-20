@@ -46,7 +46,7 @@ const TopProducts = () => {
                 <div className="flex bg-gray-100 rounded-lg p-1">
                     <button
                         onClick={() => setActiveTab("bestSellers")}
-                        className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+                        className={`px-4 py-2 cursor-pointer rounded-md text-sm font-medium transition-all duration-200 ${
                             activeTab === "bestSellers"
                                 ? "bg-white text-primary shadow-sm"
                                 : "text-gray-600 hover:text-gray-800"
@@ -59,7 +59,7 @@ const TopProducts = () => {
                     </button>
                     <button
                         onClick={() => setActiveTab("leastSellers")}
-                        className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+                        className={`px-4 py-2 rounded-md cursor-pointer text-sm font-medium transition-all duration-200 ${
                             activeTab === "leastSellers"
                                 ? "bg-white text-primary shadow-sm"
                                 : "text-gray-600 hover:text-gray-800"
