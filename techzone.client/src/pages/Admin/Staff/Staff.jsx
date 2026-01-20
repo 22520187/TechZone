@@ -76,7 +76,7 @@ export default function Staff() {
         fetchStaff();
     }, [dispatch]);
 
-    const staffData = staffItems.map((staff) => ({
+    const staffData = (staffItems || []).map((staff) => ({
         id: staff.userId,
         name: staff.fullName || "",
         email: staff.email || "",

@@ -138,8 +138,8 @@ export default function Brands() {
       const formData = new FormData();
       formData.append('file', file);
 
-      // Call the upload API
-      const response = await api.post('/api/Upload/UploadImage', formData, {
+      // Call the upload API - Updated to correct endpoint
+      const response = await api.post('/api/Image/upload/brand', formData, {
         headers: {
           'Content-Type': 'multipart/form-data'
         }
@@ -160,13 +160,13 @@ export default function Brands() {
       return imageUrl;
     } catch (error) {
       console.error("Error uploading image:", error);
-      message.error("Failed to upload image: " + (error.response?.data || error.message));
+      message.error("Failed to upload image: " + (error.response?.data?.message || error.message));
       return null;
     }
   };
 
   // Map API response data to the format expected by BrandCard
-  const mappedBrands = brandItems
+  const mappedBrands = (brandItems || [])
     .filter((brand) =>
       brand.brandName.toLowerCase().includes(searchQuery.toLowerCase())
     )

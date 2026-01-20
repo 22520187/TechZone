@@ -30,7 +30,7 @@ const Login = () => {
       
       // Redirect based on user role
       if (result.userRole === "Admin") {
-        navigate("/admin");
+        navigate("/admin/dashboard");
       } else {
         navigate(from);
       }
@@ -48,7 +48,7 @@ const Login = () => {
     if (authState.isAuthenticated) {
       // Redirect if already authenticated
       if (authState.userRole === "Admin") {
-        navigate("/admin");
+        navigate("/admin/dashboard");
       } else {
         navigate(from);
       }

@@ -1,5 +1,5 @@
 import React from "react";
-import { Route, Routes } from "react-router-dom";
+import { Route, Routes, Navigate } from "react-router-dom";
 import Dashboard from "../pages/Admin/Dashboard";
 import NotFound from "../pages/Admin/NotFound";
 import Products from "../pages/Admin/Products";
@@ -17,18 +17,19 @@ import WarrantyClaims from "../pages/Admin/WarrantyClaims/WarrantyClaims";
 const AllAdminRoutes = () => {
   return (
     <Routes>
-      <Route path="/" element={<Dashboard />} />
-      <Route path="/products" element={<Products/>} />
-      <Route path="/products/:id" element={<ProductDetail />} />
-      <Route path="/brands" element={<Brands/>} />
-      <Route path="/categories" element={<Categories/>} />
-      <Route path="/orders" element={<Order/>}/>
-      <Route path="/customers" element={<Customers/>}/>
-      <Route path="/staff" element={<Staff/>}/>
-      <Route path="/promotions" element={<Promotions/>}/>
-      <Route path="/promotions/:promotionId" element={<PromotionDetail/>}/>
-      <Route path="/warranty-claims" element={<WarrantyClaims/>}/>
-      <Route path="/settings" element={<Settings/>}/>
+      <Route path="/" element={<Navigate to="dashboard" replace />} />
+      <Route path="dashboard" element={<Dashboard />} />
+      <Route path="products" element={<Products/>} />
+      <Route path="products/:id" element={<ProductDetail />} />
+      <Route path="brands" element={<Brands/>} />
+      <Route path="categories" element={<Categories/>} />
+      <Route path="orders" element={<Order/>}/>
+      <Route path="customers" element={<Customers/>}/>
+      <Route path="staff" element={<Staff/>}/>
+      <Route path="promotions" element={<Promotions/>}/>
+      <Route path="promotions/:promotionId" element={<PromotionDetail/>}/>
+      <Route path="warranty-claims" element={<WarrantyClaims/>}/>
+      <Route path="settings" element={<Settings/>}/>
 
       <Route path="*" element={<NotFound />} />
     </Routes>

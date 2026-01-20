@@ -19,6 +19,9 @@ const OrderList = () => {
   // Add state for pagination
   const [currentPage, setCurrentPage] = useState(0);
   const [itemsPerPage, setItemsPerPage] = useState(5);
+  // Add state for pending status change
+  const [pendingStatus, setPendingStatus] = useState(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   // Fetch orders data from API
   useEffect(() => {
@@ -147,46 +150,54 @@ const OrderList = () => {
   };
 
   // Update order status
-  // Replace the existing updateOrderStatus function with this correctly fixed version
-const updateOrderStatus = async (orderId, newStatus) => {
-  try {
-    // The API expects the new status as a direct string value, not as a JSON object
-    // Note: We're sending the status as a raw string with quotes around it
-    await axios.put(`http://localhost:5240/api/Order/update-order-state/${orderId}`,
-      JSON.stringify(newStatus),
-      {
-        headers: {
-          'Content-Type': 'application/json'
+  const updateOrderStatus = async () => {
+    if (!selectedOrder || !pendingStatus) return;
+
+    try {
+      setIsSaving(true);
+      // Use axios instance to automatically get the correct baseURL
+      await axios.put(`/api/Order/update-order-state/${selectedOrder.orderId}`,
+        JSON.stringify(pendingStatus),
+        {
+          headers: {
+            'Content-Type': 'application/json'
+          }
         }
+      );
+
+      // Update local state
+      setOrders(orders.map(order =>
+        order.orderId === selectedOrder.orderId ? {...order, status: pendingStatus} : order
+      ));
+
+      // Update selected order
+      setSelectedOrder({...selectedOrder, status: pendingStatus});
+
+      // Reset pending status
+      setPendingStatus(null);
+
+      // Show success message
+      console.log(`Order #${selectedOrder.orderId} status updated to ${pendingStatus}`);
+
+    } catch (error) {
+      console.error("Error updating order status:", error);
+      // Add better error handling
+      if (error.response) {
+        console.error("Server responded with error:", error.response.data);
+      } else if (error.request) {
+        console.error("No response received from server");
+      } else {
+        console.error("Error setting up request:", error.message);
       }
-    );
-
-    // Update local state
-    setOrders(orders.map(order =>
-      order.orderId === orderId ? {...order, status: newStatus} : order
-    ));
-
-    // Update selected order if it's the one being modified
-    if (selectedOrder && selectedOrder.orderId === orderId) {
-      setSelectedOrder({...selectedOrder, status: newStatus});
+    } finally {
+      setIsSaving(false);
     }
+  };
 
-  } catch (error) {
-    console.error("Error updating order status:", error);
-    // Add better error handling
-    if (error.response) {
-      // The request was made and the server responded with a status code
-      // that falls out of the range of 2xx
-      console.error("Server responded with error:", error.response.data);
-    } else if (error.request) {
-      // The request was made but no response was received
-      console.error("No response received from server");
-    } else {
-      // Something happened in setting up the request that triggered an Error
-      console.error("Error setting up request:", error.message);
-    }
-  }
-};
+  // Handle status change in dropdown
+  const handleStatusChange = (value) => {
+    setPendingStatus(value);
+  };
 
   // Animation variants
   const tableRowVariants = {
@@ -250,15 +261,15 @@ const updateOrderStatus = async (orderId, newStatus) => {
         {/* Order Status Filter */}
         <div className="flex items-center border-r border-gray-200 ">
           <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-            <SelectTrigger className="border-0 focus:ring-0 focus:ring-offset-0 px-4 py-3 h-auto min-w-[220px]">
+            <SelectTrigger className="border-0 focus:ring-0 focus:ring-offset-0 px-4 py-3 h-auto min-w-[220px] bg-white">
               <div className="flex items-center justify-start w-full text-sm font-medium text-gray-700 cursor-pointer">
-                <Tag size={16} className="mr-2 text-green-500 flex-shrink-0 cursor-pointer" />
+                <Tag size={16} className="mr-2 text-primary-500 flex-shrink-0 cursor-pointer" />
                 <SelectValue placeholder="Order Status" className="flex-grow cursor-pointer" />
               </div>
             </SelectTrigger>
-            <SelectContent className="z-50 bg-white">
+            <SelectContent className="z-50 bg-white border border-gray-200 shadow-lg">
               {orderStatuses.map(status => (
-                <SelectItem key={status} value={status} className="cursor-pointer">
+                <SelectItem key={status} value={status} className="cursor-pointer hover:bg-gray-50">
                   {status}
                 </SelectItem>
               ))}
@@ -485,9 +496,9 @@ const updateOrderStatus = async (orderId, newStatus) => {
                     <div className="flex items-center">
                       <span className="text-gray-500 w-60">Status:</span>
                       <AntdSelect
-                        defaultValue={selectedOrder.status}
+                        value={pendingStatus || selectedOrder.status}
                         style={{ width: 150 }}
-                        onChange={(value) => updateOrderStatus(selectedOrder.orderId, value)}
+                        onChange={handleStatusChange}
                         className="border border-gray-300 rounded-md"
                       >
                         <AntdSelect.Option value="Pending Confirm">Pending Confirm</AntdSelect.Option>
@@ -555,15 +566,62 @@ const updateOrderStatus = async (orderId, newStatus) => {
                 )}
               </div>
 
-              <div className="flex justify-end gap-3 px-6 py-4 border-t bg-gray-50">
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={() => setSelectedOrder(null)}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300 transition-colors cursor-pointer"
-                >
-                  Đóng
-                </motion.button>
+              <div className="flex justify-between items-center px-6 py-4 border-t bg-gray-50">
+                {pendingStatus && pendingStatus !== selectedOrder.status && (
+                  <div className="flex items-center text-sm text-amber-600">
+                    <span className="inline-flex items-center">
+                      <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                      </svg>
+                      Có thay đổi chưa lưu
+                    </span>
+                  </div>
+                )}
+                <div className="flex gap-3 ml-auto">
+                  {pendingStatus && pendingStatus !== selectedOrder.status && (
+                    <>
+                      <motion.button
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        onClick={() => setPendingStatus(null)}
+                        disabled={isSaving}
+                        className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        Hủy
+                      </motion.button>
+                      <motion.button
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        onClick={updateOrderStatus}
+                        disabled={isSaving}
+                        className="px-4 py-2 text-sm font-medium text-white bg-primary rounded-md hover:bg-primary-600 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                      >
+                        {isSaving ? (
+                          <>
+                            <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            Đang lưu...
+                          </>
+                        ) : (
+                          'Lưu thay đổi'
+                        )}
+                      </motion.button>
+                    </>
+                  )}
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => {
+                      setSelectedOrder(null);
+                      setPendingStatus(null);
+                    }}
+                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300 transition-colors cursor-pointer"
+                  >
+                    Đóng
+                  </motion.button>
+                </div>
               </div>
             </motion.div>
           </motion.div>

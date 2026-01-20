@@ -1,12 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
-  Filter,
   ChevronLeft,
   ChevronRight,
   Search,
-  ChevronDown,
-  Eye,
   Pencil,
   Trash2,
   Plus,
@@ -70,7 +67,6 @@ export default function Promotions() {
   const [currentPage, setCurrentPage] = useState(0);
   const [itemsPerPage, setItemsPerPage] = React.useState(8);
   const [searchQuery, setSearchQuery] = useState("");
-  const [filterStatus, setFilterStatus] = useState("");
   const [products, setProducts] = useState([]);
   const [productsLoading, setProductsLoading] = useState(false);
 
@@ -202,7 +198,7 @@ export default function Promotions() {
     }
   };
 
-  const promotionsData = promotionItems.map((promotion) => ({
+  const promotionsData = (promotionItems || []).map((promotion) => ({
     id: promotion.promotionId,
     name: promotion.name,
     description: promotion.description || "",
@@ -214,12 +210,8 @@ export default function Promotions() {
     originalData: promotion,
   }));
 
-  const filterData = promotionsData.filter(
-    (row) =>
-      row.name.toLowerCase().includes(searchQuery.toLowerCase()) &&
-      (filterStatus !== ""
-        ? row.isProductPromotion.toString() === filterStatus
-        : true)
+  const filterData = promotionsData.filter((row) =>
+    row.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const totalItems = filterData.length;
@@ -268,11 +260,6 @@ export default function Promotions() {
     visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
   };
 
-  const handleFilterChange = async (e) => {
-    const value = e.target.value;
-    setFilterStatus(value);
-    setCurrentPage(0);
-  };
 
   return (
     <div className="space-y-4">
@@ -298,49 +285,13 @@ export default function Promotions() {
           />
         </div>
 
-        <div className="flex space-x-4">
-          <div className="flex items-center py-2">
-            <Filter size={18} className="mr-2 text-gray-500" />
-            <span className="text-sm font-medium text-gray-700">Filter By</span>
-          </div>
-
-          <div className="relative w-48">
-            <select
-              title="status filter"
-              className="w-full bg-white border border-gray-200 rounded-md shadow-sm py-2 px-4 focus:outline-none text-sm text-gray-700 appearance-none"
-              value={filterStatus}
-              onChange={handleFilterChange}
-            >
-              <option value="" className="italic">
-                Promotion by product
-              </option>
-              <option value="true">TRUE</option>
-              <option value="false">FALSE</option>
-            </select>
-
-            <ChevronDown
-              size={16}
-              className="text-gray-500 absolute inset-y-3 right-3 flex items-center pointer-events-none"
-            />
-          </div>
-
-          <button
-            className="flex items-center py-2 text-red-500 font-medium text-sm"
-            onClick={() => {
-              setFilterStatus("");
-            }}
-          >
-            <span className="cursor-pointer">Reset Filter</span>
-          </button>
-
-          <button
-            className="flex items-center py-2 px-5 text-white bg-primary rounded-lg font-bold text-sm hover:scale-105 active:scale-95 transition-all duration-100"
-            onClick={showAddModal}
-          >
-            <Plus size={16} className="mr-1" />
-            <span className="cursor-pointer">Add Promotion</span>
-          </button>
-        </div>
+        <button
+          className="flex items-center py-2 px-5 text-white bg-primary rounded-lg font-bold text-sm hover:bg-primary-600 active:scale-95 transition-all duration-100"
+          onClick={showAddModal}
+        >
+          <Plus size={16} className="mr-1" />
+          <span className="cursor-pointer">Add Promotion</span>
+        </button>
       </div>
       {/* Table */}
       {loading || status === "loading" ? (
@@ -478,7 +429,7 @@ export default function Promotions() {
                       <td className="px-4 py-2 whitespace-nowrap">
                         {promotion.isProductPromotion && (
                           <button
-                            onClick={() => navigate(`/promotions/${promotion.id}`)}
+                            onClick={() => navigate(`/admin/promotions/${promotion.id}`)}
                             className="flex text-gray-400 hover:text-gray-600 p-1 rounded-full hover:bg-gray-200 transition">
                             <ChevronRight size={20} />
                           </button>
@@ -510,49 +461,47 @@ export default function Promotions() {
 
           {/* Table Footer */}
           <div className="bg-white px-4 py-3 border-t border-gray-200 sm:px-6">
-            <div className="flex flex-col sm:flex-row justify-between items-center">
-              <div className="text-sm text-gray-500 mb-4 sm:mb-0">
+            <div className="flex items-center justify-between">
+              <div className="text-sm text-gray-500">
                 Showing {currentPage * itemsPerPage + 1}-
                 {Math.min((currentPage + 1) * itemsPerPage, totalItems)} of{" "}
                 {totalItems}
               </div>
 
-              {/* Pagination - Centered */}
+              {/* Pagination - Right aligned */}
               {totalPages > 1 && (
-                <div className="flex-grow flex justify-center">
-                  <div className="flex items-center space-x-2">
-                    <button
-                      className="p-2 rounded-md hover:bg-gray-100 disabled:opacity-50 border border-gray-300"
-                      disabled={currentPage === 0}
-                      onClick={() => setCurrentPage(prev => Math.max(prev - 1, 0))}
-                    >
-                      <ChevronLeft size={18} className="text-gray-600" />
-                    </button>
+                <div className="flex items-center space-x-2">
+                  <button
+                    className="p-2 rounded-md hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed border border-gray-300 transition-colors"
+                    disabled={currentPage === 0}
+                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 0))}
+                  >
+                    <ChevronLeft size={18} className="text-gray-600" />
+                  </button>
 
-                    {getPaginationNumbers().map((page) => (
-                      <motion.button
-                        key={page}
-                        whileHover={{ scale: 1.1 }}
-                        whileTap={{ scale: 0.9 }}
-                        className={`w-10 h-10 rounded-full flex items-center justify-center cursor-pointer ${
-                          currentPage === page
-                            ? 'bg-primary-500 text-white'
-                            : 'border border-gray-300 text-gray-600 hover:bg-gray-100'
-                        } transition-colors`}
-                        onClick={() => setCurrentPage(page)}
-                      >
-                        {page + 1}
-                      </motion.button>
-                    ))}
-
-                    <button
-                      className="p-2 rounded-md hover:bg-gray-100 disabled:opacity-50 border border-gray-300"
-                      disabled={currentPage >= totalPages - 1}
-                      onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages - 1))}
+                  {getPaginationNumbers().map((page) => (
+                    <motion.button
+                      key={page}
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      className={`w-10 h-10 rounded-md flex items-center justify-center cursor-pointer ${
+                        currentPage === page
+                          ? 'bg-primary-500 text-white shadow-sm'
+                          : 'border border-gray-300 text-gray-600 hover:bg-gray-50'
+                      } transition-all duration-200`}
+                      onClick={() => setCurrentPage(page)}
                     >
-                      <ChevronRight size={18} className="text-gray-600" />
-                    </button>
-                  </div>
+                      {page + 1}
+                    </motion.button>
+                  ))}
+
+                  <button
+                    className="p-2 rounded-md hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed border border-gray-300 transition-colors"
+                    disabled={currentPage >= totalPages - 1}
+                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages - 1))}
+                  >
+                    <ChevronRight size={18} className="text-gray-600" />
+                  </button>
                 </div>
               )}
             </div>
