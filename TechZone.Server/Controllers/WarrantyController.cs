@@ -114,10 +114,13 @@ namespace TechZone.Server.Controllers
         {
             try
             {
-                // Get all orders with status "Completed" or "Delivered" that don't have warranties
+                // Get all orders with status "Completed" or "Delivered" (case-insensitive) that don't have warranties
                 var completedOrders = await _context.Orders
                     .Include(o => o.OrderDetails)
-                    .Where(o => (o.Status == "Completed" || o.Status == "Delivered") && 
+                        .ThenInclude(od => od.ProductColor)
+                            .ThenInclude(pc => pc.Product)
+                    .Where(o => (o.Status.Equals("Completed", StringComparison.OrdinalIgnoreCase) || 
+                                 o.Status.Equals("Delivered", StringComparison.OrdinalIgnoreCase)) && 
                                 o.OrderDetails != null && o.OrderDetails.Any())
                     .ToListAsync();
 

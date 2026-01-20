@@ -36,8 +36,8 @@ const WarrantyClaimForm = ({ warrantyId, userId, onClose, onSuccess }) => {
         const formData = new FormData();
         formData.append('file', file);
 
-        // Upload to your image service (adjust endpoint as needed)
-        const response = await api.post('/api/Image/upload', formData, {
+        // Upload to warranty image service
+        const response = await api.post('/api/Image/upload/warranty', formData, {
           headers: {
             'Content-Type': 'multipart/form-data',
           },
