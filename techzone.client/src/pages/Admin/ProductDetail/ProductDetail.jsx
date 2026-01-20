@@ -352,19 +352,19 @@ export default function ProductDetail() {
             {/* Price */}
             <div className="flex items-baseline space-x-2 mt-1">
               <span className="text-2xl font-bold">
-                ${product.price ? product.price.toFixed(2) : "0.00"}
+                {product.price ? product.price.toLocaleString('vi-VN') : "0"} ₫
               </span>
               {product.oldPrice && product.oldPrice > product.price && (
                 <span className="text-muted-foreground line-through">
-                  ${product.oldPrice ? product.oldPrice.toFixed(2) : "0.00"}
+                  {product.oldPrice ? product.oldPrice.toLocaleString('vi-VN') : "0"} ₫
                 </span>
               )}
               {product.oldPrice && product.oldPrice > product.price && (
                 <div className="ml-2 px-2 py-1 text-sm font-medium bg-red-300 rounded">
-                  Save $
+                  Tiết kiệm
                   {product.oldPrice && product.price
-                    ? (product.oldPrice - product.price).toFixed(2)
-                    : "0.00"}
+                    ? " " + (product.oldPrice - product.price).toLocaleString('vi-VN')
+                    : " 0"} ₫
                 </div>
               )}
             </div>

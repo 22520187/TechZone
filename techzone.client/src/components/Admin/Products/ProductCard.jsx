@@ -74,7 +74,7 @@ const ProductCard = ({ product, onEdit = () => {}, onDelete = () => {} }) => {
       <div className="px-4 pt-3 pb-4 flex flex-col flex-1 justify-between space-y-1">
         <div>
           <h3 className="text-base font-semibold text-gray-800 line-clamp-2 cursor-pointer" onClick={handleClick}>{product.name}</h3>
-          <p className="text-blue-500 font-semibold">${product.price.toFixed(2)}</p>
+          <p className="text-blue-500 font-semibold">{product.price.toLocaleString("vi-VN")} đ</p>
         </div>
 
         <div className="mb-2">

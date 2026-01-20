@@ -85,10 +85,10 @@ const CartItem = ({
                   {discountPercentage > 0 ? (
                     <>
                       <span className="text-gray-400 line-through">
-                        ${price.toFixed(2)}
+                        {price.toLocaleString('vi-VN')} ₫
                       </span>
                       <span className="text-blue-600 font-medium">
-                        ${salePrice.toFixed(2)}
+                        {salePrice.toLocaleString('vi-VN')} ₫
                       </span>
                       <span className="text-xs px-1.5 py-0.5 bg-green-100 text-green-800 rounded-full">
                         {discountPercentage}% off
@@ -96,7 +96,7 @@ const CartItem = ({
                     </>
                   ) : (
                     <p className="text-gray-500 font-medium">
-                      ${price.toFixed(2)}
+                      {price.toLocaleString('vi-VN')} ₫
                     </p>
                   )}
                 </div>

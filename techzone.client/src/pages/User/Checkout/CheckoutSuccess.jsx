@@ -78,7 +78,7 @@ const CheckoutSuccess = () => {
 
                 <div className="flex justify-between font-semibold text-lg pt-2">
                   <span>Tổng tiền</span>
-                  <span>${orderDetails.total}</span>
+                  <span>{Number(orderDetails.total).toLocaleString('vi-VN')} ₫</span>
                 </div>
               </div>
             </div>
