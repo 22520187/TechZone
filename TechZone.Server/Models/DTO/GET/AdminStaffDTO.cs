@@ -18,7 +18,7 @@ namespace TechZone.Server.Models.DTO.GET
 
         public string? AvatarImageUrl { get; set; }
 
-        public string Role { get; set; } = "staff"!;
+        public string Role { get; set; } = "Staff"!;
 
         public DateTime? CreatedAt { get; set; }
     }

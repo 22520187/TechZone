@@ -32,7 +32,7 @@ namespace TechZone.Server.Repositories.Implement
 
         public async Task<User> AddStaffAsync(User staff)
         {
-            staff.Role = "staff";
+            staff.Role = "Staff";
             staff.CreatedAt = DateTime.Now;
             
             // Hash password

@@ -76,7 +76,7 @@ namespace TechZone.Server.Controllers
                 }
 
                 var staff = _mapper.Map<User>(adminAddStaffDTO);
-                staff.Role = "staff";
+                staff.Role = "Staff";
                 
                 var result = await _staffRepository.AddStaffAsync(staff);
 

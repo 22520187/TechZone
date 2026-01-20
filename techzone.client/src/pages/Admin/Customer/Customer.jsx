@@ -102,12 +102,16 @@ export default function Customers() {
     // UserId, FullName, Email, PasswordHash, Phone, City, District, Ward, AvatarImageUrl, Role, CreatedAt
     // Map API response data to the format expected by the component
     const customersData = (userItems || []).map((user) => {
-        // Normalize role: 'user'/'customer' -> 'Customer', 'admin'/'staff' -> 'Admin'
+        // Normalize role: Keep original case for display
         let normalizedRole = user.role || "Customer";
-        if (normalizedRole.toLowerCase() === "user" || normalizedRole.toLowerCase() === "customer") {
+        const roleLower = normalizedRole.toLowerCase();
+        
+        if (roleLower === "user" || roleLower === "customer") {
             normalizedRole = "Customer";
-        } else if (normalizedRole.toLowerCase() === "admin" || normalizedRole.toLowerCase() === "staff") {
+        } else if (roleLower === "admin") {
             normalizedRole = "Admin";
+        } else if (roleLower === "staff") {
+            normalizedRole = "Staff";
         }
 
         return {
@@ -440,6 +444,7 @@ export default function Customers() {
                                 Role
                             </option>
                             <option value="Admin">Admin</option>
+                            <option value="Staff">Staff</option>
                             <option value="Customer">Customer</option>
                         </select>
 
@@ -885,6 +890,7 @@ export default function Customers() {
                             <Select.Option value="Customer">
                                 Customer
                             </Select.Option>
+                            <Select.Option value="Staff">Staff</Select.Option>
                             <Select.Option value="Admin">Admin</Select.Option>
                         </Select>
                     </Form.Item>

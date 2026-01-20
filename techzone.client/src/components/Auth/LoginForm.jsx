@@ -28,9 +28,12 @@ const Login = () => {
       
       message.success("Đăng nhập thành công!");
       
-      // Redirect based on user role
-      if (result.userRole === "Admin") {
+      // Redirect based on user role (case-insensitive)
+      const role = result.userRole?.toLowerCase();
+      if (role === "admin") {
         navigate("/admin/dashboard");
+      } else if (role === "staff") {
+        navigate("/admin/orders"); // Staff vào Orders thay vì Dashboard
       } else {
         navigate(from);
       }
@@ -46,9 +49,12 @@ const Login = () => {
 
   useEffect(() => {
     if (authState.isAuthenticated) {
-      // Redirect if already authenticated
-      if (authState.userRole === "Admin") {
+      // Redirect if already authenticated (case-insensitive)
+      const role = authState.userRole?.toLowerCase();
+      if (role === "admin") {
         navigate("/admin/dashboard");
+      } else if (role === "staff") {
+        navigate("/admin/orders"); // Staff vào Orders thay vì Dashboard
       } else {
         navigate(from);
       }

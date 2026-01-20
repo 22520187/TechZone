@@ -13,14 +13,20 @@ function App() {
     const userRole = useSelector((state) => state.auth.userRole);
     const isAuthenticated = useSelector((state) => state.auth.isAuthenticated);
 
+    // Check if user is admin or staff
+    const isAdminOrStaff = isAuthenticated && (
+        userRole?.toLowerCase() === "admin" || 
+        userRole?.toLowerCase() === "staff"
+    );
+
     return (
         <div>
             <Routes>
-                {/* Admin routes */}
+                {/* Admin/Staff routes */}
                 <Route 
                     path="/admin/*" 
                     element={
-                        isAuthenticated && userRole?.toLowerCase() === "admin" ? (
+                        isAdminOrStaff ? (
                             <AdminLayout>
                                 <AllAdminRoutes />
                             </AdminLayout>
