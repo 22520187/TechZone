@@ -68,16 +68,16 @@ const AdminSidebar = ({ isCollapsed, toggleSidebar }) => {
   };
 
   const sidebarItems = [
-    { icon: LayoutDashboard, label: "Dashboard", path: "/" },
-    { icon: ShoppingBag, label: "Products", path: "/products" },
-    { icon: ListOrdered, label: "Order Lists", path: "/orders" },
-    { icon: Slack, label: "Brands", path: "/brands" },
-    { icon: Boxes, label: "Categories", path: "/categories" },
-    { icon: Users2, label: "Customers", path: "/customers" },
-    { icon: UserCog, label: "Staff", path: "/staff" },
-    { icon: TicketPercent, label: "Promotions", path: "/promotions" },
-    { icon: Shield, label: "Warranty Claims", path: "/warranty-claims" },
-    { icon: Settings, label: "Settings", path: "/settings" },
+    { icon: LayoutDashboard, label: "Dashboard", path: "/admin/dashboard" },
+    { icon: ShoppingBag, label: "Products", path: "/admin/products" },
+    { icon: ListOrdered, label: "Order Lists", path: "/admin/orders" },
+    { icon: Slack, label: "Brands", path: "/admin/brands" },
+    { icon: Boxes, label: "Categories", path: "/admin/categories" },
+    { icon: Users2, label: "Customers", path: "/admin/customers" },
+    { icon: UserCog, label: "Staff", path: "/admin/staff" },
+    { icon: TicketPercent, label: "Promotions", path: "/admin/promotions" },
+    { icon: Shield, label: "Warranty Claims", path: "/admin/warranty-claims" },
+    { icon: Settings, label: "Settings", path: "/admin/settings" },
     { icon: LogOut, label: "Logout", path: "/logout" },
   ];
 
@@ -97,7 +97,7 @@ const AdminSidebar = ({ isCollapsed, toggleSidebar }) => {
       isCollapsed ? "w-20" : "w-50"
     } bg-white`} >
       <div className="py-2 ps-1 flex justify-evenly items-center">
-        <Link to="/">
+        <Link to="/admin/dashboard">
             <GradientText
               colors={["#50bbf5", "#5069f5", "#50bbf5", "#5069f5", "#50bbf5"]}
               className={`${isCollapsed ? "text-xl" :"text-2xl"}`}

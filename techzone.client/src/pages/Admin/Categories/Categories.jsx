@@ -108,7 +108,7 @@ export default function Categories() {
     }
   };
 
-  const categoryData = categoryItems.map((category) => ({
+  const categoryData = (categoryItems || []).map((category) => ({
     id: category.categoryId,
     name: category.categoryName,
     description: category.description,

@@ -101,7 +101,7 @@ export default function Customers() {
     }, [dispatch]);
     // UserId, FullName, Email, PasswordHash, Phone, City, District, Ward, AvatarImageUrl, Role, CreatedAt
     // Map API response data to the format expected by the component
-    const customersData = userItems.map((user) => {
+    const customersData = (userItems || []).map((user) => {
         // Normalize role: 'user'/'customer' -> 'Customer', 'admin'/'staff' -> 'Admin'
         let normalizedRole = user.role || "Customer";
         if (normalizedRole.toLowerCase() === "user" || normalizedRole.toLowerCase() === "customer") {

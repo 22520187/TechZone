@@ -86,7 +86,7 @@ export default function Products() {
   }, [dispatch]);
 
   // Map API response data to the format expected by the component
-  const products = productItems.map(product => ({
+  const products = (productItems || []).map(product => ({
     id: product.productId,
     name: product.name,
     price: product.price,
@@ -127,7 +127,7 @@ export default function Products() {
     setSelectedFiles([]);
 
     // Find the original product data
-    const productData = productItems.find(p => p.productId === product.id);
+    const productData = (productItems || []).find(p => p.productId === product.id);
 
     // Set form values
     form.setFieldsValue({
