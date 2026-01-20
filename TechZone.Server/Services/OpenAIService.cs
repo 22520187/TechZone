@@ -187,6 +187,66 @@ Hãy trả lời bằng tiếng Việt, thân thiện, chuyên nghiệp và hữ
             return "Xin lỗi, có lỗi xảy ra khi xử lý yêu cầu của bạn. Vui lòng thử lại sau.";
         }
     }
+
+    public async Task<string> GenerateResponseWithContextAsync(string userMessage, string systemContext, List<(string role, string content)>? conversationHistory)
+    {
+        try
+        {
+            var messages = new List<object>
+            {
+                new { role = "system", content = systemContext }
+            };
+
+            if (conversationHistory != null && conversationHistory.Count > 0)
+            {
+                foreach (var (role, content) in conversationHistory.TakeLast(10))
+                {
+                    if (!string.IsNullOrWhiteSpace(content))
+                    {
+                        messages.Add(new
+                        {
+                            role = role == "user" ? "user" : "assistant",
+                            content = content
+                        });
+                    }
+                }
+            }
+
+            messages.Add(new { role = "user", content = userMessage });
+
+            var requestBody = new
+            {
+                model = _model,
+                messages = messages,
+                temperature = 0.2,
+                max_tokens = 800
+            };
+
+            var jsonContent = JsonSerializer.Serialize(requestBody);
+            var httpContent = new StringContent(jsonContent, Encoding.UTF8, "application/json");
+
+            var response = await _httpClient.PostAsync(_baseUrl, httpContent);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorContent = await response.Content.ReadAsStringAsync();
+                _logger.LogError($"OpenAI API Error: {response.StatusCode} - {errorContent}");
+                return "Xin lỗi, có lỗi xảy ra khi xử lý yêu cầu của bạn. Vui lòng thử lại sau.";
+            }
+
+            var responseContent = await response.Content.ReadAsStringAsync();
+            var openAIResponse = JsonSerializer.Deserialize<OpenAIResponse>(responseContent);
+
+            var generatedText = openAIResponse?.Choices?.FirstOrDefault()?.Message?.Content;
+
+            return generatedText?.Trim() ?? "Xin lỗi, tôi không thể xử lý yêu cầu của bạn lúc này. Vui lòng thử lại sau.";
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError($"Error generating OpenAI response: {ex.Message}");
+            return "Xin lỗi, có lỗi xảy ra khi xử lý yêu cầu của bạn. Vui lòng thử lại sau.";
+        }
+    }
 }
 
 // Response models for OpenAI API

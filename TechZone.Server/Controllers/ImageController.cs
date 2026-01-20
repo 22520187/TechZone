@@ -47,6 +47,23 @@ namespace TechZone.Server.Controllers
             }
         }
 
+        [HttpPost("upload/warranty")]
+        public async Task<IActionResult> UploadWarrantyImage(IFormFile file)
+        {
+            try
+            {
+                if (file == null || file.Length == 0)
+                    return BadRequest(new { message = "No file uploaded" });
+
+                var imageUrl = await _cloudinaryService.UploadImageAsync(file, "warranty-claims");
+                return Ok(new { imageUrl });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = ex.Message });
+            }
+        }
+
         [HttpDelete("delete")]
         public async Task<IActionResult> DeleteImage([FromQuery] string publicId)
         {

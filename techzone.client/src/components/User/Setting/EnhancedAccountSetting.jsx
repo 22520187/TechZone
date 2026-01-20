@@ -30,6 +30,7 @@ const EnhancedAccountSetting = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const userId = useSelector((state) => state.auth.user);
+  const isAuthenticated = useSelector((state) => state.auth.isAuthenticated);
 
   // Missing state variables
   const [loading, setLoading] = useState(true);
@@ -121,6 +122,12 @@ const EnhancedAccountSetting = () => {
 
   // Load User Data - Merge với localStorage logic để tránh conflict
   useEffect(() => {
+    // Nếu chưa đăng nhập, đưa thẳng về trang login
+    if (!isAuthenticated) {
+      navigate("/auth/login");
+      return;
+    }
+
     const fetchUserData = async () => {
       setLoading(true);
       try {
@@ -165,6 +172,13 @@ const EnhancedAccountSetting = () => {
         setLoading(false);
       } catch (err) {
         console.error("Error fetching user data:", err);
+
+        // Nếu server trả 404 hoặc lỗi auth, đăng xuất & chuyển về login
+        if (err.response?.status === 404 || err.response?.status === 401) {
+          dispatch(logout());
+          navigate("/auth/login");
+        }
+
         setError(err.message);
         setLoading(false);
         toast.error(err.message || "Failed to load user profile");
@@ -177,7 +191,7 @@ const EnhancedAccountSetting = () => {
       setError("User not logged in");
       setLoading(false);
     }
-  }, [userId]);
+  }, [userId, isAuthenticated, dispatch, navigate]);
 
   // Sync tempProfileData with profileData when modal opens
   useEffect(() => {

@@ -4,11 +4,11 @@ import {
   clearAuthCookies,
 } from "./Cookies/CookiesHelper";  // ✅ Sửa path
 
-const productURL = "https://nextgentech-73nf.onrender.com";
-const developmentURL = "http://localhost:5288";
-
+const envBaseUrl = import.meta.env.VITE_API_BASE_URL;
 const baseURL =
-    process.env.NODE_ENV === "production" ? productURL : developmentURL;
+  import.meta.env.MODE === "production"
+    ? (envBaseUrl || "")
+    : (envBaseUrl || "http://localhost:5288");
 
 const instance = axios.create({
     baseURL: baseURL,
@@ -21,15 +21,14 @@ const instance = axios.create({
 // Interceptor cho requests
 instance.interceptors.request.use(
     (config) => {
-        const authCookies = getAuthCookies();  // ✅ Sửa tên function
-        if (authCookies.token) {  // ✅ Kiểm tra token
-          config.headers["Authorization"] = `Bearer ${authCookies.token}`;  // ✅ Sửa property name
+        const authCookies = getAuthCookies();  
+        if (authCookies.token) { 
+          config.headers["Authorization"] = `Bearer ${authCookies.token}`; 
         }
 
         // Đảm bảo signal được truyền qua nếu có
         if (config.signal) {
             config.signal.addEventListener("abort", () => {
-                // Có thể thêm logic cleanup nếu cần
             });
         }
 
