@@ -90,7 +90,7 @@ export function CheckoutSummary({
                       x{item.quantity}
                     </Text>
                   </Text>
-                  <Text>${(price * item.quantity).toFixed(2)}</Text>
+                  <Text>{(price * item.quantity).toLocaleString('vi-VN')} ₫</Text>
                 </div>
               );
             })}
@@ -112,7 +112,7 @@ export function CheckoutSummary({
                 {cartItems.filter((item) => item?.productColor?.product).length}{" "}
                 items)
               </Text>
-              <Text>${cartTotal.toFixed(2)}</Text>
+              <Text>{cartTotal.toLocaleString('vi-VN')} ₫</Text>
             </div>
 
             {totalSavings > 0 && (
@@ -124,7 +124,7 @@ export function CheckoutSummary({
                 }}
               >
                 <Text type="success">Savings</Text>
-                <Text type="success">-${totalSavings.toFixed(2)}</Text>
+                <Text type="success">-{totalSavings.toLocaleString('vi-VN')} ₫</Text>
               </div>
             )}
           </div>
@@ -166,7 +166,7 @@ export function CheckoutSummary({
           >
             <Text>Total</Text>
             <Text style={{ fontSize: "1.25rem" }}>
-              ${finalTotal.toFixed(2)}
+              {finalTotal.toLocaleString('vi-VN')} ₫
             </Text>
           </div>
 
