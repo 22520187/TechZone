@@ -143,9 +143,50 @@ namespace TechZone.Server.Repositories.Implement
 
         public async Task<User?> DeleteUserAsync(int userId)
         {
-            var user = await _context.Users.FindAsync(userId);
+            var user = await _context.Users
+                .Include(u => u.Carts)
+                .Include(u => u.Orders)
+                .Include(u => u.Reviews)
+                .Include(u => u.ChatHistories)
+                .Include(u => u.WarrantyClaims)
+                .FirstOrDefaultAsync(u => u.UserId == userId);
+            
             if (user == null) return null;
 
+            var carts = user.Carts?.ToList() ?? new List<Cart>();
+            foreach (var cart in carts)
+            {
+                var cartDetails = await _context.CartDetails
+                    .Where(cd => cd.CartId == cart.CartId)
+                    .ToListAsync();
+                _context.CartDetails.RemoveRange(cartDetails);
+            }
+            _context.Carts.RemoveRange(carts);
+
+            // Delete orders and their details
+            var orders = user.Orders?.ToList() ?? new List<Order>();
+            foreach (var order in orders)
+            {
+                var orderDetails = await _context.OrderDetails
+                    .Where(od => od.OrderId == order.OrderId)
+                    .ToListAsync();
+                _context.OrderDetails.RemoveRange(orderDetails);
+            }
+            _context.Orders.RemoveRange(orders);
+
+            // Delete reviews
+            var reviews = user.Reviews?.ToList() ?? new List<Review>();
+            _context.Reviews.RemoveRange(reviews);
+
+            // Delete chat histories
+            var chatHistories = user.ChatHistories?.ToList() ?? new List<ChatHistory>();
+            _context.ChatHistories.RemoveRange(chatHistories);
+
+            // Delete warranty claims
+            var warrantyClaims = user.WarrantyClaims?.ToList() ?? new List<WarrantyClaim>();
+            _context.WarrantyClaims.RemoveRange(warrantyClaims);
+
+            // Finally delete the user
             _context.Users.Remove(user);
             await _context.SaveChangesAsync();
             return user;

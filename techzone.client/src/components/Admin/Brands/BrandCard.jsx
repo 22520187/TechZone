@@ -51,7 +51,7 @@ const BrandCard = ({ brand, onEdit, onDelete }) => {
             <div className="absolute top-2 right-2 flex space-x-2 bg-white bg-opacity-80 rounded-lg p-1 shadow-md transition-opacity duration-200">
               <button
                 onClick={handleEdit}
-                className="p-1.5 rounded-full bg-blue-500 text-white hover:bg-blue-600 transition-colors"
+                className="p-1.5 cursor-pointer rounded-full bg-blue-500 text-white hover:bg-blue-600 transition-colors"
               >
                 <Edit size={14} />
               </button>
@@ -65,7 +65,7 @@ const BrandCard = ({ brand, onEdit, onDelete }) => {
               >
                 <button
                   onClick={handleDelete}
-                  className="p-1.5 rounded-full bg-red-500 text-white hover:bg-red-600 transition-colors"
+                  className="p-1.5 cursor-pointer rounded-full bg-red-500 text-white hover:bg-red-600 transition-colors"
                 >
                   <Trash2 size={14} />
                 </button>

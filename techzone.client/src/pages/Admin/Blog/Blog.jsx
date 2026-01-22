@@ -235,7 +235,7 @@ export default function Blog() {
                 {/* Actions */}
                 <div className="flex justify-end space-x-2">
                   <button
-                    className="p-2 text-gray-400 hover:text-green-600 transition-colors"
+                    className="p-2 cursor-pointer text-gray-400 hover:text-green-600 transition-colors"
                     onClick={() => showEditModal(post)}
                   >
                     <Pencil size={16} />
@@ -247,7 +247,7 @@ export default function Blog() {
                     okText="Yes"
                     cancelText="No"
                   >
-                    <button className="p-2 text-gray-400 hover:text-red-600 transition-colors">
+                    <button className="p-2 cursor-pointer text-gray-400 hover:text-red-600 transition-colors">
                       <Trash2 size={16} />
                     </button>
                   </Popconfirm>
@@ -288,12 +288,12 @@ export default function Blog() {
           </Form.Item>
 
           <Form.Item label="Cover Image">
-            <div className="space-y-2">
+            <div className="space-y-2 cursor-pointer">
               <input
                 type="file"
                 accept="image/*"
                 onChange={handleImageUpload}
-                className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100"
+                className="block cursor-pointer w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100"
               />
               {uploading && <Spin size="small" />}
               {imageUrl && (
@@ -324,14 +324,14 @@ export default function Blog() {
           <Form.Item className="mb-0 flex justify-end">
             <button
               type="button"
-              className="mr-2 px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+              className="mr-2 cursor-pointer px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
               onClick={handleCancel}
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-dark"
+              className="px-4 py-2 cursor-pointer bg-primary text-white rounded-md hover:bg-primary-dark"
               disabled={submitting}
             >
               {submitting
