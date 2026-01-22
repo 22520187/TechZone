@@ -127,7 +127,7 @@ namespace TechZone.Server.Mapping
                 .ForMember(dest => dest.Phone, opt => opt.MapFrom(src => src.Phone))
                 .ForMember(dest => dest.OrderId, opt => opt.Ignore())
                 .ForMember(dest => dest.OrderDate, opt => opt.MapFrom(src => DateTime.Now))
-                .ForMember(dest => dest.Status, opt => opt.MapFrom(src => "Pending"))
+                .ForMember(dest => dest.Status, opt => opt.MapFrom(src => "PENDING"))
                 .ForMember(dest => dest.PaymentStatus, opt => opt.MapFrom(src => 
                     src.PaymentMethod == "cod" ? "COD" : "Unpaid"))
                 .ForMember(dest => dest.TotalAmount, opt => opt.Ignore())

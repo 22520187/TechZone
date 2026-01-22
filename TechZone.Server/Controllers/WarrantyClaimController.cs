@@ -114,7 +114,7 @@ namespace TechZone.Server.Controllers
                     UserId = addWarrantyClaimDTO.UserId,
                     IssueDescription = addWarrantyClaimDTO.IssueDescription,
                     IssueImages = issueImagesJson,
-                    Status = "Pending",
+                    Status = "PENDING",
                     SubmittedAt = DateTime.UtcNow
                 };
 

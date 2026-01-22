@@ -73,7 +73,7 @@ const AdminSidebar = ({ isCollapsed, toggleSidebar }) => {
   const allMenuItems = [
     { icon: LayoutDashboard, label: "Dashboard", path: "/admin/dashboard", roles: ["Admin"] },
     { icon: ShoppingBag, label: "Products", path: "/admin/products", roles: ["Admin"] },
-    { icon: ListOrdered, label: "Order Management", path: "/admin/orders", roles: ["Admin", "Staff"] },
+    { icon: ListOrdered, label: "Order", path: "/admin/orders", roles: ["Admin", "Staff"] },
     { icon: BookOpen, label: "Blog Posts", path: "/admin/blog", roles: ["Admin", "Staff"] },
     { icon: Slack, label: "Brands", path: "/admin/brands", roles: ["Admin"] },
     { icon: Boxes, label: "Categories", path: "/admin/categories", roles: ["Admin"] },

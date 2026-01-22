@@ -14,7 +14,7 @@ public partial class WarrantyClaim
 
     public string? IssueImages { get; set; }
 
-    public string Status { get; set; } = "Pending";
+    public string Status { get; set; } = "PENDING";
 
     public string? AdminNotes { get; set; }
 

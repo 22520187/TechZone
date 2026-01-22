@@ -80,7 +80,7 @@ namespace TechZone.Server.Repositories.Implement
                 warrantyClaim.AdminNotes = adminNotes;
             }
 
-            if (status == "Completed" || status == "Rejected")
+            if (status == "COMPLETED" || status == "REJECTED")
             {
                 warrantyClaim.ResolvedAt = DateTime.UtcNow;
             }
