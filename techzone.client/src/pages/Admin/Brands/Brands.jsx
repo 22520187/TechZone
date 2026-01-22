@@ -201,7 +201,7 @@ export default function Brands() {
         </div>
 
         <button
-          className="flex items-center py-2 px-5 text-white bg-primary rounded-lg font-bold text-sm hover:scale-105 active:scale-95 transition-all duration-100"
+          className="flex cursor-pointer items-center py-2 px-5 text-white bg-primary rounded-lg font-bold text-sm hover:scale-105 active:scale-95 transition-all duration-100"
           onClick={showAddModal}
         >
           <Plus size={16} className="mr-1" />
@@ -321,14 +321,14 @@ export default function Brands() {
           <Form.Item className="mb-0 flex justify-end">
             <button
               type="button"
-              className="mr-2 px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+              className="mr-2 cursor-pointer px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
               onClick={handleCancel}
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-dark"
+              className="px-4 py-2 cursor-pointer bg-primary text-white rounded-md hover:bg-primary-dark"
               disabled={submitting}
             >
               {submitting
