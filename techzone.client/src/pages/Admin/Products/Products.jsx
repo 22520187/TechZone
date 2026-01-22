@@ -126,7 +126,7 @@ export default function Products() {
     setIsModalOpen(true);
     setSelectedFiles([]);
 
-    // Find the original product data
+    // Find the original product data from Redux store
     const productData = (productItems || []).find(p => p.productId === product.id);
 
     // Set form values
@@ -248,6 +248,8 @@ export default function Products() {
           ...productData
         })).unwrap();
         message.success("Product updated successfully");
+        // Refresh all products to ensure latest data
+        await fetchProducts();
       } else {
         // Add new product
         await dispatch(addProduct(productData)).unwrap();

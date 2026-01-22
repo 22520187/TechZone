@@ -276,7 +276,7 @@ namespace TechZone.Server.Controllers
                     .Distinct()
                     .ToListAsync();
 
-                // 3. Delete colors that are NOT in orders
+                // 3. Delete colors that are NOT in orders (with error handling)
                 var colorIdsToDelete = existingColors
                     .Where(c => !orderedColorIds.Contains(c.ProductColorId))
                     .Select(c => c.ProductColorId)
@@ -284,33 +284,50 @@ namespace TechZone.Server.Controllers
 
                 foreach (var colorId in colorIdsToDelete)
                 {
-                    await _productColorRepository.DeleteAsync(c => c.ProductColorId == colorId);
-                }
-
-                // 4. Add new colors from DTO
-                var newProductColors = adminUpdateProductDTO.Colors
-                    .Where(c => !string.IsNullOrWhiteSpace(c.Color))
-                    .Select(color => new ProductColor
+                    try
                     {
-                        ProductId = id,
-                        Color = color.Color,
-                        ColorCode = color.ColorCode,
-                        StockQuantity = color.StockQuantity
-                    }).ToList();
-
-                if (newProductColors.Any())
-                {
-                    await _productColorRepository.AddProductColorsAsync(newProductColors);
+                        await _productColorRepository.DeleteAsync(c => c.ProductColorId == colorId);
+                    }
+                    catch (Exception ex)
+                    {
+                        // If deletion fails due to FK constraint, skip it
+                        // The color will remain but won't be updated/modified
+                        Console.WriteLine($"Failed to delete color {colorId}: {ex.Message}");
+                    }
                 }
 
-                var resultMessage = orderedColorIds.Any() 
-                    ? "Product updated successfully. Note: Some colors cannot be deleted as they exist in orders."
-                    : "Product updated successfully.";
+                // 4. Update stock quantity for existing colors and add new colors
+                foreach (var dtoColor in adminUpdateProductDTO.Colors.Where(c => !string.IsNullOrWhiteSpace(c.Color)))
+                {
+                    var existingColor = existingColors.FirstOrDefault(c => c.ColorCode == dtoColor.ColorCode);
+                    
+                    if (existingColor != null && !orderedColorIds.Contains(existingColor.ProductColorId))
+                    {
+                        // Only update if this color is NOT in any order
+                        if (existingColor.StockQuantity != dtoColor.StockQuantity)
+                        {
+                            existingColor.StockQuantity = dtoColor.StockQuantity;
+                            _context.ProductColors.Update(existingColor);
+                        }
+                    }
+                    else if (existingColor == null)
+                    {
+                        // Add new color only if it doesn't exist
+                        var newColor = new ProductColor
+                        {
+                            ProductId = id,
+                            Color = dtoColor.Color,
+                            ColorCode = dtoColor.ColorCode,
+                            StockQuantity = dtoColor.StockQuantity
+                        };
+                        _context.ProductColors.Add(newColor);
+                    }
+                }
 
-                return Ok(new { 
-                    message = resultMessage,
-                    product = await AdminGetProductById(id)
-                });
+                await _context.SaveChangesAsync();
+
+                var result = await AdminGetProductById(id);
+                return Ok(result);
             }
             catch (Exception ex)
             {
