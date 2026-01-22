@@ -7,7 +7,7 @@ namespace TechZone.Server.Models.DTO.GET
         public int? UserId { get; set; }
         public string IssueDescription { get; set; } = null!;
         public string? IssueImages { get; set; }
-        public string Status { get; set; } = "Pending";
+        public string Status { get; set; } = "PENDING";
         public string? AdminNotes { get; set; }
         public DateTime? SubmittedAt { get; set; }
         public DateTime? ResolvedAt { get; set; }

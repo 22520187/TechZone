@@ -68,10 +68,10 @@ namespace TechZone.Server.Repositories.Implement
             await _context.SaveChangesAsync();
 
             // Auto-create warranties when order is delivered or completed
-            if ((newStatus.Equals("Delivered", StringComparison.OrdinalIgnoreCase) || 
-                 newStatus.Equals("Completed", StringComparison.OrdinalIgnoreCase)) &&
-                !oldStatus.Equals("Delivered", StringComparison.OrdinalIgnoreCase) &&
-                !oldStatus.Equals("Completed", StringComparison.OrdinalIgnoreCase))
+            if ((newStatus.Equals("DELIVERED", StringComparison.OrdinalIgnoreCase) || 
+                 newStatus.Equals("COMPLETED", StringComparison.OrdinalIgnoreCase)) &&
+                !oldStatus.Equals("DELIVERED", StringComparison.OrdinalIgnoreCase) &&
+                !oldStatus.Equals("COMPLETED", StringComparison.OrdinalIgnoreCase))
             {
                 await CreateWarrantiesForOrderAsync(order);
             }

@@ -101,7 +101,7 @@ const WarrantyDetail = () => {
         return "text-green-600 bg-green-50";
       case "REJECTED":
         return "text-red-600 bg-red-50";
-      case "INPROGRESS":
+      case "IN_PROGRESS":
         return "text-blue-600 bg-blue-50";
       case "COMPLETED":
         return "text-purple-600 bg-purple-50";
@@ -118,7 +118,7 @@ const WarrantyDetail = () => {
         return "Đã duyệt";
       case "REJECTED":
         return "Từ chối";
-      case "INPROGRESS":
+      case "IN_PROGRESS":
         return "Đang xử lý";
       case "COMPLETED":
         return "Hoàn thành";
