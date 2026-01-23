@@ -137,7 +137,7 @@ export function CheckoutForm({ onSubmit, isProcessing, form }) {
                 <Col xs={24} sm={12}>
                   <Radio.Button value="vnpay" className="w-full text-center h-16">
                     <div className="flex items-center justify-center gap-2">
-                      <img src={vnpay} className="size-8" alt="VNPay"></img> 
+                      <img src={vnpay} className="size-8" alt="VNPay"></img>  
                       <span className="font-medium">VNPay</span>
                     </div>
                   </Radio.Button>

@@ -10,14 +10,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<TechZoneDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("TechZone"), sqlOptions =>
     {
-        sqlOptions.EnableRetryOnFailure(
-            maxRetryCount: 5,
-            maxRetryDelay: TimeSpan.FromSeconds(30),
-            errorNumbersToAdd: null);
-        
-        sqlOptions.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery);
-        
-        sqlOptions.CommandTimeout(60);
+        sqlOptions.EnableRetryOnFailure();
     }));
 
 builder.Services.AddCors(options =>
@@ -27,8 +20,8 @@ builder.Services.AddCors(options =>
         builder.WithOrigins(
                    "https://localhost:3000",
                    "http://localhost:3000",
-                   "http://localhost:5173",
-                   "https://localhost:5173"
+                   "http://localhost:5288",
+                   "https://localhost:5288"
                )
                .AllowAnyHeader()
                .AllowAnyMethod()

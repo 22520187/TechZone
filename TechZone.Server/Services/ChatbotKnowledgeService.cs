@@ -153,7 +153,9 @@ public class ChatbotKnowledgeService : IChatbotKnowledgeService
         // Product intent (basic search)
         if (m.Contains("sản phẩm") || m.Contains("laptop") || m.Contains("điện thoại") || m.Contains("tai nghe") || m.Contains("chuột") || m.Contains("bàn phím") || m.Contains("giá") || m.Contains("recommend") || m.Contains("gợi ý"))
         {
-            // Improved: extract product name more intelligently
+            // Extract filters from message
+            var priceRange = TryExtractPriceRange(m);
+            var categoryFilter = TryExtractCategory(m);
             var query = ExtractProductQuery(m);
 
             var productsQuery = _context.Products
@@ -161,6 +163,22 @@ public class ChatbotKnowledgeService : IChatbotKnowledgeService
                 .Include(p => p.Category)
                 .Include(p => p.ProductImages)
                 .AsQueryable();
+
+            // Filter by category if specified
+            if (!string.IsNullOrWhiteSpace(categoryFilter))
+            {
+                var categoryLower = categoryFilter.ToLower();
+                productsQuery = productsQuery.Where(p =>
+                    (p.Category != null && p.Category.CategoryName.ToLower().Contains(categoryLower)) ||
+                    p.Name.ToLower().Contains(categoryLower));
+            }
+
+            // Filter by price range if specified
+            if (priceRange.HasValue)
+            {
+                var (minPrice, maxPrice) = priceRange.Value;
+                productsQuery = productsQuery.Where(p => p.Price >= minPrice && p.Price <= maxPrice);
+            }
 
             if (!string.IsNullOrWhiteSpace(query))
             {
@@ -173,10 +191,28 @@ public class ChatbotKnowledgeService : IChatbotKnowledgeService
                     (p.Description != null && p.Description.ToLower().Contains(qLower)));
             }
 
+            // Load products first, then sort in memory if price range is specified
             var products = await productsQuery
-                .OrderByDescending(p => p.CreatedAt)
-                .Take(10) // Increase to 10 for better matching
                 .ToListAsync();
+
+            // Sort by relevance: if price range specified, sort by closest to middle of range
+            if (priceRange.HasValue)
+            {
+                var (minPrice, maxPrice) = priceRange.Value;
+                var targetPrice = (minPrice + maxPrice) / 2;
+                products = products
+                    .OrderBy(p => Math.Abs(p.Price - targetPrice))
+                    .ThenByDescending(p => p.CreatedAt)
+                    .Take(10)
+                    .ToList();
+            }
+            else
+            {
+                products = products
+                    .OrderByDescending(p => p.CreatedAt)
+                    .Take(10)
+                    .ToList();
+            }
 
             if (products.Count == 0)
             {
@@ -248,21 +284,66 @@ public class ChatbotKnowledgeService : IChatbotKnowledgeService
         var sb = new StringBuilder();
         sb.AppendLine("Dữ liệu nội bộ TechZone (trích từ database):");
 
-        // a small slice of catalog for grounding
-        var products = await _context.Products
+        // Extract filters from message to get relevant products
+        var normalizedMessage = ChatbotKnowledgeModels.Normalize(message);
+        var priceRange = TryExtractPriceRange(normalizedMessage);
+        var categoryFilter = TryExtractCategory(normalizedMessage);
+
+        var productsQuery = _context.Products
             .Include(p => p.Brand)
             .Include(p => p.Category)
-            .OrderByDescending(p => p.CreatedAt)
-            .Take(maxProducts)
+            .AsQueryable();
+
+        // Filter by category if specified
+        if (!string.IsNullOrWhiteSpace(categoryFilter))
+        {
+            var categoryLower = categoryFilter.ToLower();
+            productsQuery = productsQuery.Where(p =>
+                (p.Category != null && p.Category.CategoryName.ToLower().Contains(categoryLower)) ||
+                p.Name.ToLower().Contains(categoryLower));
+        }
+
+        // Filter by price range if specified
+        if (priceRange.HasValue)
+        {
+            var (minPrice, maxPrice) = priceRange.Value;
+            productsQuery = productsQuery.Where(p => p.Price >= minPrice && p.Price <= maxPrice);
+        }
+
+        // Get products matching filters, sorted by relevance
+        var products = await productsQuery
             .ToListAsync();
+
+        // Sort by relevance: if price range specified, sort by closest to middle of range
+        if (priceRange.HasValue)
+        {
+            var (minPrice, maxPrice) = priceRange.Value;
+            var targetPrice = (minPrice + maxPrice) / 2;
+            products = products
+                .OrderBy(p => Math.Abs(p.Price - targetPrice))
+                .ThenByDescending(p => p.CreatedAt)
+                .Take(maxProducts)
+                .ToList();
+        }
+        else
+        {
+            products = products
+                .OrderByDescending(p => p.CreatedAt)
+                .Take(maxProducts)
+                .ToList();
+        }
 
         if (products.Count > 0)
         {
-            sb.AppendLine("- Danh sách sản phẩm mới nhất:");
+            sb.AppendLine($"- Danh sách sản phẩm{(categoryFilter != null ? $" thuộc danh mục '{categoryFilter}'" : "")}{(priceRange.HasValue ? $" trong khoảng giá {priceRange.Value.minPrice:n0} - {priceRange.Value.maxPrice:n0} VND" : "")}:");
             foreach (var p in products)
             {
                 sb.AppendLine($"  - #{p.ProductId}: {p.Name} | Brand={(p.Brand?.BrandName ?? "N/A")} | Category={(p.Category?.CategoryName ?? "N/A")} | Price={p.Price:n0} VND");
             }
+        }
+        else
+        {
+            sb.AppendLine("- Không tìm thấy sản phẩm phù hợp với yêu cầu trong database.");
         }
 
         if (userId != null)
@@ -376,10 +457,6 @@ public class ChatbotKnowledgeService : IChatbotKnowledgeService
             .Replace(" và ", " và ")
             .Replace(" so sánh ", " so sánh ");
 
-        // Common patterns:
-        // - "so sánh A và B"
-        // - "A vs B"
-        // - "A với B" (users sometimes use this to compare)
         string? left = null;
         string? right = null;
 
@@ -466,14 +543,11 @@ public class ChatbotKnowledgeService : IChatbotKnowledgeService
 
     private async Task<TechZone.Server.Models.Domain.Product?> FindBestProductMatchAsync(string query)
     {
-        // query is normalized (lowercase). We need to compare against original Name.
-        // Use case-insensitive Contains by lowering both sides (EF Core translates for SQL Server).
         var q = query.Trim().ToLowerInvariant();
         if (string.IsNullOrWhiteSpace(q)) return null;
 
-        // Try exact-ish: contains all tokens
         var tokens = q.Split(' ', StringSplitOptions.RemoveEmptyEntries)
-            .Where(t => t.Length >= 2) // Skip very short tokens
+            .Where(t => t.Length >= 2) 
             .ToList();
         if (tokens.Count == 0) return null;
 
@@ -482,7 +556,6 @@ public class ChatbotKnowledgeService : IChatbotKnowledgeService
             .Include(p => p.Category)
             .AsQueryable();
 
-        // Strategy 1: All tokens must be present in product name (AND logic)
         foreach (var t in tokens)
         {
             var token = t;
@@ -491,19 +564,16 @@ public class ChatbotKnowledgeService : IChatbotKnowledgeService
 
         var candidates = await productsQuery
             .OrderByDescending(p => p.CreatedAt)
-            .Take(10) // Get more candidates for better matching
+            .Take(10) 
             .ToListAsync();
 
         if (candidates.Count == 0)
         {
-            // Strategy 2: Fallback - any token matches (OR logic, but prioritize products with more matches)
-            // Simple approach: query all products and filter in memory (for small datasets)
             var allProducts = await _context.Products
                 .Include(p => p.Brand)
                 .Include(p => p.Category)
                 .ToListAsync();
 
-            // Score products: count how many tokens match
             var scored = allProducts.Select(p => new
             {
                 Product = p,
@@ -515,7 +585,7 @@ public class ChatbotKnowledgeService : IChatbotKnowledgeService
             })
             .Where(x => x.Score > 0)
             .OrderByDescending(x => x.Score)
-            .ThenBy(x => x.Product.Name.Length) // Prefer shorter names (more specific)
+            .ThenBy(x => x.Product.Name.Length) 
             .ThenByDescending(x => x.Product.CreatedAt)
             .Select(x => x.Product)
             .Take(10)
@@ -528,20 +598,125 @@ public class ChatbotKnowledgeService : IChatbotKnowledgeService
         }
         else
         {
-            // Score candidates: products with more matching tokens rank higher
             var scored = candidates.Select(p => new
             {
                 Product = p,
                 Score = tokens.Count(t => p.Name.ToLower().Contains(t))
             })
             .OrderByDescending(x => x.Score)
-            .ThenBy(x => x.Product.Name.Length) // Prefer shorter names (more specific)
+            .ThenBy(x => x.Product.Name.Length) 
             .Select(x => x.Product)
             .ToList();
 
             if (scored.Count > 0)
             {
                 return scored.First();
+            }
+        }
+
+        return null;
+    }
+    private (decimal minPrice, decimal maxPrice)? TryExtractPriceRange(string normalizedMessage)
+    {
+        var patterns = new[]
+        {
+            @"(\d+)\s*(?:triệu|tr|m)\s*(?:đến|tới|-)\s*(\d+)\s*(?:triệu|tr|m)",
+            @"từ\s*(\d+)\s*(?:triệu|tr|m)\s*(?:đến|tới|-)\s*(\d+)\s*(?:triệu|tr|m)",
+            @"khoảng\s*(\d+)\s*(?:triệu|tr|m)\s*(?:đến|tới|-)\s*(\d+)\s*(?:triệu|tr|m)",
+            @"(\d+)\s*-\s*(\d+)\s*(?:triệu|tr|m)",
+            @"giá\s*(?:từ|khoảng)?\s*(\d+)\s*(?:triệu|tr|m)\s*(?:đến|tới|-)\s*(\d+)\s*(?:triệu|tr|m)"
+        };
+
+        foreach (var pattern in patterns)
+        {
+            var regex = new System.Text.RegularExpressions.Regex(pattern, System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+            var match = regex.Match(normalizedMessage);
+            if (match.Success && match.Groups.Count >= 3)
+            {
+                if (decimal.TryParse(match.Groups[1].Value, out var min) &&
+                    decimal.TryParse(match.Groups[2].Value, out var max))
+                {
+                    // Convert to VND (multiply by 1,000,000)
+                    var minPrice = min * 1_000_000;
+                    var maxPrice = max * 1_000_000;
+                    
+                    // Ensure min <= max
+                    if (minPrice > maxPrice)
+                    {
+                        (minPrice, maxPrice) = (maxPrice, minPrice);
+                    }
+                    
+                    return (minPrice, maxPrice);
+                }
+            }
+        }
+
+        // Single price pattern: "10 triệu", "dưới 15 triệu", "trên 10 triệu"
+        var singlePatterns = new[]
+        {
+            @"dưới\s*(\d+)\s*(?:triệu|tr|m)",
+            @"dưới\s*(\d+)\s*(?:triệu|tr|m)",
+            @"trên\s*(\d+)\s*(?:triệu|tr|m)",
+            @"khoảng\s*(\d+)\s*(?:triệu|tr|m)",
+            @"(\d+)\s*(?:triệu|tr|m)"
+        };
+
+        foreach (var pattern in singlePatterns)
+        {
+            var regex = new System.Text.RegularExpressions.Regex(pattern, System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+            var match = regex.Match(normalizedMessage);
+            if (match.Success && match.Groups.Count >= 2)
+            {
+                if (decimal.TryParse(match.Groups[1].Value, out var price))
+                {
+                    var priceVnd = price * 1_000_000;
+                    
+                    if (pattern.Contains("dưới"))
+                    {
+                        return (0, priceVnd);
+                    }
+                    else if (pattern.Contains("trên"))
+                    {
+                        return (priceVnd, decimal.MaxValue);
+                    }
+                    else
+                    {
+                        // "khoảng X triệu" -> range around X (e.g., ±20%)
+                        var margin = priceVnd * 0.2m;
+                        return (priceVnd - margin, priceVnd + margin);
+                    }
+                }
+            }
+        }
+
+        return null;
+    }
+
+    private string? TryExtractCategory(string normalizedMessage)
+    {
+        // Map common terms to category keywords
+        var categoryKeywords = new Dictionary<string, string[]>
+        {
+            { "laptop", new[] { "laptop", "máy tính xách tay", "notebook", "macbook" } },
+            { "điện thoại", new[] { "điện thoại", "smartphone", "phone", "iphone", "samsung", "xiaomi" } },
+            { "màn hình", new[] { "màn hình", "monitor", "display", "ultragear", "ultrawide" } },
+            { "tai nghe", new[] { "tai nghe", "headphone", "earphone", "airpods" } },
+            { "chuột", new[] { "chuột", "mouse", "gaming mouse" } },
+            { "bàn phím", new[] { "bàn phím", "keyboard", "gaming keyboard" } },
+            { "tablet", new[] { "tablet", "ipad", "máy tính bảng" } }
+        };
+
+        foreach (var kvp in categoryKeywords)
+        {
+            var categoryName = kvp.Key;
+            var keywords = kvp.Value;
+            
+            foreach (var keyword in keywords)
+            {
+                if (normalizedMessage.Contains(keyword))
+                {
+                    return categoryName;
+                }
             }
         }
 
