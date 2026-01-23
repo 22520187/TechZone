@@ -13,6 +13,7 @@ import { Form, Skeleton, Empty, Button, message } from "antd";
 const Checkout = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [appliedPromotion, setAppliedPromotion] = useState(null);
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const [form] = Form.useForm();
@@ -48,6 +49,14 @@ const Checkout = () => {
     return total + price * item.quantity;
   }, 0);
 
+  // Calculate discount amount
+  const discountAmount = appliedPromotion 
+    ? (cartTotal * appliedPromotion.discountPercentage) / 100 
+    : 0;
+
+  // Final total after discount
+  const finalTotal = cartTotal - discountAmount;
+
   // Handle form submission
   const handleSubmitOrder = async (formValues) => {
     try {
@@ -60,7 +69,7 @@ const Checkout = () => {
       const orderData = {
         userId: parseInt(userId),
         paymentMethod: formValues.paymentMethod,
-        promotionId: null, // Can be updated if you implement promo code functionality
+        promotionId: appliedPromotion ? appliedPromotion.promotionId : null,
         shippingAddress: shippingAddress,
         fullName: formValues.fullName,
         phone: formValues.phone,
@@ -79,7 +88,7 @@ const Checkout = () => {
           try {
             const vnpayResponse = await api.post("/api/VNPay/create-payment-url", {
               orderId: orderId,
-              amount: cartTotal,
+              amount: finalTotal,
               orderInfo: `Thanh toán đơn hàng #${orderId}`,
             });
 
@@ -98,7 +107,7 @@ const Checkout = () => {
           // COD payment - navigate to success page
           message.success("Order created successfully!");
           navigate(
-            `/checkout/success?orderNumber=${orderId}&total=${cartTotal.toFixed(2)}`
+            `/checkout/success?orderNumber=${orderId}&total=${finalTotal.toFixed(2)}`
           );
 
           // Refresh the cart
@@ -185,6 +194,10 @@ const Checkout = () => {
           <CheckoutSummary
             cartItems={cartItems}
             cartTotal={cartTotal}
+            discountAmount={discountAmount}
+            finalTotal={finalTotal}
+            appliedPromotion={appliedPromotion}
+            setAppliedPromotion={setAppliedPromotion}
             isProcessing={isProcessing}
             onSubmit={handleSubmitOrder}
             form={form}

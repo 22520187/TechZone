@@ -5,7 +5,7 @@ import { format, parse, isValid } from "date-fns";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../../components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "../../../components/ui/popover";
 import { Calendar } from "../../../components/ui/calendar";
-import { Modal, Table } from "antd";
+import { Modal, Table, message } from "antd";
 import { Select as AntdSelect } from "antd";
 import axios from "../../../features/AxiosInstance/AxiosInstance";
 
@@ -42,9 +42,10 @@ const OrderList = () => {
     fetchOrders();
   }, []);
 
-  // Get unique order statuses from the data
+  // Get unique order statuses from the data (normalized to uppercase)
   const orderStatuses = useMemo(() => {
-    return [...new Set(orders.map(order => order.status))];
+    const statuses = orders.map(order => order.status?.toUpperCase() || order.status);
+    return [...new Set(statuses)].sort();
   }, [orders]);
 
   // Function to reset all filters
@@ -68,9 +69,10 @@ const OrderList = () => {
     return selectedDate ? format(selectedDate, "dd MMM yyyy") : "Date";
   };
 
-  // Get status color based on status value
+  // Get status color based on status value (case-insensitive)
   const getStatusColor = (status) => {
-    switch (status) {
+    const normalizedStatus = status?.toUpperCase();
+    switch (normalizedStatus) {
       case "COMPLETED":
         return "bg-emerald-100 text-emerald-600";
       case "PROCESSING":
@@ -100,8 +102,8 @@ const OrderList = () => {
         }
       }
 
-      // Filter by status if selected
-      if (selectedStatus && order.status !== selectedStatus) {
+      // Filter by status if selected (case-insensitive comparison)
+      if (selectedStatus && order.status?.toUpperCase() !== selectedStatus?.toUpperCase()) {
         return false;
       }
 
@@ -177,10 +179,15 @@ const OrderList = () => {
       setPendingStatus(null);
 
       // Show success message
-      console.log(`Order #${selectedOrder.orderId} status updated to ${pendingStatus}`);
+      message.success(`Order #${selectedOrder.orderId} status updated to ${pendingStatus}`, 3);
 
     } catch (error) {
       console.error("Error updating order status:", error);
+      
+      // Show error message
+      const errorMessage = error.response?.data?.message || error.response?.data || "Failed to update order status";
+      message.error(errorMessage, 3);
+      
       // Add better error handling
       if (error.response) {
         console.error("Server responded with error:", error.response.data);
@@ -371,8 +378,8 @@ const OrderList = () => {
                           {order.paymentMethod}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(order.status)}`}>
-                            {order.status}
+                          <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(order.status?.toUpperCase())}`}>
+                            {order.status?.toUpperCase()}
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
@@ -496,7 +503,7 @@ const OrderList = () => {
                     <div className="flex items-center">
                       <span className="text-gray-500 w-60">Status:</span>
                       <AntdSelect
-                        value={pendingStatus || selectedOrder.status}
+                        value={pendingStatus || selectedOrder.status?.toUpperCase()}
                         style={{ width: 150 }}
                         onChange={handleStatusChange}
                         className="border border-gray-300 rounded-md"
@@ -526,8 +533,20 @@ const OrderList = () => {
                         columns={[
                           {
                             title: "Product",
-                            dataIndex: "productName",
                             key: "productName",
+                            render: (_, record) => {
+                              // Access nested product name or use computed property from backend
+                              const productName = record.productName || record.productColor?.product?.name || "N/A";
+                              const color = record.productColor_Color || record.productColor?.color || "";
+                              return (
+                                <div>
+                                  <div>{productName}</div>
+                                  {color && color !== "N/A" && (
+                                    <div className="text-xs text-gray-500">Color: {color}</div>
+                                  )}
+                                </div>
+                              );
+                            },
                           },
                           {
                             title: "Quantity",
@@ -539,28 +558,35 @@ const OrderList = () => {
                             title: "Unit Price",
                             dataIndex: "price",
                             key: "price",
-                            render: (value) => value.toLocaleString("vi-VN") + " ₫",
+                            render: (value) => value?.toLocaleString("vi-VN") + " ₫",
                             className: "text-right",
                           },
                           {
                             title: "Total",
                             key: "total",
-                            render: (_, record) => (record.price * record.quantity).toLocaleString("vi-VN") + " ₫",
+                            render: (_, record) => ((record.price || 0) * (record.quantity || 0)).toLocaleString("vi-VN") + " ₫",
                             className: "text-right font-medium",
                           },
                         ]}
                         dataSource={selectedOrder.orderDetails}
-                        rowKey="id"
+                        rowKey="orderDetailId"
                       />
                     </div>
                   </div>
                 )}
 
-                {selectedOrder.promotion && (
+                {selectedOrder.voucherApplied && (
                   <div className="mt-4 p-3 bg-blue-50 rounded-md border border-blue-100">
                     <div className="flex items-center">
                       <span className="text-blue-600 font-medium">Mã khuyến mãi:</span>
-                      <span className="ml-2 px-2 py-1 bg-blue-100 rounded text-blue-700">{selectedOrder.promotion.code}</span>
+                      <span className="ml-2 px-2 py-1 bg-blue-100 rounded text-blue-700">
+                        {selectedOrder.voucherApplied.promotionCode || selectedOrder.voucherApplied.name || "N/A"}
+                      </span>
+                      {selectedOrder.voucherApplied.discountPercentage && (
+                        <span className="ml-2 text-blue-600">
+                          (-{selectedOrder.voucherApplied.discountPercentage}%)
+                        </span>
+                      )}
                     </div>
                   </div>
                 )}

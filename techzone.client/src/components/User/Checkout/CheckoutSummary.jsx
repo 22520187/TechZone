@@ -1,14 +1,19 @@
 import React, { useState } from "react";
-import { Card, Typography, Divider, Input, Button } from "antd";
+import { Card, Typography, Divider, Input, Button, message } from "antd";
 import { motion } from "framer-motion";
-import { ArrowRight, ShieldCheck, CreditCard } from "lucide-react";
-import { TagOutlined } from "@ant-design/icons";
+import { ArrowRight, ShieldCheck, CreditCard, X } from "lucide-react";
+import { TagOutlined, CheckCircleOutlined } from "@ant-design/icons";
+import api from "../../../features/AxiosInstance/AxiosInstance";
 
 const { Text, Title } = Typography;
 
 export function CheckoutSummary({
   cartItems,
   cartTotal,
+  discountAmount,
+  finalTotal,
+  appliedPromotion,
+  setAppliedPromotion,
   isProcessing,
   onSubmit,
   form,
@@ -25,17 +30,39 @@ export function CheckoutSummary({
     }
   };
 
-  // Apply promo code (demo functionality)
-  const handleApplyPromo = (e) => {
+  // Apply promo code
+  const handleApplyPromo = async (e) => {
     e.preventDefault();
+    
+    if (!promoCode.trim()) {
+      message.warning("Please enter a promotion code");
+      return;
+    }
+
     setIsApplyingPromo(true);
 
-    // Simulate API call
-    setTimeout(() => {
+    try {
+      const response = await api.post("/api/Promotion/ValidatePromotionCode", {
+        promotionCode: promoCode.trim()
+      });
+
+      if (response.data) {
+        setAppliedPromotion(response.data);
+        message.success(`Promotion applied: ${response.data.discountPercentage}% off!`);
+        setPromoCode("");
+      }
+    } catch (error) {
+      const errorMessage = error.response?.data || "Invalid or expired promotion code";
+      message.error(errorMessage);
+    } finally {
       setIsApplyingPromo(false);
-      setPromoCode("");
-      alert("For this demo, promo codes are not actually applied");
-    }, 1000);
+    }
+  };
+
+  // Remove applied promotion
+  const handleRemovePromo = () => {
+    setAppliedPromotion(null);
+    message.info("Promotion removed");
   };
 
   // Calculate original total (without discounts)
@@ -45,11 +72,8 @@ export function CheckoutSummary({
     return acc + price * item.quantity;
   }, 0);
 
-  // Calculate savings
-  const totalSavings = originalTotal - cartTotal;
-
-  // Calculate final total (no shipping)
-  const finalTotal = cartTotal;
+  // Calculate product savings (from salePrice)
+  const productSavings = originalTotal - cartTotal;
 
   return (
     <motion.div
@@ -115,7 +139,7 @@ export function CheckoutSummary({
               <Text>{cartTotal.toLocaleString('vi-VN')} ₫</Text>
             </div>
 
-            {totalSavings > 0 && (
+            {productSavings > 0 && (
               <div
                 style={{
                   display: "flex",
@@ -123,35 +147,85 @@ export function CheckoutSummary({
                   fontSize: "0.875rem",
                 }}
               >
-                <Text type="success">Savings</Text>
-                <Text type="success">-{totalSavings.toLocaleString('vi-VN')} ₫</Text>
+                <Text type="success">Product Savings</Text>
+                <Text type="success">-{productSavings.toLocaleString('vi-VN')} ₫</Text>
+              </div>
+            )}
+
+            {appliedPromotion && (
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  fontSize: "0.875rem",
+                }}
+              >
+                <Text type="success">
+                  Promo Discount ({appliedPromotion.discountPercentage}%)
+                </Text>
+                <Text type="success">-{discountAmount.toLocaleString('vi-VN')} ₫</Text>
               </div>
             )}
           </div>
 
           {/* Promo code */}
-          <motion.form
-            onSubmit={handleApplyPromo}
-            style={{ display: "flex", gap: "8px" }}
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.2 }}
-          >
-            <Input
-              placeholder="Promo code"
-              value={promoCode}
-              onChange={(e) => setPromoCode(e.target.value)}
-              style={{ flex: 1 }}
-            />
-            <Button
-              type="default"
-              htmlType="submit"
-              icon={<TagOutlined />}
-              disabled={!promoCode || isApplyingPromo}
+          {appliedPromotion ? (
+            <div 
+              style={{ 
+                padding: "12px", 
+                backgroundColor: "#f6ffed", 
+                border: "1px solid #b7eb8f",
+                borderRadius: "8px",
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center"
+              }}
             >
-              Apply
-            </Button>
-          </motion.form>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <CheckCircleOutlined style={{ color: "#52c41a", fontSize: "16px" }} />
+                <div>
+                  <Text strong style={{ fontSize: "0.875rem" }}>
+                    {appliedPromotion.promotionCode}
+                  </Text>
+                  <br />
+                  <Text type="secondary" style={{ fontSize: "0.75rem" }}>
+                    {appliedPromotion.name}
+                  </Text>
+                </div>
+              </div>
+              <Button 
+                type="text" 
+                size="small"
+                icon={<X size={14} />}
+                onClick={handleRemovePromo}
+                style={{ color: "#52c41a" }}
+              />
+            </div>
+          ) : (
+            <motion.form
+              onSubmit={handleApplyPromo}
+              style={{ display: "flex", gap: "8px" }}
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.2 }}
+            >
+              <Input
+                placeholder="Enter promo code"
+                value={promoCode}
+                onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
+                style={{ flex: 1 }}
+              />
+              <Button
+                type="default"
+                htmlType="submit"
+                icon={<TagOutlined />}
+                loading={isApplyingPromo}
+                disabled={!promoCode || isApplyingPromo}
+              >
+                Apply
+              </Button>
+            </motion.form>
+          )}
 
           <Divider />
 

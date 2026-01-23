@@ -11,6 +11,8 @@ namespace TechZone.Server.Repositories
         Task LinkProductsToPromotionAsync(Promotion promotion, ICollection<string> productIds);
         Task<Promotion> DeletePromotionAsync(int id);
         Task<Promotion?> UpdatePromotionAsync(int promotionId, Promotion updatedPromotion);
+        Task<Promotion?> UpdatePromotionStatusAsync(int promotionId, string status);
         Task<string> GetVoucherCodeByPromotionId(int PromotionId);
+        Task<Promotion?> ValidatePromotionCodeAsync(string promotionCode);
     }
 }

@@ -81,7 +81,21 @@ namespace TechZone.Server.Repositories.Implement
             existingPromotion.DiscountPercentage = updatedPromotion.DiscountPercentage;
             existingPromotion.StartDate = updatedPromotion.StartDate;
             existingPromotion.EndDate = updatedPromotion.EndDate;
+            existingPromotion.Status = updatedPromotion.Status;
 
+            await dbContext.SaveChangesAsync();
+            return existingPromotion;
+        }
+
+        public async Task<Promotion?> UpdatePromotionStatusAsync(int promotionId, string status)
+        {
+            var existingPromotion = await dbContext.Promotions.Include(p => p.Products).FirstOrDefaultAsync(p => p.PromotionId == promotionId);
+            if (existingPromotion == null) 
+            {
+                return null;
+            }
+
+            existingPromotion.Status = status;
             await dbContext.SaveChangesAsync();
             return existingPromotion;
         }
@@ -94,6 +108,21 @@ namespace TechZone.Server.Repositories.Implement
             var promotionCode = promotion.PromotionCode;
 
             return promotionCode;
+        }
+
+        public async Task<Promotion?> ValidatePromotionCodeAsync(string promotionCode)
+        {
+            var now = DateTime.Now;
+            var promotion = await dbContext.Promotions
+                .Include(p => p.Products)
+                .FirstOrDefaultAsync(p => 
+                    p.PromotionCode == promotionCode &&
+                    p.Status == "Active" &&
+                    p.StartDate <= now &&
+                    p.EndDate >= now
+                );
+            
+            return promotion;
         }
     }
 }

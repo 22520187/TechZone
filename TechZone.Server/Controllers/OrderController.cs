@@ -27,7 +27,8 @@ namespace TechZone.Server.Controllers
             var orders = await _orderRepository.GetOrdersByUserIdAsync(userId);
             if (orders == null || orders.Count == 0)
             {
-                return NotFound(new { Message = "No orders found for this user." });
+                // Return empty array instead of NotFound to allow frontend to show empty state
+                return Ok(new List<OrderDTO>());
             }
 
             var orderDTOs = _mapper.Map<List<OrderDTO>>(orders);

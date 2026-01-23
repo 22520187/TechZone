@@ -14,6 +14,8 @@ namespace TechZone.Server.Models.DTO.ADD
 
         public DateTime EndDate { get; set; }
 
+        public string Status { get; set; } = "Active";
+
         public ICollection<string> ProductIDs { get; set; } = new List<string>();
     }
 }

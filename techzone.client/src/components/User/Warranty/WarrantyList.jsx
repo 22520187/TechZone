@@ -116,11 +116,10 @@ const WarrantyList = () => {
         animate={{ opacity: 1, y: 0 }}
         className="mb-8"
       >
-        <h1 className="text-3xl font-bold text-gray-900 mb-2 flex items-center gap-3">
-          <Shield className="w-8 h-8 text-blue-600" />
-          Bảo hành sản phẩm
+        <h1 className="text-xl font-bold mb-4 text-primary-600">
+          Warranty List
         </h1>
-        <p className="text-gray-600">Quản lý và theo dõi bảo hành của bạn</p>
+        <p className="text-gray-600">Manage and track your warranties</p>
       </motion.div>
 
       {warranties.length === 0 ? (
@@ -131,10 +130,10 @@ const WarrantyList = () => {
         >
           <Package className="w-16 h-16 text-gray-400 mx-auto mb-4" />
           <h3 className="text-xl font-semibold text-gray-700 mb-2">
-            Chưa có bảo hành nào
+            No warranties found
           </h3>
           <p className="text-gray-500">
-            Bạn chưa có sản phẩm nào được bảo hành. Bảo hành sẽ được tạo tự động khi đơn hàng được giao.
+            You don't have any products with warranties. Warranties will be automatically created when the order is delivered.
           </p>
         </motion.div>
       ) : (
@@ -233,9 +232,9 @@ const WarrantyList = () => {
                     e.stopPropagation();
                     navigate(`/warranty/${warranty.warrantyId}`);
                   }}
-                  className="ml-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  className="ml-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors cursor-pointer"
                 >
-                  Xem chi tiết
+                  View details
                 </button>
               </div>
             </motion.div>

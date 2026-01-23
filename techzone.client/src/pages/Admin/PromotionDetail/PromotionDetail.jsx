@@ -117,12 +117,12 @@ const PromotionDetail = () => {
                 </label>
                 <span
                   className={`px-4 py-2 rounded-full text-sm font-medium ${
-                    promotion.isActive
+                    promotion.status === "Active"
                       ? "bg-green-100 text-green-800"
                       : "bg-red-100 text-red-800"
                   }`}
                 >
-                  {promotion.isActive ? "Active" : "Inactive"}
+                  {promotion.status || "Inactive"}
                 </span>
               </div>
             </div>

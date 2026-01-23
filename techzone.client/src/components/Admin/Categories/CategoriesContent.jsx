@@ -13,13 +13,6 @@ const CategoriesContent = () => {
     const [form] = Form.useForm();
     const [searchTerm, setSearchTerm] = useState("");
 
-    // Mock data for now until API is confirmed
-    const mockCategories = [
-        { id: 1, name: "Laptops", description: "High performance laptops", image: "https://placehold.co/300x200?text=Laptops" },
-        { id: 2, name: "Smartphones", description: "Latest smartphones", image: "https://placehold.co/300x200?text=Smartphones" },
-        { id: 3, name: "Accessories", description: "Tech accessories", image: "https://placehold.co/300x200?text=Accessories" },
-    ];
-
     useEffect(() => {
         fetchCategories();
     }, []);
@@ -27,9 +20,8 @@ const CategoriesContent = () => {
     const fetchCategories = async () => {
         setLoading(true);
         try {
-            // const response = await api.get("/categories");
-            // setCategories(response.data);
-            setCategories(mockCategories); // Using mock data for initial setup
+            const response = await api.get("/categories");
+            setCategories(response.data);
         } catch (error) {
             console.error("Failed to fetch categories:", error);
             message.error("Failed to load categories");

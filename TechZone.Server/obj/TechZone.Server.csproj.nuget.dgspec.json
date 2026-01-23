@@ -1,25 +1,31 @@
 {
   "format": 1,
   "restore": {
-    "D:\\UIT\\SE347\\NextGenTech_working\\TechZone\\TechZone.Server\\TechZone.Server.csproj": {}
+    "D:\\SE347\\TechZone\\TechZone.Server\\TechZone.Server.csproj": {}
   },
   "projects": {
-    "D:\\UIT\\SE347\\NextGenTech_working\\TechZone\\TechZone.Server\\TechZone.Server.csproj": {
+    "D:\\SE347\\TechZone\\TechZone.Server\\TechZone.Server.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "D:\\UIT\\SE347\\NextGenTech_working\\TechZone\\TechZone.Server\\TechZone.Server.csproj",
+        "projectUniqueName": "D:\\SE347\\TechZone\\TechZone.Server\\TechZone.Server.csproj",
         "projectName": "TechZone.Server",
-        "projectPath": "D:\\UIT\\SE347\\NextGenTech_working\\TechZone\\TechZone.Server\\TechZone.Server.csproj",
-        "packagesPath": "C:\\Users\\ACER\\.nuget\\packages\\",
-        "outputPath": "D:\\UIT\\SE347\\NextGenTech_working\\TechZone\\TechZone.Server\\obj\\",
+        "projectPath": "D:\\SE347\\TechZone\\TechZone.Server\\TechZone.Server.csproj",
+        "packagesPath": "C:\\Users\\ADMIN\\.nuget\\packages\\",
+        "outputPath": "D:\\SE347\\TechZone\\TechZone.Server\\obj\\",
         "projectStyle": "PackageReference",
+        "fallbackFolders": [
+          "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
+        ],
         "configFilePaths": [
-          "C:\\Users\\ACER\\AppData\\Roaming\\NuGet\\NuGet.Config"
+          "C:\\Users\\ADMIN\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
         "originalTargetFrameworks": [
           "net8.0"
         ],
         "sources": {
+          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
@@ -37,7 +43,8 @@
           "enableAudit": "true",
           "auditLevel": "low",
           "auditMode": "direct"
-        }
+        },
+        "SdkAnalysisLevel": "9.0.200"
       },
       "frameworks": {
         "net8.0": {
@@ -115,7 +122,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.416/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.203/PortableRuntimeIdentifierGraph.json"
         }
       }
     }

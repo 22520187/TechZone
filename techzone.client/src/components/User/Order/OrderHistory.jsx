@@ -10,6 +10,7 @@ import {
   ExclamationTriangleIcon,
   CogIcon,
 } from "@heroicons/react/24/outline";
+import { ShoppingBag } from "lucide-react";
 import api from "../../../features/AxiosInstance/AxiosInstance";
 import { message } from "antd";
 
@@ -168,9 +169,19 @@ const OrderHistory = () => {
           <p className="text-red-600">{error}</p>
         </div>
       ) : orders.length === 0 ? (
-        <div className="bg-gray-50 rounded-lg p-8 text-center">
-          <p className="text-gray-600">You don't have any orders yet</p>
-        </div>
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="bg-white rounded-lg shadow-md p-12 text-center"
+        >
+          <ShoppingBag className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+          <h3 className="text-xl font-semibold text-gray-700 mb-2">
+            Chưa có đơn hàng nào
+          </h3>
+          <p className="text-gray-500">
+            Bạn chưa có đơn hàng nào. Hãy bắt đầu mua sắm để xem lịch sử đơn hàng của bạn tại đây.
+          </p>
+        </motion.div>
       ) : (
         <div className="bg-gray-50 rounded-lg overflow-hidden shadow-sm mb-6">
           <div className="grid grid-cols-12 bg-gray-100 py-3 px-4 border-b border-gray-200">

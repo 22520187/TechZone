@@ -133,5 +133,62 @@ namespace TechZone.Server.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
             }
         }
+
+        [HttpPatch("UpdatePromotionStatus/{id}")]
+        public async Task<ActionResult> UpdatePromotionStatus(int id, [FromBody] UpdateStatusRequest request)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(request.Status))
+                {
+                    return BadRequest("Status is required.");
+                }
+
+                var promotion = await _promotionRepository.UpdatePromotionStatusAsync(id, request.Status);
+                if (promotion == null)
+                {
+                    return NotFound("Promotion not found");
+                }
+                return Ok(_mapper.Map<AdminPromotionDTO>(promotion));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+            }
+        }
+
+        [HttpPost("ValidatePromotionCode")]
+        public async Task<ActionResult> ValidatePromotionCode([FromBody] ValidatePromotionCodeRequest request)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(request.PromotionCode))
+                {
+                    return BadRequest("Promotion code is required.");
+                }
+
+                var promotion = await _promotionRepository.ValidatePromotionCodeAsync(request.PromotionCode);
+                if (promotion == null)
+                {
+                    return NotFound("Promotion code is invalid or has expired.");
+                }
+                
+                return Ok(_mapper.Map<CustomerPromotionDTO>(promotion));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+            }
+        }
+    }
+
+    public class UpdateStatusRequest
+    {
+        public string Status { get; set; }
+    }
+
+    public class ValidatePromotionCodeRequest
+    {
+        public string PromotionCode { get; set; }
     }
 }

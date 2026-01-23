@@ -178,9 +178,9 @@ const WarrantyDetail = () => {
           <p className="text-red-600">{error || "Không tìm thấy bảo hành"}</p>
           <button
             onClick={() => navigate("/warranty")}
-            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 cursor-pointer"
           >
-            Quay lại danh sách
+            Back to warranty list
           </button>
         </div>
       </div>
@@ -195,10 +195,10 @@ const WarrantyDetail = () => {
       >
         <button
           onClick={() => navigate("/warranty")}
-          className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6"
+          className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6 cursor-pointer"
         >
           <ArrowLeft className="w-5 h-5" />
-          Quay lại danh sách bảo hành
+          Back to warranty list
         </button>
 
         <div className="bg-white rounded-lg shadow-md p-6 mb-6">
@@ -293,10 +293,10 @@ const WarrantyDetail = () => {
           {canCreateClaim() && (
             <button
               onClick={() => setShowClaimForm(true)}
-              className="w-full md:w-auto px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
+              className="w-full md:w-auto px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2 cursor-pointer"
             >
               <Plus className="w-5 h-5" />
-              Tạo yêu cầu bảo hành
+              Create warranty claim
             </button>
           )}
         </div>

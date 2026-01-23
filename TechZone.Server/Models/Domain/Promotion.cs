@@ -19,6 +19,8 @@ public partial class Promotion
 
     public DateTime EndDate { get; set; }
 
+    public string Status { get; set; } = "Active"; // "Active" or "Inactive"
+
     public virtual ICollection<Order> Orders { get; set; } = new List<Order>();
 
     public virtual ICollection<Product> Products { get; set; } = new List<Product>();

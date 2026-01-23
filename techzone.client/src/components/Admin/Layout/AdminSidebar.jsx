@@ -81,7 +81,7 @@ const AdminSidebar = ({ isCollapsed, toggleSidebar }) => {
     { icon: UserCog, label: "Staff", path: "/admin/staff", roles: ["Admin"] },
     { icon: TicketPercent, label: "Promotions", path: "/admin/promotions", roles: ["Admin"] },
     { icon: Shield, label: "Warranty Claims", path: "/admin/warranty-claims", roles: ["Admin"] },
-    { icon: Settings, label: "Settings", path: "/admin/settings", roles: ["Admin", "Staff"] },
+    // { icon: Settings, label: "Settings", path: "/admin/settings", roles: ["Admin", "Staff"] },
     { icon: LogOut, label: "Logout", path: "/logout", roles: ["Admin", "Staff"] },
   ];
 
@@ -113,7 +113,7 @@ const AdminSidebar = ({ isCollapsed, toggleSidebar }) => {
               animationSpeed={3}
               showBorder={false}
             >
-              {isCollapsed ? ("NGT") : ("nextgentech")}
+              {isCollapsed ? ("TZ") : ("TechZone")}
             </GradientText>
         </Link>
 
