@@ -533,7 +533,7 @@ const OrderDetail = () => {
     if (statusUpper === "SHIPPING" || statusUpper === "PROCESSING") return 3;
     if (statusUpper === "CONFIRMED") return 2;
     if (statusUpper === "ORDER_PLACED" || statusUpper === "PENDING") return 1;
-    if (statusUpper === "CANCELLED" || statusUpper === "CANCELED") return 0;
+    if (statusUpper === "CANCELLED") return 0;
     return 1;
   };
 
@@ -577,7 +577,7 @@ const OrderDetail = () => {
       date: `${dateStr} - ${timeStr}`
     });
 
-    if (statusUpper === "CANCELLED" || statusUpper === "CANCELED") {
+    if (statusUpper === "CANCELLED") {
       activities.unshift({
         icon: FileText,
         color: "text-red-500",
@@ -597,7 +597,7 @@ const OrderDetail = () => {
 
     timeline.push({ status: "ORDER_PLACED", date });
 
-    if (statusUpper !== "CANCELLED" && statusUpper !== "CANCELED") {
+    if (statusUpper !== "CANCELLED") {
       if (statusUpper === "CONFIRMED" || statusUpper === "PROCESSING" || statusUpper === "SHIPPING" || statusUpper === "COMPLETED") {
         timeline.push({ status: "CONFIRMED", date: new Date(date.getTime() + 15 * 60 * 1000) });
       }
@@ -730,7 +730,7 @@ const OrderDetail = () => {
       )}
 
       <div className="mb-8">
-        {orderData.status.toUpperCase() !== "CANCELED" ? (
+        {orderData.status.toUpperCase() !== "CANCELLED" ? (
           <>
             <p className="text-gray-700 mb-4">
               Expected delivery on {orderData.expectedDelivery}

@@ -127,7 +127,7 @@ namespace TechZone.Server.Mapping
                 .ForMember(dest => dest.Phone, opt => opt.MapFrom(src => src.Phone))
                 .ForMember(dest => dest.OrderId, opt => opt.Ignore())
                 .ForMember(dest => dest.OrderDate, opt => opt.MapFrom(src => DateTime.Now))
-                .ForMember(dest => dest.Status, opt => opt.MapFrom(src => "Pending"))
+                .ForMember(dest => dest.Status, opt => opt.MapFrom(src => "PENDING"))
                 .ForMember(dest => dest.PaymentStatus, opt => opt.MapFrom(src => 
                     src.PaymentMethod == "cod" ? "COD" : "Unpaid"))
                 .ForMember(dest => dest.TotalAmount, opt => opt.Ignore())
@@ -180,7 +180,7 @@ namespace TechZone.Server.Mapping
             CreateMap<AdminAddStaffDTO, User>()
                 .ForMember(dest => dest.PasswordHash, 
                     opt => opt.MapFrom(src => src.Password))
-                .ForMember(dest => dest.Role, opt => opt.MapFrom(src => "staff"))
+                .ForMember(dest => dest.Role, opt => opt.MapFrom(src => "Staff"))
                 .ForMember(dest => dest.UserId, opt => opt.Ignore())
                 .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(src => DateTime.UtcNow))
                 .ReverseMap();
@@ -204,6 +204,27 @@ namespace TechZone.Server.Mapping
             CreateMap<WarrantyClaim, WarrantyClaimDTO>()
                 .ForMember(dest => dest.Warranty, opt => opt.MapFrom(src => src.Warranty))
                 .ForMember(dest => dest.User, opt => opt.MapFrom(src => src.User))
+                .ReverseMap();
+
+            // BlogPost mappings
+            CreateMap<BlogPost, BlogPostDTO>()
+                .ForMember(dest => dest.AuthorName, opt => opt.MapFrom(src => src.Author != null ? src.Author.FullName : null))
+                .ReverseMap();
+
+            CreateMap<AddBlogPostDTO, BlogPost>()
+                .ForMember(dest => dest.BlogPostId, opt => opt.Ignore())
+                .ForMember(dest => dest.AuthorId, opt => opt.Ignore())
+                .ForMember(dest => dest.Author, opt => opt.Ignore())
+                .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
+                .ForMember(dest => dest.UpdatedAt, opt => opt.Ignore())
+                .ReverseMap();
+
+            CreateMap<UpdateBlogPostDTO, BlogPost>()
+                .ForMember(dest => dest.BlogPostId, opt => opt.Ignore())
+                .ForMember(dest => dest.AuthorId, opt => opt.Ignore())
+                .ForMember(dest => dest.Author, opt => opt.Ignore())
+                .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
+                .ForMember(dest => dest.UpdatedAt, opt => opt.Ignore())
                 .ReverseMap();
 
         }

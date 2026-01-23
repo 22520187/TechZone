@@ -37,7 +37,7 @@ namespace TechZone.Server.Repositories.Implement
         }
 
         public async Task<List<Product>> AdminGetAllProductAsync()
-        {
+        {  
             return await dbContext.Products
             .Include(p => p.Brand)
             .Include(p => p.Category)

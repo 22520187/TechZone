@@ -46,6 +46,8 @@ public partial class TechZoneDbContext : DbContext
 
     public virtual DbSet<WarrantyClaim> WarrantyClaims { get; set; }
 
+    public virtual DbSet<BlogPost> BlogPosts { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Brand>(entity =>
@@ -315,6 +317,28 @@ public partial class TechZoneDbContext : DbContext
             entity.HasOne(d => d.User).WithMany(p => p.WarrantyClaims)
                 .HasForeignKey(d => d.UserId)
                 .HasConstraintName("FK__WarrantyC__UserI__7E37BEF6")
+                .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        modelBuilder.Entity<BlogPost>(entity =>
+        {
+            entity.HasKey(e => e.BlogPostId).HasName("PK__BlogPost__1234567890ABCD12");
+
+            entity.ToTable("BlogPost");
+
+            entity.Property(e => e.Title)
+                .HasMaxLength(500)
+                .IsRequired();
+            entity.Property(e => e.Description).HasMaxLength(2000);
+            entity.Property(e => e.ImageUrl).HasMaxLength(500);
+            entity.Property(e => e.Content).HasMaxLength(10000);
+            entity.Property(e => e.IsPublished).HasDefaultValue(false);
+            entity.Property(e => e.CreatedAt).HasColumnType("datetime");
+            entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
+
+            entity.HasOne(d => d.Author).WithMany()
+                .HasForeignKey(d => d.AuthorId)
+                .HasConstraintName("FK__BlogPost__Author__7F2BE32F")
                 .OnDelete(DeleteBehavior.SetNull);
         });
 

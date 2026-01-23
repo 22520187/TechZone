@@ -101,13 +101,17 @@ export default function Customers() {
     }, [dispatch]);
     // UserId, FullName, Email, PasswordHash, Phone, City, District, Ward, AvatarImageUrl, Role, CreatedAt
     // Map API response data to the format expected by the component
-    const customersData = userItems.map((user) => {
-        // Normalize role: 'user'/'customer' -> 'Customer', 'admin'/'staff' -> 'Admin'
+    const customersData = (userItems || []).map((user) => {
+        // Normalize role: Keep original case for display
         let normalizedRole = user.role || "Customer";
-        if (normalizedRole.toLowerCase() === "user" || normalizedRole.toLowerCase() === "customer") {
+        const roleLower = normalizedRole.toLowerCase();
+        
+        if (roleLower === "user" || roleLower === "customer") {
             normalizedRole = "Customer";
-        } else if (normalizedRole.toLowerCase() === "admin" || normalizedRole.toLowerCase() === "staff") {
+        } else if (roleLower === "admin") {
             normalizedRole = "Admin";
+        } else if (roleLower === "staff") {
+            normalizedRole = "Staff";
         }
 
         return {
@@ -440,6 +444,7 @@ export default function Customers() {
                                 Role
                             </option>
                             <option value="Admin">Admin</option>
+                            <option value="Staff">Staff</option>
                             <option value="Customer">Customer</option>
                         </select>
 
@@ -649,7 +654,7 @@ export default function Customers() {
                                             <td className="px-6 py-2 whitespace-nowrap">
                                                 <div className="flex space-x-2 justify-center">
                                                     <button
-                                                        className="text-gray-400 hover:text-green-600 transition-colors"
+                                                        className="text-gray-400 cursor-pointer hover:text-green-600 transition-colors"
                                                         onClick={() =>
                                                             showEditModal(
                                                                 customer
@@ -670,7 +675,7 @@ export default function Customers() {
                                                         cancelText="No"
                                                         placement="left"
                                                     >
-                                                        <button className="text-gray-400 hover:text-red-600 transition-colors">
+                                                        <button className="text-gray-400 cursor-pointer hover:text-red-600 transition-colors">
                                                             <Trash2 size={16} />
                                                         </button>
                                                     </Popconfirm>
@@ -885,6 +890,7 @@ export default function Customers() {
                             <Select.Option value="Customer">
                                 Customer
                             </Select.Option>
+                            <Select.Option value="Staff">Staff</Select.Option>
                             <Select.Option value="Admin">Admin</Select.Option>
                         </Select>
                     </Form.Item>
@@ -892,14 +898,14 @@ export default function Customers() {
                     <Form.Item className="mb-0 flex justify-end">
                         <button
                             type="button"
-                            className="mr-2 px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                            className="mr-2 cursor-pointer px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
                             onClick={handleCancel}
                         >
                             Cancel
                         </button>
                         <button
                             type="submit"
-                            className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-dark"
+                            className="px-4 cursor-pointer py-2 bg-primary text-white rounded-md hover:bg-primary-dark"
                             disabled={submitting}
                         >
                             {submitting

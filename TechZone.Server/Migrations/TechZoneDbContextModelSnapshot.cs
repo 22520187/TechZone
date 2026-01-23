@@ -38,6 +38,53 @@ namespace TechZone.Server.Migrations
                     b.ToTable("ProductPromotion", (string)null);
                 });
 
+            modelBuilder.Entity("TechZone.Server.Models.Domain.BlogPost", b =>
+                {
+                    b.Property<int>("BlogPostId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("BlogPostId"));
+
+                    b.Property<int?>("AuthorId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Content")
+                        .HasMaxLength(10000)
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("CreatedAt")
+                        .HasColumnType("datetime");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<string>("ImageUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<bool>("IsPublished")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime");
+
+                    b.HasKey("BlogPostId")
+                        .HasName("PK__BlogPost__1234567890ABCD12");
+
+                    b.HasIndex("AuthorId");
+
+                    b.ToTable("BlogPost", (string)null);
+                });
+
             modelBuilder.Entity("TechZone.Server.Models.Domain.Brand", b =>
                 {
                     b.Property<int>("BrandId")
@@ -608,6 +655,17 @@ namespace TechZone.Server.Migrations
                         .HasForeignKey("PromotionId")
                         .IsRequired()
                         .HasConstraintName("FK__ProductPr__Promo__5EBF139D");
+                });
+
+            modelBuilder.Entity("TechZone.Server.Models.Domain.BlogPost", b =>
+                {
+                    b.HasOne("TechZone.Server.Models.Domain.User", "Author")
+                        .WithMany()
+                        .HasForeignKey("AuthorId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("FK__BlogPost__Author__7F2BE32F");
+
+                    b.Navigation("Author");
                 });
 
             modelBuilder.Entity("TechZone.Server.Models.Domain.Cart", b =>

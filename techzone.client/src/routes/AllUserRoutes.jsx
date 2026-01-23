@@ -20,6 +20,8 @@ import AboutUs from "../pages/User/AboutUs/AboutUs";
 import WarrantyList from "../pages/User/Warranty/WarrantyList";
 import WarrantyDetail from "../pages/User/Warranty/WarrantyDetail";
 import WarrantyClaimHistory from "../pages/User/Warranty/WarrantyClaimHistory";
+import { BlogList, BlogDetail } from "../pages/User/Blog";
+
 const AllUserRoutes = () => {
     return (
         <Routes>
@@ -44,6 +46,8 @@ const AllUserRoutes = () => {
             <Route path="/warranty" element={<WarrantyList />} />
             <Route path="/warranty/:warrantyId" element={<WarrantyDetail />} />
             <Route path="/warranty-claims" element={<WarrantyClaimHistory />} />
+            <Route path="/blog" element={<BlogList />} />
+            <Route path="/blog/:id" element={<BlogDetail />} />
         </Routes>
     )
 }

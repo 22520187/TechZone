@@ -76,7 +76,7 @@ const AdminWarrantyClaims = () => {
         return "bg-green-100 text-green-700 border-green-300";
       case "REJECTED":
         return "bg-red-100 text-red-700 border-red-300";
-      case "INPROGRESS":
+      case "IN_PROGRESS":
         return "bg-blue-100 text-blue-700 border-blue-300";
       case "COMPLETED":
         return "bg-purple-100 text-purple-700 border-purple-300";
@@ -93,7 +93,7 @@ const AdminWarrantyClaims = () => {
         return <CheckCircle className="w-5 h-5 text-green-600" />;
       case "REJECTED":
         return <XCircle className="w-5 h-5 text-red-600" />;
-      case "INPROGRESS":
+      case "IN_PROGRESS":
         return <AlertCircle className="w-5 h-5 text-blue-600" />;
       case "COMPLETED":
         return <CheckCircle className="w-5 h-5 text-purple-600" />;
@@ -110,7 +110,7 @@ const AdminWarrantyClaims = () => {
         return "Đã duyệt";
       case "REJECTED":
         return "Đã từ chối";
-      case "INPROGRESS":
+      case "IN_PROGRESS":
         return "Đang xử lý";
       case "COMPLETED":
         return "Hoàn thành";
@@ -195,11 +195,11 @@ const AdminWarrantyClaims = () => {
             style={{ width: 200 }}
             allowClear
           >
-            <Select.Option value="Pending">Đang chờ</Select.Option>
-            <Select.Option value="Approved">Đã duyệt</Select.Option>
-            <Select.Option value="Rejected">Đã từ chối</Select.Option>
-            <Select.Option value="InProgress">Đang xử lý</Select.Option>
-            <Select.Option value="Completed">Hoàn thành</Select.Option>
+            <Select.Option value="PENDING">Đang chờ</Select.Option>
+            <Select.Option value="APPROVED">Đã duyệt</Select.Option>
+            <Select.Option value="REJECTED">Đã từ chối</Select.Option>
+            <Select.Option value="IN_PROGRESS">Đang xử lý</Select.Option>
+            <Select.Option value="COMPLETED">Hoàn thành</Select.Option>
           </Select>
           {statusFilter && (
             <button
@@ -388,11 +388,11 @@ const AdminWarrantyClaims = () => {
                 onChange={setNewStatus}
                 style={{ width: '100%' }}
               >
-                <Select.Option value="Pending">Đang chờ</Select.Option>
-                <Select.Option value="Approved">Đã duyệt</Select.Option>
-                <Select.Option value="Rejected">Đã từ chối</Select.Option>
-                <Select.Option value="InProgress">Đang xử lý</Select.Option>
-                <Select.Option value="Completed">Hoàn thành</Select.Option>
+                <Select.Option value="PENDING">Đang chờ</Select.Option>
+                <Select.Option value="APPROVED">Đã duyệt</Select.Option>
+                <Select.Option value="REJECTED">Đã từ chối</Select.Option>
+                <Select.Option value="IN_PROGRESS">Đang xử lý</Select.Option>
+                <Select.Option value="COMPLETED">Hoàn thành</Select.Option>
               </Select>
             </div>
 

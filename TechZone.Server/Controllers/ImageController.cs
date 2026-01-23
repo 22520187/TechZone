@@ -64,6 +64,40 @@ namespace TechZone.Server.Controllers
             }
         }
 
+        [HttpPost("upload/brand")]
+        public async Task<IActionResult> UploadBrandImage(IFormFile file)
+        {
+            try
+            {
+                if (file == null || file.Length == 0)
+                    return BadRequest(new { message = "No file uploaded" });
+
+                var imageUrl = await _cloudinaryService.UploadImageAsync(file, "brands");
+                return Ok(new { imageUrl });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = ex.Message });
+            }
+        }
+
+        [HttpPost("upload")]
+        public async Task<IActionResult> UploadImage(IFormFile file, [FromQuery] string folder = "general")
+        {
+            try
+            {
+                if (file == null || file.Length == 0)
+                    return BadRequest(new { message = "No file uploaded" });
+
+                var imageUrl = await _cloudinaryService.UploadImageAsync(file, folder);
+                return Ok(new { imageUrl });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = ex.Message });
+            }
+        }
+
         [HttpDelete("delete")]
         public async Task<IActionResult> DeleteImage([FromQuery] string publicId)
         {

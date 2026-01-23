@@ -63,7 +63,7 @@ const ProductCard = ({ product, onEdit = () => {}, onDelete = () => {} }) => {
             placement="left"
           >
             <button
-              className="absolute top-2 right-2 p-1.5 rounded-full bg-red-500 text-white hover:bg-red-600 transition-colors"
+              className="absolute cursor-pointer top-2 right-2 p-1.5 rounded-full bg-red-500 text-white hover:bg-red-600 transition-colors"
             >
               <Trash2 size={14} />
             </button>

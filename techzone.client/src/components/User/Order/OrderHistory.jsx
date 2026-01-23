@@ -99,11 +99,10 @@ const OrderHistory = () => {
         return "text-green-600";
       case "PROCESSING":
         return "text-blue-600";
-      case "PENDING CONFIRM":
+      case "PENDING_CONFIRM":
       case "PENDING":
         return "text-amber-600";
       case "CANCELLED":
-      case "CANCELED":
         return "text-red-600";
       default:
         return "text-gray-600";
@@ -116,11 +115,10 @@ const OrderHistory = () => {
         return <CheckCircleIcon className="h-5 w-5" />;
       case "PROCESSING":
         return <CogIcon className="h-5 w-5" />;
-      case "PENDING CONFIRM":
+      case "PENDING_CONFIRM":
       case "PENDING":
         return <ExclamationTriangleIcon className="h-5 w-5" />;
       case "CANCELLED":
-      case "CANCELED":
         return <XCircleIcon className="h-5 w-5" />;
       default:
         return <ClockIcon className="h-5 w-5" />;
@@ -129,17 +127,17 @@ const OrderHistory = () => {
 
   const getStatusBadge = (status) => {
     const baseClasses = "inline-flex items-center px-3 py-1 rounded-full text-xs font-medium";
+    const statusUpper = status.toUpperCase().replace(" ", "_");
 
-    switch (status.toUpperCase()) {
+    switch (statusUpper) {
       case "COMPLETED":
         return `${baseClasses} bg-green-100 text-green-800 border border-green-200`;
       case "PROCESSING":
         return `${baseClasses} bg-blue-100 text-blue-800 border border-blue-200`;
-      case "PENDING CONFIRM":
+      case "PENDING_CONFIRM":
       case "PENDING":
         return `${baseClasses} bg-amber-100 text-amber-800 border border-amber-200`;
       case "CANCELLED":
-      case "CANCELED":
         return `${baseClasses} bg-red-100 text-red-800 border border-red-200`;
       default:
         return `${baseClasses} bg-gray-100 text-gray-800 border border-gray-200`;

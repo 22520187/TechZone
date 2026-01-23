@@ -118,7 +118,7 @@ namespace TechZone.Server.Controllers
                 {
                     FullName = "Nguyễn Quản Trị",
                     Email = "admin@techzone.vn",
-                    PasswordHash = "$2a$11$dummyHashForAdminAccount",
+                    PasswordHash = BCrypt.Net.BCrypt.HashPassword("admin123"),
                     Phone = "0901234567",
                     City = "TP Hồ Chí Minh",
                     District = "Quận 1",
@@ -135,7 +135,7 @@ namespace TechZone.Server.Controllers
                     {
                         FullName = $"Nhân viên số {i}",
                         Email = $"staff{i}@techzone.vn",
-                        PasswordHash = "$2a$11$dummyHashForStaffAccount",
+                        PasswordHash = BCrypt.Net.BCrypt.HashPassword($"staff{i}123"),
                         Phone = $"090123456{i}",
                         City = cities[random.Next(cities.Length)],
                         District = districts[random.Next(districts.Length)],
@@ -164,7 +164,7 @@ namespace TechZone.Server.Controllers
                     {
                         FullName = name,
                         Email = email,
-                        PasswordHash = "$2a$11$dummyHashForCustomerAccount",
+                        PasswordHash = BCrypt.Net.BCrypt.HashPassword($"customer{i + 1}123"),
                         Phone = $"09{random.Next(10000000, 99999999)}",
                         City = cities[random.Next(cities.Length)],
                         District = districts[random.Next(districts.Length)],

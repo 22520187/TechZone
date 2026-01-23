@@ -122,11 +122,19 @@ const productSlice = createSlice({
             })
             .addCase(updateProduct.fulfilled, (state, action) => {
                 state.status = "succeeded";
-                const index = state.productItems.findIndex(
-                    (product) => product.productId === action.payload.productId
-                );
-                if (index !== -1) {
-                    state.productItems[index] = action.payload;
+                // The API returns the product directly in response.data
+                const updatedProduct = action.payload;
+                if (updatedProduct && updatedProduct.productId) {
+                    const index = state.productItems.findIndex(
+                        (product) => product.productId === updatedProduct.productId
+                    );
+                    if (index !== -1) {
+                        // Update existing product in list
+                        state.productItems[index] = updatedProduct;
+                    } else {
+                        // If not found, add it
+                        state.productItems.push(updatedProduct);
+                    }
                 }
             })
             .addCase(updateProduct.rejected, (state, action) => {
