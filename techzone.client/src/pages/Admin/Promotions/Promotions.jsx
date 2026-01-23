@@ -5,7 +5,6 @@ import {
   ChevronRight,
   Search,
   Pencil,
-  Trash2,
   Plus,
 } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
@@ -17,19 +16,21 @@ import {
   Input,
   DatePicker,
   InputNumber,
-  Popconfirm,
   Select,
   Tag,
+  Switch,
 } from "antd";
 import {
   fetchAllPromotion,
   addPromotion,
   updatePromotion,
   deletePromotion,
+  updatePromotionStatus,
 } from "../../../features/Admin/Promotions/Promotion";
 import { fetchAllProduct } from "../../../features/Admin/Products/Product";
 import dayjs from "dayjs";
 import { useNavigate } from "react-router-dom";
+import useDebounce from "../../../hooks/useDebounce";
 
 const PromotionStatusBadge = ({ status }) => {
   const getStatusStyles = () => {
@@ -69,6 +70,8 @@ export default function Promotions() {
   const [searchQuery, setSearchQuery] = useState("");
   const [products, setProducts] = useState([]);
   const [productsLoading, setProductsLoading] = useState(false);
+
+  const debouncedSearchQuery = useDebounce(searchQuery, 300);
 
   // Modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -129,6 +132,7 @@ export default function Promotions() {
     setIsEditMode(true);
     setCurrentPromotion(promotion);
     setIsModalOpen(true);
+    
     form.setFieldsValue({
       name: promotion.name,
       description: promotion.description,
@@ -149,8 +153,10 @@ export default function Promotions() {
     try {
       setSubmitting(true);
       const formatDate = (date) => {
-        const d = date.hour(12).minute(0).second(0);
-        return d.toISOString();
+        if (!date) return null;
+        // Ensure date is a dayjs object
+        const d = dayjs.isDayjs(date) ? date : dayjs(date);
+        return d.hour(12).minute(0).second(0).millisecond(0).toISOString();
       };
 
       const promotionData = {
@@ -160,6 +166,7 @@ export default function Promotions() {
         discountPercentage: values.discountPercentage,
         startDate: formatDate(values.startDate),
         endDate: formatDate(values.endDate),
+        status: "Active", // Default to Active when creating/updating
         productIDs: values.productIDs || [],
       };
 
@@ -171,9 +178,11 @@ export default function Promotions() {
           })
         ).unwrap();
         message.success("Promotion updated successfully");
+        await fetchPromotions();
       } else {
         await dispatch(addPromotion(promotionData)).unwrap();
         message.success("Promotion added successfully");
+        await fetchPromotions();
       }
       setIsModalOpen(false);
       form.resetFields();
@@ -187,13 +196,15 @@ export default function Promotions() {
     }
   };
 
-  const handleDelete = async (promotionId) => {
+  const handleStatusToggle = async (promotionId, currentStatus) => {
     try {
-      await dispatch(deletePromotion(promotionId)).unwrap();
-      message.success("Promotion deleted successfully");
+      const newStatus = currentStatus === "Active" ? "Inactive" : "Active";
+      await dispatch(updatePromotionStatus({ promotionId, status: newStatus })).unwrap();
+      message.success(`Promotion ${newStatus === "Active" ? "activated" : "deactivated"} successfully`);
+      await fetchPromotions();
     } catch (err) {
       message.error(
-        "Failed to delete promotion: " + (err.message || "Unknown error")
+        "Failed to update promotion status: " + (err.message || "Unknown error")
       );
     }
   };
@@ -206,13 +217,19 @@ export default function Promotions() {
     code: promotion.promotionCode,
     startDate: dayjs(promotion.startDate).format("DD-MM-YYYY"),
     endDate: dayjs(promotion.endDate).format("DD-MM-YYYY"),
+    status: promotion.status || "Active",
     isProductPromotion: promotion.productIDs && promotion.productIDs.length > 0,
     originalData: promotion,
   }));
 
-  const filterData = promotionsData.filter((row) =>
-    row.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filterData = promotionsData.filter((row) => {
+    const matchesSearch = debouncedSearchQuery.trim() === "" ||
+      row.name.toLowerCase().includes(debouncedSearchQuery.toLowerCase()) ||
+      row.code.toLowerCase().includes(debouncedSearchQuery.toLowerCase()) ||
+      row.description.toLowerCase().includes(debouncedSearchQuery.toLowerCase());
+    
+    return matchesSearch;
+  });
 
   const totalItems = filterData.length;
   const totalPages = Math.ceil(totalItems / itemsPerPage);
@@ -281,6 +298,7 @@ export default function Promotions() {
             value={searchQuery}
             onChange={(e) => {
               setSearchQuery(e.target.value);
+              setCurrentPage(0); // Reset to first page when searching
             }}
           />
         </div>
@@ -354,6 +372,12 @@ export default function Promotions() {
                     scope="col"
                     className="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider"
                   >
+                    Status
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider"
+                  >
                     Action
                   </th>
                   <th
@@ -363,6 +387,7 @@ export default function Promotions() {
                 </tr>
               </thead>
               <motion.tbody
+                key={`promotion-table-${debouncedSearchQuery}-${currentPage}`}
                 variants={containerVariants}
                 initial="hidden"
                 animate="visible"
@@ -404,6 +429,15 @@ export default function Promotions() {
                           status={promotion.isProductPromotion}
                         />
                       </td>
+                      <td className="px-4 py-2 whitespace-nowrap text-center">
+                        <Switch
+                          checked={promotion.status === "Active"}
+                          onChange={() => handleStatusToggle(promotion.id, promotion.status)}
+                          checkedChildren="Active"
+                          unCheckedChildren="Inactive"
+                          style={{ minWidth: '70px' }}
+                        />
+                      </td>
                       <td className="px-4 py-2 whitespace-nowrap">
                         <div className="flex justify-center space-x-2">
                           <button
@@ -412,18 +446,6 @@ export default function Promotions() {
                           >
                             <Pencil size={16} />
                           </button>
-                          <Popconfirm
-                            title="Delete Promotion"
-                            description="Are you sure you want to delete this promotion?"
-                            onConfirm={() => handleDelete(promotion.id)}
-                            okText="Yes"
-                            cancelText="No"
-                            placement="left"
-                          >
-                            <button className="text-gray-400 hover:text-red-600 transition-colors">
-                              <Trash2 size={16} />
-                            </button>
-                          </Popconfirm>
                         </div>
                       </td>
                       <td className="px-4 py-2 whitespace-nowrap">

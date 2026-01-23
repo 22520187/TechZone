@@ -9,6 +9,7 @@ import {
   updateCategory,
   deleteCategory,
 } from "../../../features/Admin/Categories/Category";
+import useDebounce from "../../../hooks/useDebounce";
 
 export default function Categories() {
   const dispatch = useDispatch();
@@ -24,6 +25,8 @@ export default function Categories() {
   const [currentCategory, setCurrentCategory] = useState(null);
   const [form] = Form.useForm();
   const [submitting, setSubmitting] = useState(false);
+
+  const debouncedSearchQuery = useDebounce(searchQuery, 300);
 
   const fetchCategories = async () => {
     try {
@@ -114,10 +117,13 @@ export default function Categories() {
     description: category.description,
   }));
 
-  const filterCategoryData = categoryData.filter(
-    (row) => row.name.toLowerCase().includes(searchQuery.toLowerCase())
-    // && ((filter != "" && subfilter != "") ? (filter === 'Loại' ? row.categoryName === subfilter : row.supplierName === subfilter): true)
-  );
+  const filterCategoryData = categoryData.filter((row) => {
+    const matchesSearch = debouncedSearchQuery.trim() === "" ||
+      row.name.toLowerCase().includes(debouncedSearchQuery.toLowerCase()) ||
+      row.description.toLowerCase().includes(debouncedSearchQuery.toLowerCase());
+    
+    return matchesSearch;
+  });
 
   const totalItems = filterCategoryData.length;
   const totalPages = Math.ceil(totalItems / itemsPerPage);
@@ -185,7 +191,7 @@ export default function Categories() {
             value={searchQuery}
             onChange={(e) => {
               setSearchQuery(e.target.value);
-              console.log(searchQuery);
+              setCurrentPage(0); // Reset to first page when searching
             }}
           />
         </div>
@@ -240,6 +246,7 @@ export default function Categories() {
                 </tr>
               </thead>
               <motion.tbody
+                key={`category-table-${debouncedSearchQuery}-${currentPage}`}
                 variants={containerVariants}
                 initial="hidden"
                 animate="visible"

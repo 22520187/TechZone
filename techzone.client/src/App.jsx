@@ -4,12 +4,16 @@ import AllUserRoutes from "./routes/AllUserRoutes";
 import Navbar from "./components/User/Navbar/Navbar";
 import "./App.css";
 import { useSelector } from "react-redux";
+import { useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import AdminLayout from "./components/Admin/Layout/AdminLayout";
 import AllAdminRoutes from "./routes/AllAdminRoutes";
 import AIChatButton from "./components/User/Chat/AIChatButton";
 import { Routes, Route, Navigate } from "react-router-dom";
 
 function App() {
+    const navigate = useNavigate();
+    const location = useLocation();
     const userRole = useSelector((state) => state.auth.userRole);
     const isAuthenticated = useSelector((state) => state.auth.isAuthenticated);
 
@@ -18,6 +22,19 @@ function App() {
         userRole?.toLowerCase() === "admin" || 
         userRole?.toLowerCase() === "staff"
     );
+
+    // Redirect admin/staff to admin panel if they're on user routes
+    useEffect(() => {
+        if (isAdminOrStaff && !location.pathname.startsWith('/admin')) {
+            // Skip redirect for auth routes
+            if (!location.pathname.startsWith('/auth')) {
+                const targetPath = userRole?.toLowerCase() === "admin" 
+                    ? "/admin/dashboard" 
+                    : "/admin/orders";
+                navigate(targetPath, { replace: true });
+            }
+        }
+    }, [isAdminOrStaff, location.pathname, navigate, userRole]);
 
     return (
         <div>

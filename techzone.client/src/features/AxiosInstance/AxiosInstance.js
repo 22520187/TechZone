@@ -24,9 +24,7 @@ instance.interceptors.request.use(
         const authCookies = getAuthCookies();  
         if (authCookies.token) { 
           config.headers["Authorization"] = `Bearer ${authCookies.token}`; 
-          console.log("🔑 Token being sent:", authCookies.token.substring(0, 50) + "...");
         } else {
-          console.warn("⚠️ No token found in cookies!");
         }
 
         // Đảm bảo signal được truyền qua nếu có

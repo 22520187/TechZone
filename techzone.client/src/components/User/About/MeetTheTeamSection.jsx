@@ -66,7 +66,7 @@ const MeetTheTeamSection = () => {
             </h2>
           </div>
           <h3 className="text-4xl bg-gradient-to-r from-primary-600 to-secondary-600 bg-clip-text text-transparent font-bold mb-2">
-            The Experts Behind NextGenTech
+            The Experts Behind TechZone
           </h3>
           <p className="text-muted-foreground text-gray-600 text-base font-medium">
             Our diverse team of tech enthusiasts and e-commerce experts are
@@ -77,7 +77,7 @@ const MeetTheTeamSection = () => {
 
         {/* Danh sách thành viên nhóm */}
         <motion.div
-          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8"
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true }}

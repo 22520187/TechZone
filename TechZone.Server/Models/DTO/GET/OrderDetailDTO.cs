@@ -11,6 +11,10 @@ namespace TechZone.Server.Models.DTO.GET
 
         // Include ProductColor with Product information (similar to CartItemDTO)
         public virtual OrderDetailProductColorDTO? ProductColor { get; set; }
+
+        // Computed properties for easy access
+        public string ProductName => ProductColor?.Product?.Name ?? "N/A";
+        public string ProductColor_Color => ProductColor?.Color ?? "N/A";
     }
 
     public class OrderDetailProductColorDTO

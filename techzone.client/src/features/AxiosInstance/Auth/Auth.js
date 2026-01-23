@@ -9,7 +9,6 @@ import {
 
 // API endpoint
 const API_URL = "/api/Account";
-const authCookies = getAuthCookies();
 
 // Thunk để xử lý đăng ký
 export const register = createAsyncThunk(
@@ -70,17 +69,28 @@ export const login = createAsyncThunk(
     }
 );
 
-// Slice quản lý trạng thái auth
-const authSlice = createSlice({
-    name: "auth",
-    initialState: {
+// Khởi tạo state từ cookies
+const initializeAuthState = () => {
+    const authCookies = getAuthCookies();
+    console.log('[Auth] Initializing auth state from cookies:', {
+        userID: authCookies.userID,
+        userRole: authCookies.userRole,
+        hasToken: !!authCookies.token
+    });
+    return {
         user: authCookies.userID || null,
         token: authCookies.token || null,
         userRole: authCookies.userRole || null,
         isAuthenticated: !!authCookies.token,
         status: "idle", // 'idle' | 'loading' | 'succeeded' | 'failed'
         error: null,
-    },
+    };
+};
+
+// Slice quản lý trạng thái auth
+const authSlice = createSlice({
+    name: "auth",
+    initialState: initializeAuthState(),
     reducers: {
         logout: (state) => {
             state.user = null;

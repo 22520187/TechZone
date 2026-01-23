@@ -196,6 +196,7 @@ namespace TechZone.Server.Repositories.Implement
 					var cartDetails = await dbContext.CartDetails
 						.Include(cd => cd.ProductColor)
 						.ThenInclude(pc => pc.Product)
+							.ThenInclude(p => p.Promotions)
 						.Where(cd => cd.CartId == cart.CartId)
 						.ToListAsync();
 
@@ -228,16 +229,35 @@ namespace TechZone.Server.Repositories.Implement
 							throw new Exception($"Sản phẩm {cartDetail.ProductColor.Product.Name} (màu {cartDetail.ProductColor.Color}) không đủ số lượng trong kho");
 						}
 
+						// Tính giá sau khi áp dụng product promotion (nếu có)
+						var product = cartDetail.ProductColor.Product;
+						decimal productPrice = product.Price;
+
+						// Tìm promotion active cho product này
+						var activeProductPromotion = product.Promotions?
+							.Where(p => p.Status == "Active" 
+								&& p.StartDate <= DateTime.Now 
+								&& p.EndDate >= DateTime.Now 
+								&& p.DiscountPercentage.HasValue)
+							.OrderByDescending(p => p.DiscountPercentage)
+							.FirstOrDefault();
+
+						// Nếu có promotion cho product, áp dụng discount
+						if (activeProductPromotion != null)
+						{
+							productPrice = productPrice * (1 - activeProductPromotion.DiscountPercentage!.Value / 100m);
+						}
+
 						// Tạo chi tiết đơn hàng
 						var orderDetail = new OrderDetail
 						{
 							OrderId = order.OrderId,
 							ProductColorId = cartDetail.ProductColorId,
 							Quantity = cartDetail.Quantity,
-							Price = cartDetail.ProductColor.Product.Price
+							Price = productPrice
 						};
 
-						// Cập nhật tổng tiền
+						// Cập nhật tổng tiền (với giá đã sale)
 						totalAmount += orderDetail.Price.GetValueOrDefault() * orderDetail.Quantity;
 
 						// Thêm chi tiết đơn hàng vào database
@@ -248,7 +268,25 @@ namespace TechZone.Server.Repositories.Implement
 						dbContext.ProductColors.Update(cartDetail.ProductColor);
 					}
 
-					// Cập nhật tổng tiền đơn hàng
+					// Áp dụng promotion discount nếu có
+					if (order.PromotionId.HasValue && order.PromotionId.Value > 0)
+					{
+						var promotion = await dbContext.Promotions
+							.FirstOrDefaultAsync(p => p.PromotionId == order.PromotionId.Value);
+						
+						if (promotion != null && 
+							promotion.Status == "Active" &&
+							promotion.StartDate <= DateTime.Now && 
+							promotion.EndDate >= DateTime.Now &&
+							promotion.DiscountPercentage.HasValue)
+						{
+							// Tính discount amount
+							decimal discountAmount = totalAmount * (promotion.DiscountPercentage.Value / 100m);
+							totalAmount -= discountAmount;
+						}
+					}
+
+					// Cập nhật tổng tiền đơn hàng (đã bao gồm discount)
 					order.TotalAmount = totalAmount;
 					dbContext.Orders.Update(order);
 

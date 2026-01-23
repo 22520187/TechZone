@@ -24,7 +24,7 @@ const HeroSection = () => {
             variants={fadeUp}
             transition={{ delay: 0.1 }}
           >
-            About NextGenTech
+            About TechZone
           </motion.div>
           <motion.h1
             className="text-3xl md:text-5xl bg-gradient-to-r from-primary-600 to-secondary-600 bg-clip-text text-transparent font-bold"

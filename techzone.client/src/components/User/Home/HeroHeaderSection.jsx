@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 
 import BlurText from "../../ReactBitsComponent/BlurText";
 import SplitText from "../../ReactBitsComponent/SplitText";
@@ -14,6 +15,7 @@ import Speaker from "../../../assets/HomeProductImage/Speaker.png";
 const images = [Headphone, Keyboard, Mouse, Phone, Speaker];
 
 const HeroHeaderSection = () => {
+  const navigate = useNavigate();
   const [currentImage, setCurrentImage] = useState(0);
 
   useEffect(() => {
@@ -45,6 +47,7 @@ const HeroHeaderSection = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, ease: "easeOut", delay: 1.5 }}
             class="border text-gray-50  duration-300 relative group cursor-pointer text-lg  overflow-hidden h-16 w-48 rounded-md bg-primary-100 p-2  font-extrabold hover:bg-primary"
+            onClick={() => navigate("/products")}
           >
             <div class="absolute group-hover:-top-1 group-hover:-right-2 z-10 w-16 h-16 rounded-full group-hover:scale-150  duration-700 right-12 top-12 bg-yellow-500"></div>
             <div class="absolute group-hover:-top-1 group-hover:-right-2 z-10 w-12 h-12 rounded-full group-hover:scale-150  duration-700 right-20 -top-6 bg-orange-500"></div>

@@ -63,6 +63,18 @@ export const deletePromotion = createAsyncThunk(
     }
 );
 
+export const updatePromotionStatus = createAsyncThunk(
+    "promotion/updatePromotionStatus",
+    async ({ promotionId, status }, { rejectWithValue }) => {
+        try {
+            const response = await api.patch(`${apiBaseUrl}/UpdatePromotionStatus/${promotionId}`, { status });
+            return response.data;
+        } catch (error) {
+            return rejectWithValue(error.response?.data || "Something went wrong");
+        }
+    }
+);
+
 const initialState = {
     promotionItems: [],
     promotionDetail: [],
@@ -128,9 +140,25 @@ const promotionSlice = createSlice({
             })
             .addCase(deletePromotion.fulfilled, (state, action) => {
                 state.status = "succeeded";
-                state.promotionItems = state.promotionItems.filter(promotion => promotion.promotionId !== action.payload.promotionId);
+                // Backend returns the deleted promotion, extract promotionId from payload
+                const deletedId = action.payload?.promotionId || action.payload;
+                state.promotionItems = state.promotionItems.filter(promotion => promotion.promotionId !== deletedId);
             })
             .addCase(deletePromotion.rejected, (state, action) => {
+                state.status = "failed";
+                state.error = action.payload;
+            })
+            .addCase(updatePromotionStatus.pending, (state) => {
+                state.status = "loading";
+            })
+            .addCase(updatePromotionStatus.fulfilled, (state, action) => {
+                state.status = "succeeded";
+                const index = state.promotionItems.findIndex(promotion => promotion.promotionId === action.payload.promotionId);
+                if (index !== -1) {
+                    state.promotionItems[index] = action.payload;
+                }
+            })
+            .addCase(updatePromotionStatus.rejected, (state, action) => {
                 state.status = "failed";
                 state.error = action.payload;
             });

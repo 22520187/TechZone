@@ -216,6 +216,7 @@ public partial class TechZoneDbContext : DbContext
             entity.Property(e => e.Name).HasMaxLength(255);
             entity.Property(e => e.PromotionCode).HasMaxLength(100);
             entity.Property(e => e.StartDate).HasColumnType("datetime");
+            entity.Property(e => e.Status).HasMaxLength(50).HasDefaultValue("Active");
         });
 
         modelBuilder.Entity<Review>(entity =>
