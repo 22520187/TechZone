@@ -16,7 +16,7 @@ const WarrantyClaimHistory = () => {
   useEffect(() => {
     const fetchClaims = async () => {
       if (!userId) {
-        setError("Vui lòng đăng nhập để xem lịch sử yêu cầu");
+        setError("Please login to view warranty claim history");
         setLoading(false);
         return;
       }

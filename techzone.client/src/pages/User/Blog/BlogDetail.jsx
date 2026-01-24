@@ -69,7 +69,7 @@ export default function BlogDetail() {
           className="flex items-center text-gray-600 hover:text-gray-900 mb-8 transition-colors z-10 relative cursor-pointer group"
         >
           <ArrowLeft size={20} className="mr-2 group-hover:translate-x-[-4px] transition-transform" />
-          <span className="font-medium">Quay lại danh sách bài viết</span>
+          <span className="font-medium">Back to Blog List</span>
         </button>
 
         {/* Blog Post Content */}

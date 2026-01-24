@@ -15,7 +15,7 @@ public class ChatbotKnowledgeService : IChatbotKnowledgeService
         _context = context;
     }
 
-    public async Task<string?> TryAnswerFromDatabaseAsync(string message, int? userId)
+    public async Task<ChatbotAnswer?> TryAnswerFromDatabaseAsync(string message, int? userId)
     {
         var m = ChatbotKnowledgeModels.Normalize(message);
         if (string.IsNullOrWhiteSpace(m)) return null;
@@ -31,7 +31,10 @@ public class ChatbotKnowledgeService : IChatbotKnowledgeService
 
             if (leftProduct == null && rightProduct == null)
             {
-                return $"Mình không tìm thấy cả **{left}** và **{right}** trong database TechZone. Bạn thử gửi đúng tên sản phẩm như trong shop (hoặc gửi link/tên gần đúng hơn) nhé.";
+                return new ChatbotAnswer
+                {
+                    TextResponse = $"Mình không tìm thấy cả **{left}** và **{right}** trong database TechZone. Bạn thử gửi đúng tên sản phẩm như trong shop (hoặc gửi link/tên gần đúng hơn) nhé."
+                };
             }
 
             if (leftProduct == null || rightProduct == null)
@@ -40,9 +43,19 @@ public class ChatbotKnowledgeService : IChatbotKnowledgeService
                 var missing = leftProduct == null ? left : right;
                 var foundBrand = found?.Brand?.BrandName ?? "N/A";
                 var foundCategory = found?.Category?.CategoryName ?? "N/A";
-                return
-                    $"Mình chỉ tìm thấy **{found?.Name}** ({foundBrand} | {foundCategory}) với giá **{found?.Price:n0} đ**.\n" +
-                    $"Còn **{missing}** thì mình chưa thấy trong database TechZone (có thể shop chưa có sản phẩm này / tên khác).";
+                
+                var products = new List<ProductInfo>();
+                if (found != null)
+                {
+                    products.Add(MapToProductInfo(found));
+                }
+
+                return new ChatbotAnswer
+                {
+                    TextResponse = $"Mình chỉ tìm thấy **{found?.Name}** ({foundBrand} | {foundCategory}) với giá **{found?.Price:n0} đ**.\n" +
+                                 $"Còn **{missing}** thì mình chưa thấy trong database TechZone (có thể shop chưa có sản phẩm này / tên khác).",
+                    Products = products
+                };
             }
 
             var p1 = leftProduct;
@@ -65,7 +78,12 @@ public class ChatbotKnowledgeService : IChatbotKnowledgeService
                 sb.AppendLine($"=> **{who}** đắt hơn **{absDiff:n0} đ**.");
             }
             sb.AppendLine("Bạn muốn mình so sánh thêm cấu hình/điểm mạnh yếu (nếu dữ liệu có trong hệ thống) không?");
-            return sb.ToString().Trim();
+            
+            return new ChatbotAnswer
+            {
+                TextResponse = sb.ToString().Trim(),
+                Products = new List<ProductInfo> { MapToProductInfo(p1), MapToProductInfo(p2) }
+            };
         }
 
         // Warranty intent
@@ -73,7 +91,10 @@ public class ChatbotKnowledgeService : IChatbotKnowledgeService
         {
             if (userId == null)
             {
-                return "Bạn vui lòng đăng nhập để mình kiểm tra thông tin bảo hành theo tài khoản của bạn.";
+                return new ChatbotAnswer
+                {
+                    TextResponse = "Bạn vui lòng đăng nhập để mình kiểm tra thông tin bảo hành theo tài khoản của bạn."
+                };
             }
 
             var warranties = await _context.Warranties
@@ -91,7 +112,10 @@ public class ChatbotKnowledgeService : IChatbotKnowledgeService
 
             if (warranties.Count == 0)
             {
-                return "Mình chưa thấy bảo hành nào trong hệ thống cho tài khoản này. Nếu bạn vừa hoàn tất đơn hàng, hãy thử vào lại sau hoặc cung cấp mã đơn để mình kiểm tra giúp.";
+                return new ChatbotAnswer
+                {
+                    TextResponse = "Mình chưa thấy bảo hành nào trong hệ thống cho tài khoản này. Nếu bạn vừa hoàn tất đơn hàng, hãy thử vào lại sau hoặc cung cấp mã đơn để mình kiểm tra giúp."
+                };
             }
 
             var sb = new StringBuilder();
@@ -101,7 +125,10 @@ public class ChatbotKnowledgeService : IChatbotKnowledgeService
                 var productName = w.OrderDetail?.ProductColor?.Product?.Name ?? "(không rõ sản phẩm)";
                 sb.AppendLine($"- #{w.WarrantyId}: {productName} | {w.StartDate:yyyy-MM-dd} → {w.EndDate:yyyy-MM-dd} | Trạng thái: {w.Status}");
             }
-            return sb.ToString().Trim();
+            return new ChatbotAnswer
+            {
+                TextResponse = sb.ToString().Trim()
+            };
         }
 
         // Order intent
@@ -109,7 +136,10 @@ public class ChatbotKnowledgeService : IChatbotKnowledgeService
         {
             if (userId == null)
             {
-                return "Bạn vui lòng đăng nhập để mình kiểm tra tình trạng đơn hàng theo tài khoản của bạn.";
+                return new ChatbotAnswer
+                {
+                    TextResponse = "Bạn vui lòng đăng nhập để mình kiểm tra tình trạng đơn hàng theo tài khoản của bạn."
+                };
             }
 
             var orders = await _context.Orders
@@ -121,7 +151,10 @@ public class ChatbotKnowledgeService : IChatbotKnowledgeService
 
             if (orders.Count == 0)
             {
-                return "Mình chưa thấy đơn hàng nào của bạn trong hệ thống.";
+                return new ChatbotAnswer
+                {
+                    TextResponse = "Mình chưa thấy đơn hàng nào của bạn trong hệ thống."
+                };
             }
 
             var sb = new StringBuilder();
@@ -132,7 +165,10 @@ public class ChatbotKnowledgeService : IChatbotKnowledgeService
                 sb.AppendLine($"- Mã đơn #{o.OrderId} | {o.OrderDate:yyyy-MM-dd} | Trạng thái: {o.Status} | Số sản phẩm: {itemCount}");
             }
             sb.AppendLine("Nếu bạn muốn mình kiểm tra chi tiết 1 đơn, hãy gửi: \"mã đơn 123\".");
-            return sb.ToString().Trim();
+            return new ChatbotAnswer
+            {
+                TextResponse = sb.ToString().Trim()
+            };
         }
 
         // Product price query intent: "giá của X", "giá X", "X giá bao nhiêu"
@@ -144,9 +180,15 @@ public class ChatbotKnowledgeService : IChatbotKnowledgeService
             {
                 var brand = product.Brand?.BrandName ?? "N/A";
                 var category = product.Category?.CategoryName ?? "N/A";
-                return $"**{product.Name}** ({brand} | {category})\n" +
-                       $"Giá: **{product.Price:n0} đ**\n" +
-                       $"{(product.StockQuantity.HasValue ? $"Tồn kho: {product.StockQuantity} sản phẩm" : "")}";
+                
+                return new ChatbotAnswer
+                {
+                    TextResponse = $"**{product.Name}** ({brand} | {category})\n" +
+                                 $"Giá: **{product.Price:n0} đ**\n" +
+                                 $"{(product.StockQuantity.HasValue ? $"Tồn kho: {product.StockQuantity} sản phẩm" : "")}\n" +
+                                 $"Xem chi tiết tại: /product/{product.ProductId}",
+                    Products = new List<ProductInfo> { MapToProductInfo(product) }
+                };
             }
         }
 
@@ -169,8 +211,7 @@ public class ChatbotKnowledgeService : IChatbotKnowledgeService
             {
                 var categoryLower = categoryFilter.ToLower();
                 productsQuery = productsQuery.Where(p =>
-                    (p.Category != null && p.Category.CategoryName.ToLower().Contains(categoryLower)) ||
-                    p.Name.ToLower().Contains(categoryLower));
+                    (p.Category != null && p.Category.CategoryName.ToLower().Contains(categoryLower)));
             }
 
             // Filter by price range if specified
@@ -225,6 +266,7 @@ public class ChatbotKnowledgeService : IChatbotKnowledgeService
                         var fallbackQuery = _context.Products
                             .Include(p => p.Brand)
                             .Include(p => p.Category)
+                            .Include(p => p.ProductImages)
                             .AsQueryable();
 
                         foreach (var token in tokens)
@@ -244,11 +286,16 @@ public class ChatbotKnowledgeService : IChatbotKnowledgeService
 
                 if (products.Count == 0)
                 {
-                    return "Mình chưa tìm thấy sản phẩm phù hợp trong database. Bạn thử cho mình tên sản phẩm / hãng / danh mục cụ thể hơn nhé. Ví dụ: \"giá của iPhone 15 Pro\" hoặc \"Samsung Galaxy S24\".";
+                    return new ChatbotAnswer
+                    {
+                        TextResponse = "Mình chưa tìm thấy sản phẩm phù hợp trong database. Bạn thử cho mình tên sản phẩm / hãng / danh mục cụ thể hơn nhé. Ví dụ: \"giá của iPhone 15 Pro\" hoặc \"Samsung Galaxy S24\"."
+                    };
                 }
             }
 
             var sb = new StringBuilder();
+            var productInfoList = new List<ProductInfo>();
+            
             if (products.Count == 1)
             {
                 var p = products[0];
@@ -260,6 +307,8 @@ public class ChatbotKnowledgeService : IChatbotKnowledgeService
                 {
                     sb.AppendLine($"Tồn kho: {p.StockQuantity} sản phẩm");
                 }
+                sb.AppendLine($"\nXem chi tiết tại: /product/{p.ProductId}");
+                productInfoList.Add(MapToProductInfo(p));
             }
             else
             {
@@ -268,11 +317,17 @@ public class ChatbotKnowledgeService : IChatbotKnowledgeService
                 {
                     var brand = p.Brand?.BrandName ?? "N/A";
                     var category = p.Category?.CategoryName ?? "N/A";
-                    sb.AppendLine($"- #{p.ProductId}: {p.Name} | {brand} | {category} | Giá: {p.Price:n0} đ");
+                    sb.AppendLine($"- {p.Name} | {brand} | {category} | Giá: {p.Price:n0} đ");
+                    productInfoList.Add(MapToProductInfo(p));
                 }
-                sb.AppendLine("Bạn muốn mình lọc theo mức giá / hãng / nhu cầu (gaming, học tập, văn phòng) không?");
+                sb.AppendLine("\nBạn muốn mình lọc theo mức giá / hãng / nhu cầu (gaming, học tập, văn phòng) không?");
             }
-            return sb.ToString().Trim();
+            
+            return new ChatbotAnswer
+            {
+                TextResponse = sb.ToString().Trim(),
+                Products = productInfoList
+            };
         }
 
         // Unknown intent -> no DB answer
@@ -292,6 +347,7 @@ public class ChatbotKnowledgeService : IChatbotKnowledgeService
         var productsQuery = _context.Products
             .Include(p => p.Brand)
             .Include(p => p.Category)
+            .Include(p => p.ProductImages)
             .AsQueryable();
 
         // Filter by category if specified
@@ -338,7 +394,9 @@ public class ChatbotKnowledgeService : IChatbotKnowledgeService
             sb.AppendLine($"- Danh sách sản phẩm{(categoryFilter != null ? $" thuộc danh mục '{categoryFilter}'" : "")}{(priceRange.HasValue ? $" trong khoảng giá {priceRange.Value.minPrice:n0} - {priceRange.Value.maxPrice:n0} VND" : "")}:");
             foreach (var p in products)
             {
-                sb.AppendLine($"  - #{p.ProductId}: {p.Name} | Brand={(p.Brand?.BrandName ?? "N/A")} | Category={(p.Category?.CategoryName ?? "N/A")} | Price={p.Price:n0} VND");
+                var imageUrl = p.ProductImages?.FirstOrDefault(img => img.IsPrimary == true)?.ImageUrl
+                              ?? p.ProductImages?.FirstOrDefault()?.ImageUrl;
+                sb.AppendLine($"  - ProductId={p.ProductId}, Name=\"{p.Name}\", Brand=\"{p.Brand?.BrandName ?? "N/A"}\", Category=\"{p.Category?.CategoryName ?? "N/A"}\", Price={p.Price:n0} VND, ImageUrl=\"{imageUrl}\", StockQuantity={p.StockQuantity}");
             }
         }
         else
@@ -366,6 +424,107 @@ public class ChatbotKnowledgeService : IChatbotKnowledgeService
 
         sb.AppendLine("Yêu cầu: Trả lời chỉ dựa trên dữ liệu nội bộ ở trên. Nếu thiếu dữ liệu, hãy nói rõ không có trong hệ thống.");
         return sb.ToString();
+    }
+
+    public async Task<List<TechZone.Server.Controllers.ProductCardDto>?> ExtractProductsFromContextAsync(string message, int? userId, int maxProducts = 5)
+    {
+        // Extract filters from message to get relevant products
+        var normalizedMessage = ChatbotKnowledgeModels.Normalize(message);
+        var priceRange = TryExtractPriceRange(normalizedMessage);
+        var categoryFilter = TryExtractCategory(normalizedMessage);
+
+        var productsQuery = _context.Products
+            .Include(p => p.Brand)
+            .Include(p => p.Category)
+            .Include(p => p.ProductImages)
+            .AsQueryable();
+
+        // Filter by category if specified
+        if (!string.IsNullOrWhiteSpace(categoryFilter))
+        {
+            var categoryLower = categoryFilter.ToLower();
+            productsQuery = productsQuery.Where(p =>
+                (p.Category != null && p.Category.CategoryName.ToLower().Contains(categoryLower)) ||
+                p.Name.ToLower().Contains(categoryLower));
+        }
+
+        // Filter by price range if specified
+        if (priceRange.HasValue)
+        {
+            var (minPrice, maxPrice) = priceRange.Value;
+            productsQuery = productsQuery.Where(p => p.Price >= minPrice && p.Price <= maxPrice);
+        }
+
+        // Get products matching filters, sorted by relevance
+        var products = await productsQuery
+            .ToListAsync();
+
+        // Sort by relevance: if price range specified, sort by closest to middle of range
+        if (priceRange.HasValue)
+        {
+            var (minPrice, maxPrice) = priceRange.Value;
+            var targetPrice = (minPrice + maxPrice) / 2;
+            products = products
+                .OrderBy(p => Math.Abs(p.Price - targetPrice))
+                .ThenByDescending(p => p.CreatedAt)
+                .Take(maxProducts)
+                .ToList();
+        }
+        else
+        {
+            products = products
+                .OrderByDescending(p => p.CreatedAt)
+                .Take(maxProducts)
+                .ToList();
+        }
+
+        // If no products found with strict filters, try to find some popular products as fallback
+        if (products.Count == 0)
+        {
+            // Try to find products in similar category but wider price range
+            if (!string.IsNullOrWhiteSpace(categoryFilter))
+            {
+                var categoryLower = categoryFilter.ToLower();
+                products = await _context.Products
+                    .Include(p => p.Brand)
+                    .Include(p => p.Category)
+                    .Include(p => p.ProductImages)
+                    .Where(p => (p.Category != null && p.Category.CategoryName.ToLower().Contains(categoryLower)) ||
+                               p.Name.ToLower().Contains(categoryLower))
+                    .OrderByDescending(p => p.CreatedAt)
+                    .Take(maxProducts)
+                    .ToListAsync();
+            }
+            
+            // If still no products, return some popular/recent products
+            if (products.Count == 0)
+            {
+                products = await _context.Products
+                    .Include(p => p.Brand)
+                    .Include(p => p.Category)
+                    .Include(p => p.ProductImages)
+                    .OrderByDescending(p => p.CreatedAt)
+                    .Take(maxProducts)
+                    .ToListAsync();
+            }
+        }
+
+        if (products.Count == 0)
+        {
+            return null;
+        }
+
+        return products.Select(p => new TechZone.Server.Controllers.ProductCardDto
+        {
+            ProductId = p.ProductId,
+            Name = p.Name,
+            Price = p.Price,
+            ImageUrl = p.ProductImages?.FirstOrDefault(img => img.IsPrimary == true)?.ImageUrl
+                      ?? p.ProductImages?.FirstOrDefault()?.ImageUrl,
+            Brand = p.Brand?.BrandName,
+            Category = p.Category?.CategoryName,
+            StockQuantity = p.StockQuantity
+        }).ToList();
     }
 
     private static string ExtractProductQuery(string normalizedMessage)
@@ -698,14 +857,15 @@ public class ChatbotKnowledgeService : IChatbotKnowledgeService
         var categoryKeywords = new Dictionary<string, string[]>
         {
             { "laptop", new[] { "laptop", "máy tính xách tay", "notebook", "macbook" } },
-            { "điện thoại", new[] { "điện thoại", "smartphone", "phone", "iphone", "samsung", "xiaomi" } },
-            { "màn hình", new[] { "màn hình", "monitor", "display", "ultragear", "ultrawide" } },
-            { "tai nghe", new[] { "tai nghe", "headphone", "earphone", "airpods" } },
+            { "điện thoại", new[] { "điện thoại", "smartphone", "phone", "iphone", "galaxy" } },
+            { "màn hình", new[] { "màn hình", "monitor", "display", "ultragear", "ultrawide", "ultrasharp" } },
+            { "tai nghe", new[] { "tai nghe", "headphone", "earphone", "airpods", "headset" } },
             { "chuột", new[] { "chuột", "mouse", "gaming mouse" } },
-            { "bàn phím", new[] { "bàn phím", "keyboard", "gaming keyboard" } },
+            { "bàn phím", new[] { "bàn phím", "keyboard", "gaming keyboard", "phím cơ" } },
             { "tablet", new[] { "tablet", "ipad", "máy tính bảng" } }
         };
 
+        // Check for exact category matches (prioritize specific keywords)
         foreach (var kvp in categoryKeywords)
         {
             var categoryName = kvp.Key;
@@ -713,7 +873,8 @@ public class ChatbotKnowledgeService : IChatbotKnowledgeService
             
             foreach (var keyword in keywords)
             {
-                if (normalizedMessage.Contains(keyword))
+                // Use word boundary matching to avoid partial matches
+                if (System.Text.RegularExpressions.Regex.IsMatch(normalizedMessage, $@"\b{keyword}\b"))
                 {
                     return categoryName;
                 }
@@ -721,6 +882,21 @@ public class ChatbotKnowledgeService : IChatbotKnowledgeService
         }
 
         return null;
+    }
+
+    private ProductInfo MapToProductInfo(TechZone.Server.Models.Domain.Product product)
+    {
+        return new ProductInfo
+        {
+            ProductId = product.ProductId,
+            Name = product.Name,
+            Price = product.Price,
+            ImageUrl = product.ProductImages?.FirstOrDefault(img => img.IsPrimary == true)?.ImageUrl
+                      ?? product.ProductImages?.FirstOrDefault()?.ImageUrl,
+            Brand = product.Brand?.BrandName,
+            Category = product.Category?.CategoryName,
+            StockQuantity = product.StockQuantity
+        };
     }
 
 }

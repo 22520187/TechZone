@@ -1,25 +1,33 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
-
-import { Input, Button, Card, Modal, message as antMessage } from 'antd';
+import { useNavigate } from 'react-router-dom';
+import { Input, Button, Card, Modal, message as antMessage, Tag } from 'antd';
 import { useDispatch, useSelector } from 'react-redux';
 import GradientText from '../../components/ReactBitsComponent/GradientText';
 import {
   saveChatMessage,
   getRecentChatHistory,
   deleteChatHistory,
-  clearChatHistory
+  clearChatHistory,
+  chatWithGemini
 } from '../../features/Chatbot/Chatbot';
 import { getAuthCookies } from '../../features/AxiosInstance/Cookies/CookiesHelper';
+import { MessageCircle, User, Bot, Sparkles, Send, Trash2, ExternalLink, ShoppingCart } from 'lucide-react';
 
 const { TextArea } = Input;
 
 const Chatbot = () => {
+  console.log('🎯 Chatbot component loaded!');
+  
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const chatbotState = useSelector((state) => state.chatbot);
   const chatHistory = chatbotState?.chatHistory || [];
   const authCookies = getAuthCookies();
   const userId = authCookies.userID ? parseInt(authCookies.userID) : null;
+  
+  console.log('👤 User ID:', userId);
+  console.log('💬 Chat history length:', chatHistory.length);
   const [messages, setMessages] = useState([
     {
       id: 1,
@@ -32,6 +40,59 @@ const Chatbot = () => {
   const [isTyping, setIsTyping] = useState(false);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const messagesEndRef = useRef(null);
+
+  // Function to parse message content and convert /product/{id} links to clickable links
+  const parseMessageContent = (content) => {
+    if (!content) return content;
+    
+    // Split content by lines to preserve formatting
+    const lines = content.split('\n');
+    
+    return lines.map((line, lineIndex) => {
+      const parts = [];
+      const linkRegex = /(\/?product\/(\d+))/g;
+      let lastIndex = 0;
+      let match;
+      
+      while ((match = linkRegex.exec(line)) !== null) {
+        // Add text before link
+        if (match.index > lastIndex) {
+          parts.push(line.substring(lastIndex, match.index));
+        }
+        
+        // Add clickable link
+        const productId = match[2];
+        parts.push(
+          <a
+            key={`link-${lineIndex}-${match.index}`}
+            href={`/products/${productId}`}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              navigate(`/products/${productId}`);
+            }}
+            className="text-blue-600 hover:text-blue-800 hover:underline cursor-pointer font-semibold"
+            style={{ textDecoration: 'underline' }}
+          >
+            {match[1]}
+          </a>
+        );
+        
+        lastIndex = match.index + match[0].length;
+      }
+      
+      // Add remaining text
+      if (lastIndex < line.length) {
+        parts.push(line.substring(lastIndex));
+      }
+      
+      return (
+        <div key={`line-${lineIndex}`}>
+          {parts.length > 0 ? parts : line}
+        </div>
+      );
+    });
+  };
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -57,6 +118,17 @@ const Chatbot = () => {
 
   // Convert chat history to messages format
   useEffect(() => {
+    console.log('📝 [useEffect] chatHistory changed, length:', chatHistory?.length);
+    console.log('📝 [useEffect] isLoadingHistory:', isLoadingHistory);
+    console.log('📝 [useEffect] Current messages count:', messages.length);
+    
+    // Only update messages from history on initial load or when history actually changes
+    // Skip if user is currently typing or just received a response
+    if (isTyping) {
+      console.log('⏸️ Skip history update - currently typing');
+      return;
+    }
+
     if (chatHistory && chatHistory.length > 0) {
       const convertedMessages = chatHistory
         .filter(chat => chat.message || chat.response) // Filter out empty records
@@ -74,7 +146,9 @@ const Chatbot = () => {
                 id: `bot-${chat.chatHistoryId || index}-${chat.createdAt || Date.now()}`,
                 type: 'bot',
                 content: chat.response,
-                timestamp: new Date(chat.createdAt)
+                timestamp: new Date(chat.createdAt),
+                // History messages don't have products, keep null
+                products: null
               }
             ];
           }
@@ -84,7 +158,8 @@ const Chatbot = () => {
             id: `${messageType}-${chat.chatHistoryId || index}-${chat.createdAt || Date.now()}`,
             type: messageType,
             content: chat.message || chat.response,
-            timestamp: new Date(chat.createdAt)
+            timestamp: new Date(chat.createdAt),
+            products: null
           };
         })
         .flat() // Flatten array if we created pairs
@@ -116,16 +191,23 @@ const Chatbot = () => {
         }
       ]);
     }
-  }, [chatHistory, isLoadingHistory]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chatHistory, isLoadingHistory]); // REMOVED isTyping from dependencies!
 
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
 
   const handleSendMessage = async () => {
-    if (!inputMessage.trim()) return;
+    console.log('🚀 handleSendMessage called');
+    
+    if (!inputMessage.trim()) {
+      console.log('❌ Empty message, returning');
+      return;
+    }
 
     const userMessageContent = inputMessage.trim();
+    console.log('📝 User message:', userMessageContent);
 
     const userMessage = {
       id: messages.length + 1,
@@ -138,62 +220,67 @@ const Chatbot = () => {
     setInputMessage('');
     setIsTyping(true);
 
-    // Get bot response
-    const botResponseContent = getBotResponse(userMessageContent);
+    console.log('🔄 Calling API...');
 
-    // Simulate AI response delay
-    setTimeout(async () => {
+    try {
+      // Call Gemini AI API
+      const response = await dispatch(chatWithGemini({
+        message: userMessageContent,
+        userId: userId,
+        historyLimit: 5
+      })).unwrap();
+
+      console.log('=== AI RESPONSE DEBUG ===');
+      console.log('Full response:', JSON.stringify(response, null, 2));
+      console.log('Response type:', typeof response);
+      console.log('Response keys:', response ? Object.keys(response) : 'null');
+      console.log('Has products?:', 'products' in response);
+      console.log('Products value:', response.products);
+      console.log('Products type:', typeof response.products);
+      console.log('Products is array?:', Array.isArray(response.products));
+      console.log('Products length:', response.products?.length);
+      console.log('========================');
+
       const botResponse = {
         id: messages.length + 2,
         type: 'bot',
-        content: botResponseContent,
-        timestamp: new Date()
+        content: response.response || "Xin lỗi, tôi không thể xử lý yêu cầu của bạn lúc này.",
+        timestamp: new Date(),
+        products: response.products || null
       };
+
+      console.log('Bot Response with products:', botResponse);
+
       setMessages(prev => [...prev, botResponse]);
       setIsTyping(false);
 
-      // Save to database
+      // DO NOT refresh chat history immediately after sending message
+      // because it will overwrite the message with products
+      // The history will be loaded on next page refresh
+      
+      /* Commented out to prevent overwriting products
       if (userId) {
         try {
-          // Save user message
-          await dispatch(saveChatMessage({
-            message: userMessageContent,
-            response: '',
-            messageType: 'user'
-          })).unwrap();
-
-          // Save bot response
-          await dispatch(saveChatMessage({
-            message: '',
-            response: botResponseContent,
-            messageType: 'bot'
-          })).unwrap();
+          await dispatch(getRecentChatHistory({ userId, limit: 50 })).unwrap();
         } catch (error) {
-          console.error("Error saving chat message:", error);
+          console.error("Error refreshing chat history:", error);
         }
       }
-    }, 1500);
-  };
+      */
+    } catch (error) {
+      console.error("Error getting AI response:", error);
+      
+      // Fallback response if API fails
+      const botResponse = {
+        id: messages.length + 2,
+        type: 'bot',
+        content: "Xin lỗi, có lỗi xảy ra khi kết nối với AI. Vui lòng thử lại sau.",
+        timestamp: new Date()
+      };
 
-  const getBotResponse = (userInput) => {
-    const input = userInput.toLowerCase();
-
-    if (input.includes('laptop') || input.includes('máy tính')) {
-      return 'TechZone có nhiều dòng laptop từ gaming, văn phòng đến workstation. Một số thương hiệu nổi bật như ASUS, Dell, HP, Lenovo với giá từ 10 triệu đến 50 triệu. Bạn cần laptop cho mục đích gì?';
-    } else if (input.includes('điện thoại') || input.includes('phone')) {
-      return 'Chúng tôi có đầy đủ các dòng smartphone từ iPhone, Samsung Galaxy, Xiaomi, OPPO... với nhiều phân khúc giá. Bạn có ngân sách bao nhiêu và cần tính năng gì đặc biệt?';
-    } else if (input.includes('gaming') || input.includes('game')) {
-      return 'TechZone chuyên cung cấp gear gaming: PC gaming, laptop gaming, chuột, bàn phím cơ, tai nghe, ghế gaming... Bạn đang tìm thiết bị gaming nào cụ thể?';
-    } else if (input.includes('giá') || input.includes('price')) {
-      return 'Giá sản phẩm tại TechZone rất cạnh tranh với nhiều chương trình khuyến mãi. Bạn có thể cho tôi biết sản phẩm cụ thể để tôi tư vấn giá tốt nhất?';
-    } else if (input.includes('giao hàng') || input.includes('shipping')) {
-      return 'TechZone hỗ trợ giao hàng toàn quốc:\n• Nội thành: 1-2 ngày\n• Tỉnh thành: 2-3 ngày\n• Miễn phí ship cho đơn từ 500k\n• Giao hàng nhanh trong 2h (phí 30k)';
-    } else if (input.includes('bảo hành') || input.includes('warranty')) {
-      return 'Chế độ bảo hành tại TechZone:\n• Laptop: 12-24 tháng\n• Điện thoại: 12 tháng\n• Phụ kiện: 6-12 tháng\n• Bảo hành chính hãng, đổi mới trong 7 ngày đầu';
-    } else if (input.includes('khuyến mãi') || input.includes('sale')) {
-      return 'Hiện tại TechZone đang có nhiều chương trình:\n• Giảm 10-20% laptop gaming\n• Mua phone tặng phụ kiện\n• Trade-in máy cũ lên đời\n• Trả góp 0% lãi suất';
-    } else {
-      return 'Cảm ơn bạn đã quan tâm đến TechZone! Tôi có thể hỗ trợ bạn về:\n• Tư vấn sản phẩm công nghệ\n• Thông tin giá cả và khuyến mãi\n• Chính sách bảo hành, giao hàng\n• So sánh sản phẩm\nBạn cần hỗ trợ gì cụ thể?';
+      setMessages(prev => [...prev, botResponse]);
+      setIsTyping(false);
+      antMessage.error('Không thể kết nối với AI. Vui lòng thử lại.');
     }
   };
 
@@ -305,17 +392,27 @@ const Chatbot = () => {
               )}
             </div>
             {/* Messages Area */}
-            <div className="h-96 overflow-y-auto p-6 bg-gradient-to-b from-white to-gray-50">
-              <div className="space-y-6">
-                {messages.map((message) => (
+            <div className="h-[600px] overflow-y-auto p-6 bg-gradient-to-b from-white to-gray-50">
+              <div className="space-y-6 max-w-full">{/* Changed max-w-2xl to max-w-full */}
+                {messages.map((message) => {
+                  // Debug logging for each message render
+                  if (message.type === 'bot') {
+                    console.log(`[Render] Message ID: ${message.id}`);
+                    console.log(`[Render] Has products?: ${message.products ? 'YES' : 'NO'}`);
+                    console.log(`[Render] Products count: ${message.products?.length || 0}`);
+                    if (message.products) {
+                      console.log(`[Render] Products:`, message.products);
+                    }
+                  }
+                  
+                  return (
                   <motion.div
                     key={message.id}
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
                   >
-                    <div className={`flex items-start space-x-3 max-w-2xl ${message.type === 'user' ? 'flex-row-reverse space-x-reverse' : ''
-                      }`}>
+                    <div className={`flex items-start space-x-3 ${message.type === 'user' ? 'max-w-2xl flex-row-reverse space-x-reverse' : 'max-w-4xl'}`}>
                       {/* Avatar */}
                       <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${message.type === 'user'
                         ? 'bg-gradient-to-r from-primary to-secondary'
@@ -329,24 +426,96 @@ const Chatbot = () => {
                       </div>
 
                       {/* Message Bubble */}
-                      <div className={`px-4 py-3 rounded-2xl ${message.type === 'user'
-                        ? 'bg-gradient-to-r from-primary to-secondary text-white'
-                        : 'bg-white border border-gray-200 text-gray-800 shadow-sm'
-                        }`}>
-                        <p className="text-sm leading-relaxed whitespace-pre-line">
-                          {message.content}
-                        </p>
-                        <p className={`text-xs mt-2 ${message.type === 'user' ? 'text-white opacity-70' : 'text-gray-500'
+                      <div className={`flex flex-col space-y-2 flex-1 ${message.type === 'user' ? 'items-end' : 'items-start'}`}>
+                        <div className={`px-4 py-3 rounded-2xl ${message.type === 'user'
+                          ? 'bg-gradient-to-r from-primary to-secondary text-white'
+                          : 'bg-white border border-gray-200 text-gray-800 shadow-sm'
                           }`}>
-                          {message.timestamp.toLocaleTimeString('vi-VN', {
-                            hour: '2-digit',
-                            minute: '2-digit'
-                          })}
-                        </p>
+                          <div className="text-sm leading-relaxed whitespace-pre-line">
+                            {message.type === 'bot' ? parseMessageContent(message.content) : message.content}
+                          </div>
+                          <p className={`text-xs mt-2 ${message.type === 'user' ? 'text-white opacity-70' : 'text-gray-500'
+                            }`}>
+                            {message.timestamp.toLocaleTimeString('vi-VN', {
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })}
+                          </p>
+                        </div>
+
+                        {/* Product Cards - Only show for bot messages */}
+                        {message.type === 'bot' && message.products && message.products.length > 0 && (
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 w-full mt-2">
+                            {console.log('Rendering products:', message.products)}
+                            {message.products.map((product) => (
+                              <motion.div
+                                key={product.productId}
+                                whileHover={{ scale: 1.02 }}
+                                className="bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden cursor-pointer"
+                                onClick={() => navigate(`/products/${product.productId}`)}
+                              >
+                                <div className="relative h-40 bg-gray-100">
+                                  {product.imageUrl ? (
+                                    <img
+                                      src={product.imageUrl}
+                                      alt={product.name}
+                                      className="w-full h-full object-contain p-2"
+                                      onError={(e) => {
+                                        e.target.src = 'https://via.placeholder.com/300x300?text=No+Image';
+                                      }}
+                                    />
+                                  ) : (
+                                    <div className="w-full h-full flex items-center justify-center text-gray-400">
+                                      <ShoppingCart size={48} />
+                                    </div>
+                                  )}
+                                  {product.stockQuantity !== null && product.stockQuantity !== undefined && (
+                                    <div className="absolute top-2 right-2">
+                                      <Tag color={product.stockQuantity > 0 ? 'green' : 'red'}>
+                                        {product.stockQuantity > 0 ? `Còn ${product.stockQuantity}` : 'Hết hàng'}
+                                      </Tag>
+                                    </div>
+                                  )}
+                                </div>
+                                <div className="p-3">
+                                  <h4 className="text-sm font-semibold text-gray-800 line-clamp-2 mb-1">
+                                    {product.name}
+                                  </h4>
+                                  <div className="flex items-center justify-between mb-2">
+                                    <span className="text-xs text-gray-500">
+                                      {product.brand && `${product.brand} • `}
+                                      {product.category}
+                                    </span>
+                                  </div>
+                                  <div className="flex items-center justify-between">
+                                    <span className="text-lg font-bold text-primary">
+                                      {new Intl.NumberFormat('vi-VN', {
+                                        style: 'currency',
+                                        currency: 'VND'
+                                      }).format(product.price)}
+                                    </span>
+                                    <Button
+                                      type="link"
+                                      size="small"
+                                      icon={<ExternalLink size={14} />}
+                                      className="text-primary"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        navigate(`/products/${product.productId}`);
+                                      }}
+                                    >
+                                      Chi tiết
+                                    </Button>
+                                  </div>
+                                </div>
+                              </motion.div>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     </div>
                   </motion.div>
-                ))}
+                )})}
 
                 {/* Typing indicator */}
                 {isTyping && (

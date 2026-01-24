@@ -16,7 +16,7 @@ const WarrantyList = () => {
   useEffect(() => {
     const fetchWarranties = async () => {
       if (!userId) {
-        setError("Vui lòng đăng nhập để xem bảo hành");
+        setError("Please login to view warranties");
         setLoading(false);
         return;
       }

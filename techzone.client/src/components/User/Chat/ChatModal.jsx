@@ -1,8 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Send, Bot, User, Minimize2, Maximize2, Trash2 } from 'lucide-react';
+import { Send, Bot, User, Minimize2, Maximize2, Trash2, ExternalLink } from 'lucide-react';
 import { Input, Button, Modal, message as antMessage } from 'antd';
 import { useDispatch, useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 import { 
   saveChatMessage, 
   getRecentChatHistory,
@@ -16,6 +17,7 @@ const { TextArea } = Input;
 
 const ChatModal = ({ isOpen, onClose }) => {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const chatbotState = useSelector((state) => state.chatbot);
   const chatHistory = chatbotState?.chatHistory || [];
   const authCookies = getAuthCookies();
@@ -33,6 +35,58 @@ const ChatModal = ({ isOpen, onClose }) => {
   const [isMinimized, setIsMinimized] = useState(false);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const messagesEndRef = useRef(null);
+
+  // Function to parse message content and convert /product/{id} links to clickable links
+  const parseMessageContent = (content) => {
+    if (!content) return content;
+    
+    // Split content by lines to preserve formatting
+    const lines = content.split('\n');
+    
+    return lines.map((line, lineIndex) => {
+      const parts = [];
+      const linkRegex = /(\/?product\/(\d+))/g;
+      let lastIndex = 0;
+      let match;
+      
+      while ((match = linkRegex.exec(line)) !== null) {
+        // Add text before link
+        if (match.index > lastIndex) {
+          parts.push(line.substring(lastIndex, match.index));
+        }
+        
+        // Add clickable link
+        const productId = match[2];
+        parts.push(
+          <span
+            key={`link-${lineIndex}-${match.index}`}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              navigate(`/products/${productId}`);
+              onClose();
+            }}
+            className="text-blue-600 hover:text-blue-800 underline cursor-pointer font-semibold"
+          >
+            {match[1]}
+          </span>
+        );
+        
+        lastIndex = match.index + match[0].length;
+      }
+      
+      // Add remaining text
+      if (lastIndex < line.length) {
+        parts.push(line.substring(lastIndex));
+      }
+      
+      return (
+        <div key={`line-${lineIndex}`}>
+          {parts.length > 0 ? parts : line}
+        </div>
+      );
+    });
+  };
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -75,7 +129,8 @@ const ChatModal = ({ isOpen, onClose }) => {
                 id: `bot-${chat.chatHistoryId || index}-${chat.createdAt || Date.now()}`,
                 type: 'bot',
                 content: chat.response,
-                timestamp: new Date(chat.createdAt)
+                timestamp: new Date(chat.createdAt),
+                products: null // History doesn't have products
               }
             ];
           }
@@ -85,7 +140,8 @@ const ChatModal = ({ isOpen, onClose }) => {
             id: `${messageType}-${chat.chatHistoryId || index}-${chat.createdAt || Date.now()}`,
             type: messageType,
             content: chat.message || chat.response,
-            timestamp: new Date(chat.createdAt)
+            timestamp: new Date(chat.createdAt),
+            products: null // History doesn't have products
           };
         })
         .flat() // Flatten array if we created pairs
@@ -117,7 +173,8 @@ const ChatModal = ({ isOpen, onClose }) => {
         }
       ]);
     }
-  }, [chatHistory, isOpen, isLoadingHistory]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chatHistory, isOpen, isLoadingHistory]); // Removed isTyping to prevent re-render
 
   useEffect(() => {
     scrollToBottom();
@@ -151,13 +208,15 @@ const ChatModal = ({ isOpen, onClose }) => {
         id: messages.length + 2,
         type: 'bot',
         content: response.response || "Xin lỗi, tôi không thể xử lý yêu cầu của bạn lúc này.",
-        timestamp: new Date()
+        timestamp: new Date(),
+        products: response.products || null
       };
 
       setMessages(prev => [...prev, botResponse]);
       setIsTyping(false);
 
-      // Refresh chat history to include the new messages
+      // DO NOT refresh chat history immediately to prevent overwriting products
+      /* Commented out to preserve products in bot response
       if (userId) {
         try {
           await dispatch(getRecentChatHistory({ userId, limit: 50 })).unwrap();
@@ -165,6 +224,7 @@ const ChatModal = ({ isOpen, onClose }) => {
           console.error("Error refreshing chat history:", error);
         }
       }
+      */
     } catch (error) {
       console.error("Error getting AI response:", error);
       
@@ -327,7 +387,66 @@ const ChatModal = ({ isOpen, onClose }) => {
                           <User size={16} className="text-white mt-1 flex-shrink-0" />
                         )}
                         <div className="flex-1">
-                          <p className="text-sm">{message.content}</p>
+                          <div className="text-sm whitespace-pre-line">
+                            {message.type === 'bot' ? parseMessageContent(message.content) : message.content}
+                          </div>
+                          
+                          {/* Display product cards if available */}
+                          {message.products && message.products.length > 0 && (
+                            <div className="mt-3 space-y-2">
+                              {message.products.map((product) => (
+                                <div
+                                  key={product.productId}
+                                  className="bg-gray-50 rounded-lg p-3 border border-gray-200 hover:shadow-md transition-shadow cursor-pointer"
+                                  onClick={() => {
+                                    navigate(`/products/${product.productId}`);
+                                    onClose();
+                                  }}
+                                >
+                                  <div className="flex gap-3">
+                                    {/* Product Image */}
+                                    {product.imageUrl && (
+                                      <div className="flex-shrink-0">
+                                        <img
+                                          src={product.imageUrl}
+                                          alt={product.name}
+                                          className="w-16 h-16 object-cover rounded"
+                                          onError={(e) => {
+                                            e.target.onerror = null;
+                                            e.target.src = '/placeholder-product.png';
+                                          }}
+                                        />
+                                      </div>
+                                    )}
+                                    
+                                    {/* Product Info */}
+                                    <div className="flex-1 min-w-0">
+                                      <h4 className="text-sm font-semibold text-gray-800 truncate">
+                                        {product.name}
+                                      </h4>
+                                      {(product.brand || product.category) && (
+                                        <p className="text-xs text-gray-500 mt-0.5">
+                                          {[product.brand, product.category].filter(Boolean).join(' | ')}
+                                        </p>
+                                      )}
+                                      <div className="flex items-center justify-between mt-1">
+                                        <p className="text-sm font-bold text-primary">
+                                          {product.price.toLocaleString('vi-VN')} đ
+                                        </p>
+                                        <ExternalLink size={14} className="text-primary" />
+                                      </div>
+                                      {product.stockQuantity !== null && product.stockQuantity !== undefined && (
+                                        <p className="text-xs text-gray-500 mt-0.5">
+                                          Tồn kho: {product.stockQuantity}
+                                        </p>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                          
                           <p className={`text-xs mt-1 ${
                             message.type === 'user' ? 'text-white opacity-70' : 'text-gray-500'
                           }`}>
