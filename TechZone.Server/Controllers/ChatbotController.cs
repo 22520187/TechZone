@@ -1,6 +1,7 @@
 using AutoMapper;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System.Text.Json.Serialization;
 using TechZone.Server.Models.DTO.ADD;
 using TechZone.Server.Models.DTO.GET;
 using TechZone.Server.Models.Domain;
@@ -131,12 +132,31 @@ namespace TechZone.Server.Controllers
                 }
 
                 string aiResponse;
+                List<ProductCardDto>? products = null;
 
                 if (mode.Equals("DatabaseOnly", StringComparison.OrdinalIgnoreCase))
                 {
                     // Database-only mode is kept for debugging, but default behavior should be Hybrid (OpenAI grounded by DB).
-                    aiResponse = await _knowledgeService.TryAnswerFromDatabaseAsync(request.Message, request.UserId)
-                                 ?? "Mình chưa có đủ dữ liệu trong hệ thống để trả lời câu hỏi này từ database TechZone.";
+                    var dbAnswer = await _knowledgeService.TryAnswerFromDatabaseAsync(request.Message, request.UserId);
+                    
+                    if (dbAnswer != null)
+                    {
+                        aiResponse = dbAnswer.TextResponse;
+                        products = dbAnswer.Products?.Select(p => new ProductCardDto
+                        {
+                            ProductId = p.ProductId,
+                            Name = p.Name,
+                            Price = p.Price,
+                            ImageUrl = p.ImageUrl,
+                            Brand = p.Brand,
+                            Category = p.Category,
+                            StockQuantity = p.StockQuantity
+                        }).ToList();
+                    }
+                    else
+                    {
+                        aiResponse = "Mình chưa có đủ dữ liệu trong hệ thống để trả lời câu hỏi này từ database TechZone.";
+                    }
                 }
                 else if (mode.Equals("Hybrid", StringComparison.OrdinalIgnoreCase))
                 {
@@ -144,12 +164,19 @@ namespace TechZone.Server.Controllers
                     var dbContext = await _knowledgeService.BuildDatabaseContextAsync(request.Message, request.UserId);
 
                     var strictSystemPrompt =
-                        "Bạn là TechZone AI Assistant.\n" +
+                        "Bạn là TechZone AI Assistant - trợ lý thông minh chuyên về công nghệ.\n\n" +
                         "QUY TẮC BẮT BUỘC:\n" +
                         "- Chỉ được dùng dữ liệu trong phần 'Dữ liệu nội bộ TechZone (trích từ database)' để trả lời.\n" +
                         "- Không được bịa, không suy đoán, không lấy dữ liệu bên ngoài.\n" +
-                        "- Nếu thiếu dữ liệu để trả lời (ví dụ không có giá/không thấy sản phẩm), hãy nói rõ: 'Không có dữ liệu trong hệ thống TechZone để trả lời câu này' và gợi ý người dùng cung cấp thông tin.\n" +
-                        "- Trả lời ngắn gọn, đúng trọng tâm, tiếng Việt.\n\n" +
+                        "- KHÔNG được sử dụng markdown image syntax ![...](url) vì hệ thống đã tự động hiển thị hình ảnh.\n" +
+                        "- Nếu thiếu dữ liệu để trả lời (ví dụ không có giá/không thấy sản phẩm), hãy nói rõ: 'Không có dữ liệu trong hệ thống TechZone để trả lời câu này' và gợi ý người dùng cung cấp thông tin.\n\n" +
+                        "CÁCH TRẢ LỜI VỀ SẢN PHẨM:\n" +
+                        "- Khi giới thiệu sản phẩm, hãy mô tả ngắn gọn về tính năng nổi bật, ưu điểm.\n" +
+                        "- Luôn đề cập đến giá tiền một cách rõ ràng (ví dụ: '25.990.000 VND' hoặc '25,9 triệu đồng').\n" +
+                        "- Với mỗi sản phẩm được đề cập, PHẢI thêm dòng: '👉 Xem chi tiết: /products/{ProductId}'\n" +
+                        "- KHÔNG thêm URL hình ảnh vì hệ thống đã tự động hiển thị product cards với ảnh.\n" +
+                        "- Nếu có nhiều sản phẩm, hãy trình bày theo dạng danh sách rõ ràng.\n" +
+                        "- Trả lời bằng tiếng Việt thân thiện, nhiệt tình.\n\n" +
                         dbContext;
 
                     aiResponse = await _openAIService.GenerateResponseWithContextAsync(
@@ -157,6 +184,19 @@ namespace TechZone.Server.Controllers
                         strictSystemPrompt,
                         conversationHistory
                     );
+
+                    // Extract products from database context to return in response
+                    products = await _knowledgeService.ExtractProductsFromContextAsync(request.Message, request.UserId);
+                    
+                    // Debug logging
+                    Console.WriteLine($"[Chatbot] Extracted {products?.Count ?? 0} products for message: {request.Message}");
+                    if (products != null)
+                    {
+                        foreach (var p in products)
+                        {
+                            Console.WriteLine($"  - Product #{p.ProductId}: {p.Name} - {p.Price:n0} VND - Image: {p.ImageUrl ?? "N/A"}");
+                        }
+                    }
                 }
                 else // ExternalOnly
                 {
@@ -185,7 +225,8 @@ namespace TechZone.Server.Controllers
                 return Ok(new ChatResponseDto
                 {
                     Response = aiResponse,
-                    Timestamp = DateTime.UtcNow
+                    Timestamp = DateTime.UtcNow,
+                    Products = products
                 });
             }
             catch (Exception ex)
@@ -209,8 +250,38 @@ namespace TechZone.Server.Controllers
 
     public class ChatResponseDto
     {
+        [JsonPropertyName("response")]
         public string Response { get; set; } = string.Empty;
+        
+        [JsonPropertyName("timestamp")]
         public DateTime Timestamp { get; set; }
+        
+        [JsonPropertyName("products")]
+        public List<ProductCardDto>? Products { get; set; }
+    }
+
+    public class ProductCardDto
+    {
+        [JsonPropertyName("productId")]
+        public int ProductId { get; set; }
+        
+        [JsonPropertyName("name")]
+        public string Name { get; set; } = string.Empty;
+        
+        [JsonPropertyName("price")]
+        public decimal Price { get; set; }
+        
+        [JsonPropertyName("imageUrl")]
+        public string? ImageUrl { get; set; }
+        
+        [JsonPropertyName("brand")]
+        public string? Brand { get; set; }
+        
+        [JsonPropertyName("category")]
+        public string? Category { get; set; }
+        
+        [JsonPropertyName("stockQuantity")]
+        public int? StockQuantity { get; set; }
     }
 }
 
