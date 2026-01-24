@@ -444,6 +444,13 @@ const OrderDetail = () => {
           const product = detail.productColor?.product;
           const productColor = detail.productColor;
           
+          // Get image from productImages array (prefer primary image, or first image)
+          let imageUrl = "";
+          if (product?.productImages && product.productImages.length > 0) {
+            const primaryImage = product.productImages.find(img => img.isPrimary);
+            imageUrl = primaryImage?.imageUrl || product.productImages[0]?.imageUrl || "";
+          }
+          
           return {
             productId: productId, // Actual ProductId for rating
             productColorId: detail.productColorId,
@@ -453,6 +460,7 @@ const OrderDetail = () => {
             productCategory: product?.category?.categoryName || "Unknown",
             color: productColor?.color || "Unknown",
             colorCode: productColor?.colorCode || "",
+            imageUrl: imageUrl,
           };
         });
 
@@ -485,7 +493,8 @@ const OrderDetail = () => {
           items: productsData.map(p => ({
             name: p.productName,
             quantity: p.quantity,
-            price: p.price
+            price: p.price,
+            image: p.imageUrl
           })),
           products: productsData.map((p, index) => ({
             productId: p.productId.toString(), // Actual ProductId (not ProductColorId)
@@ -493,6 +502,7 @@ const OrderDetail = () => {
             name: p.productName,
             color: p.color,
             colorCode: p.colorCode,
+            imageUrl: p.imageUrl,
             price: p.price 
               ? new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND", maximumFractionDigits: 0 }).format(p.price)
               : "0 VND",
@@ -715,7 +725,8 @@ const OrderDetail = () => {
         </div>
       </motion.div>
 
-      {orderData.status.toUpperCase() === "PROCESSING" && (
+      {(orderData.status.toUpperCase() === "PROCESSING" || 
+        orderData.status.toUpperCase() === "SHIPPING") && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -736,7 +747,8 @@ const OrderDetail = () => {
               Expected delivery on {orderData.expectedDelivery}
             </p>
 
-            {orderData.status.toUpperCase() !== "PROCESSING" && (
+            {(orderData.status.toUpperCase() !== "PROCESSING" && 
+              orderData.status.toUpperCase() !== "SHIPPING") && (
               <div className="relative mb-8">
                 <div className="absolute top-4 left-0 right-0 h-1 bg-gray-200 z-0"></div>
 
@@ -846,7 +858,8 @@ const OrderDetail = () => {
         )}
       </div>
 
-      {orderData.status.toUpperCase() !== "PROCESSING" && (
+      {(orderData.status.toUpperCase() !== "PROCESSING" && 
+        orderData.status.toUpperCase() !== "SHIPPING") && (
         <div className="mb-8">
           <h2 className="text-lg font-semibold mb-4">Order Activity</h2>
 
@@ -900,7 +913,21 @@ const OrderDetail = () => {
             >
               <div className="col-span-5">
                 <div className="flex">
-                  <div className="w-12 h-12 bg-gray-200 rounded-md mr-3 flex-shrink-0"></div>
+                  {product.imageUrl ? (
+                    <img 
+                      src={product.imageUrl} 
+                      alt={product.name}
+                      className="w-12 h-12 object-cover rounded-md mr-3 flex-shrink-0"
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="%23ccc" stroke-width="2"%3E%3Crect x="3" y="3" width="18" height="18" rx="2"%3E%3C/rect%3E%3Ccircle cx="8.5" cy="8.5" r="1.5"%3E%3C/circle%3E%3Cpath d="M21 15l-5-5L5 21"%3E%3C/path%3E%3C/svg%3E';
+                      }}
+                    />
+                  ) : (
+                    <div className="w-12 h-12 bg-gray-200 rounded-md mr-3 flex-shrink-0 flex items-center justify-center">
+                      <Package size={20} className="text-gray-400" />
+                    </div>
+                  )}
                   <div>
                     <p className="text-blue-500 text-xs font-medium">
                       {product.category}

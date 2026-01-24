@@ -73,16 +73,18 @@ const OrderList = () => {
   const getStatusColor = (status) => {
     const normalizedStatus = status?.toUpperCase();
     switch (normalizedStatus) {
-      case "COMPLETED":
-        return "bg-emerald-100 text-emerald-600";
-      case "PROCESSING":
-        return "bg-purple-100 text-purple-600";
-      case "CANCELLED":
-        return "bg-red-100 text-red-600";
       case "PENDING":
         return "bg-amber-100 text-amber-600";
-      case "PENDING_CONFIRM":
+      case "CONFIRMED":
         return "bg-blue-100 text-blue-600";
+      case "PROCESSING":
+        return "bg-purple-100 text-purple-600";
+      case "SHIPPING":
+        return "bg-indigo-100 text-indigo-600";
+      case "COMPLETED":
+        return "bg-emerald-100 text-emerald-600";
+      case "CANCELLED":
+        return "bg-red-100 text-red-600";
       default:
         return "bg-gray-100 text-gray-600";
     }
@@ -508,9 +510,10 @@ const OrderList = () => {
                         onChange={handleStatusChange}
                         className="border border-gray-300 rounded-md"
                       >
-                        <AntdSelect.Option value="PENDING_CONFIRM">Pending Confirm</AntdSelect.Option>
+                        <AntdSelect.Option value="PENDING">Pending</AntdSelect.Option>
+                        <AntdSelect.Option value="CONFIRMED">Confirmed</AntdSelect.Option>
                         <AntdSelect.Option value="PROCESSING">Processing</AntdSelect.Option>
-                        {/* <AntdSelect.Option value="SHIPPING">Shipping</AntdSelect.Option> */}
+                        <AntdSelect.Option value="SHIPPING">Shipping</AntdSelect.Option>
                         <AntdSelect.Option value="COMPLETED">Completed</AntdSelect.Option>
                         <AntdSelect.Option value="CANCELLED">Cancelled</AntdSelect.Option>
                       </AntdSelect>
