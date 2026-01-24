@@ -66,7 +66,7 @@ namespace TechZone.Server.Controllers
                     if (int.TryParse(vnp_TxnRef, out int orderId))
                     {
                         await _orderRepository.UpdatePaymentStatusAsync(orderId, "Paid");
-                        await _orderRepository.UpdateOrderStatusAsync(orderId, "Processing");
+                        await _orderRepository.UpdateOrderStatusAsync(orderId, "PROCESSING");
                     }
 
                     return Ok(new 
@@ -84,7 +84,7 @@ namespace TechZone.Server.Controllers
                     if (int.TryParse(vnp_TxnRef, out int orderId))
                     {
                         await _orderRepository.UpdatePaymentStatusAsync(orderId, "Failed");
-                        await _orderRepository.UpdateOrderStatusAsync(orderId, "Cancelled");
+                        await _orderRepository.UpdateOrderStatusAsync(orderId, "CANCELLED");
                     }
 
                     return Ok(new 
