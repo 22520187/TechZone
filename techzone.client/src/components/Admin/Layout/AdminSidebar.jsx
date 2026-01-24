@@ -77,7 +77,7 @@ const AdminSidebar = ({ isCollapsed, toggleSidebar }) => {
     { icon: BookOpen, label: "Blog Posts", path: "/admin/blog", roles: ["Admin", "Staff"] },
     { icon: Slack, label: "Brands", path: "/admin/brands", roles: ["Admin"] },
     { icon: Boxes, label: "Categories", path: "/admin/categories", roles: ["Admin"] },
-    { icon: Users2, label: "Customers", path: "/admin/customers", roles: ["Admin"] },
+    { icon: Users2, label: "Users", path: "/admin/customers", roles: ["Admin"] },
     { icon: UserCog, label: "Staff", path: "/admin/staff", roles: ["Admin"] },
     { icon: TicketPercent, label: "Promotions", path: "/admin/promotions", roles: ["Admin"] },
     { icon: Shield, label: "Warranty Claims", path: "/admin/warranty-claims", roles: ["Admin"] },

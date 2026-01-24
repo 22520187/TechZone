@@ -31,7 +31,7 @@ const ProductCard = ({ product, onEdit = () => {}, onDelete = () => {} }) => {
   const navigate = useNavigate();
 
   const handleClick = () => {
-    navigate(`/products/${product.id}`);
+    navigate(`/admin/products/${product.id}`);
   };
 
   return (
