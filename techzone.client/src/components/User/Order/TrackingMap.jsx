@@ -151,13 +151,73 @@ const TrackingMap = ({ orderId, shippingAddress }) => {
   useEffect(() => {
     setLoading(true);
     setTimeout(() => {
-      const data = mockTrackingData[orderId];
-      if (data) {
-        setTrackingData(data);
+      // Check if we have specific mock data for this orderId
+      let data = mockTrackingData[orderId];
+      
+      // If not found, generate default tracking data for any order
+      if (!data) {
+        data = {
+          currentLocation: {
+            lat: 10.7769,
+            lng: 106.7009,
+            address: "Kho TechZone, Quận 1, TP.HCM"
+          },
+          destination: {
+            lat: 10.7829,
+            lng: 106.7220,
+            address: shippingAddress || "Đang cập nhật địa chỉ giao hàng"
+          },
+          route: [
+            [10.7769, 106.7009],
+            [10.7789, 106.7089],
+            [10.7809, 106.7149],
+            [10.7829, 106.7220]
+          ],
+          estimatedDelivery: "2 giờ",
+          distance: "8.5 km",
+          driverInfo: {
+            name: "Nguyễn Văn Tài",
+            phone: "0901234567",
+            vehicle: "Xe máy - 59H1-12345",
+            rating: 4.8
+          },
+          trackingPoints: [
+            {
+              time: "10:00",
+              location: "Kho TechZone",
+              status: "Đã lấy hàng",
+              completed: true,
+              description: "Tài xế đã nhận hàng từ kho"
+            },
+            {
+              time: "10:30",
+              location: "Đang di chuyển",
+              status: "Trên đường giao hàng",
+              completed: true,
+              description: "Đang di chuyển theo tuyến đường tối ưu"
+            },
+            {
+              time: "11:45",
+              location: "Gần điểm giao hàng",
+              status: "Sắp đến nơi",
+              completed: false,
+              description: "Dự kiến đến nơi trong 15 phút"
+            },
+            {
+              time: "12:00",
+              location: "Điểm giao hàng",
+              status: "Giao hàng thành công",
+              completed: false,
+              description: "Hoàn thành giao hàng"
+            }
+          ]
+        };
       }
+      
+      setTrackingData(data);
       setLoading(false);
     }, 1000);
-  }, [orderId]);
+  }, [orderId, shippingAddress]);
 
   if (loading) {
     return (

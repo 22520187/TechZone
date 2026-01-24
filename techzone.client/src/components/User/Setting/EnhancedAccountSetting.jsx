@@ -677,7 +677,7 @@ const handleLogout = (e) => {
         </motion.div>
 
         {/* Password Change Section */}
-        <div className="bg-white rounded-xl shadow-lg p-8 md:p-12 w-150 mx-auto -mt-0">
+        <div className="bg-white rounded-xl shadow-lg p-8 md:p-12 w-150 mx-auto -mt-0" style={{ marginTop: 'calc(var(--spacing) * -14)' }}>
           <motion.div
             variants={fadeIn}
             custom={5}

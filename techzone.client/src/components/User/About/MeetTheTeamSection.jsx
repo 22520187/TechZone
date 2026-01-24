@@ -22,28 +22,28 @@ const teamMembers = [
     role: "Project Leader",
     bio: "Contact info: 22520187@gm.uit.edu.vn",
     image:
-      "https://scontent.fsgn2-6.fna.fbcdn.net/v/t1.6435-1/38515504_104266080512654_2683816465022320640_n.jpg?stp=c232.0.616.616a_dst-jpg_s200x200_tt6&_nc_cat=110&ccb=1-7&_nc_sid=e99d92&_nc_ohc=xRWrP2LuUS0Q7kNvgEnyZrU&_nc_oc=AdgguTjplSTYeHUnAWgXF3biaQskKdbiiGusXFp4qHL3FIs0DSFRPe6HdaOI0VVWCimz8w1tuLSkVzRNQHeN4lzY&_nc_zt=24&_nc_ht=scontent.fsgn2-6.fna&_nc_gid=AqmzsRuOA77z408HVRXO-1V&oh=00_AYBPw8T2ZVMMqw2BU1KXFRfdR6VUzjb9iThzz5QitAUIUw&oe=67EE6226",
+      "https://tse1.mm.bing.net/th/id/OIP.aTIJhZW9eQlg9msWJBZ_ewHaKX?pid=Api&P=0&h=180",
   },
   {
     name: "Võ Lê Quốc Đạt",
     role: "Member",
     bio: "Contact info: 22520242@gm.uit.edu.vn",
     image:
-      "https://scontent.fsgn2-5.fna.fbcdn.net/v/t39.30808-6/479496095_2273575333028250_5618835893194945727_n.jpg?_nc_cat=111&ccb=1-7&_nc_sid=6ee11a&_nc_ohc=DRDNHjSHC-8Q7kNvgHlDkv3&_nc_oc=AdhxRx4KobKPt2QVoTERBxWiCcK0qXf6UOmR7kyB5ibTui6MMbVfZm0a3jMtjiIjoRhtfLyrG-EK2LJs88xdH5kg&_nc_zt=23&_nc_ht=scontent.fsgn2-5.fna&_nc_gid=AYL_FjwBoFy_Rl9eVrmpwKX&oh=00_AYDF458uuxouriUJE1DKQKkAfVt51ze4dI3jIrvUoxnPcA&oe=67CCC3EC",
+      "https://tse4.mm.bing.net/th/id/OIP.VWiq9XJszYmJnO9lA3NrmwHaHa?pid=Api&P=0&h=180",
   },
   {
     name: "Lý Nguyễn Anh Duy",
     role: "Member",
     bio: "Contact info: 22520319@gm.uit.edu.vn",
     image:
-      "https://scontent.fsgn2-8.fna.fbcdn.net/v/t39.30808-1/432724266_122128019222207728_5974449286739924673_n.jpg?stp=c11.0.938.938a_dst-jpg_s200x200_tt6&_nc_cat=102&ccb=1-7&_nc_sid=e99d92&_nc_ohc=MBJpnewxYxMQ7kNvgGQAQB2&_nc_oc=AdiV-PbWXR6ixfdkw0g_FNND-vd58EGZsoYCd9prqOaQTLO3Rfr1p6klOTg1S5X9venTfNo7aVDNKZfq6BEz_ztO&_nc_zt=24&_nc_ht=scontent.fsgn2-8.fna&_nc_gid=AY-BQhSuR4HwsquA5EGaKyA&oh=00_AYBRyVfpFoTK79PmtsJqs_Mi9YsS1njWqdDb4zwxMCTF3Q&oe=67CCBF6C",
+      "https://tse1.mm.bing.net/th/id/OIP.5zlxsY5Q6kqqwq0xQpMK1gHaQY?pid=Api&P=0&h=180",
   },
   {
     name: "Nguyễn Tuấn Lộc",
     role: "Member",
     bio: "Contact info: 23520862@gm.uit.edu.vn",
     image:
-      "https://scontent.fsgn2-8.fna.fbcdn.net/v/t39.30808-1/432724266_122128019222207728_5974449286739924673_n.jpg?stp=c11.0.938.938a_dst-jpg_s200x200_tt6&_nc_cat=102&ccb=1-7&_nc_sid=e99d92&_nc_ohc=MBJpnewxYxMQ7kNvgGQAQB2&_nc_oc=AdiV-PbWXR6ixfdkw0g_FNND-vd58EGZsoYCd9prqOaQTLO3Rfr1p6klOTg1S5X9venTfNo7aVDNKZfq6BEz_ztO&_nc_zt=24&_nc_ht=scontent.fsgn2-8.fna&_nc_gid=AY-BQhSuR4HwsquA5EGaKyA&oh=00_AYBRyVfpFoTK79PmtsJqs_Mi9YsS1njWqdDb4zwxMCTF3Q&oe=67CCBF6C",
+      "https://tse2.mm.bing.net/th/id/OIP.3v5GfoQ9J76uIfniOixeegHaIr?pid=Api&P=0&h=180",
   },
 ];
 
