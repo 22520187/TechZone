@@ -83,6 +83,8 @@ export default function Brands() {
         if (uploadedImageUrl) {
           imageUrl = uploadedImageUrl;
         }
+      } else if (isEditMode && currentBrand && !selectedFile) {
+        imageUrl = currentBrand.image || "";
       }
 
       const brandData = {
@@ -259,6 +261,14 @@ export default function Brands() {
             ]}
           >
             <Input placeholder="Enter brand name" />
+          </Form.Item>
+
+          {/* Hidden field to store image URL */}
+          <Form.Item
+            name="brandImageUrl"
+            hidden
+          >
+            <Input type="hidden" />
           </Form.Item>
 
           <Form.Item

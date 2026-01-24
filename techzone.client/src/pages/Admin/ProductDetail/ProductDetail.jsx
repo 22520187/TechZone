@@ -168,7 +168,7 @@ export default function ProductDetail() {
     }
   };
 
-  const handleBackToProducts = () => navigate("/products");
+  const handleBackToProducts = () => navigate("/admin/products");
 
   return (
     <motion.div
@@ -263,82 +263,6 @@ export default function ProductDetail() {
             <p className="text-muted-foreground line-clamp-2">
               {product.description}
             </p>
-
-            {/* Color Selection */}
-            <div className="mt-2">
-              <span className="text-sm font-medium mb-2 block">
-                Color: {selectedColor?.name || "None"}
-              </span>
-              <div className="flex space-x-2">
-                {product.productColors &&
-                  product.productColors.map((color) => (
-                    <button
-                      key={color.id}
-                      onClick={() => handleColorSelect(color)}
-                      className={`w-10 h-10 rounded-full border-2 cursor-pointer ${
-                        selectedColor?.id === color.id
-                          ? "border-primary"
-                          : "border-transparent"
-                      } transform transition-transform ${
-                        selectedColor?.id === color.id
-                          ? "scale-110"
-                          : "scale-100"
-                      } hover:scale-110`}
-                      style={{
-                        backgroundColor: color.code,
-                        boxShadow:
-                          selectedColor?.id === color.id
-                            ? "0 0 0 2px rgba(59, 130, 246, 0.3)"
-                            : "none",
-                      }}
-                      aria-label={`Select ${color.name} color`}
-                    />
-                  ))}
-              </div>
-            </div>
-
-            {/* Quantity Controls */}
-            <div className="flex items-center mt-2">
-              <span className="text-sm font-medium mr-4">Quantity:</span>
-              <div className="flex items-center border rounded-md">
-                <button
-                  onClick={() => handleQuantityChange(quantity - 1)}
-                  disabled={quantity <= 1}
-                  className="px-3 py-1 text-lg disabled:opacity-50 cursor-pointer hover:bg-muted transition-colors"
-                >
-                  -
-                </button>
-                <span className="px-4 py-1 font-medium">{quantity}</span>
-                <button
-                  onClick={() => handleQuantityChange(quantity + 1)}
-                  disabled={quantity >= availableStock}
-                  className="px-3 py-1 text-lg disabled:opacity-50 cursor-pointer hover:bg-muted transition-colors"
-                >
-                  +
-                </button>
-              </div>
-              <span className="ml-4 text-sm text-muted-foreground">
-                {selectedColor
-                  ? `${availableStock} available`
-                  : `Total stock: ${product.stockQuantity}`}
-              </span>
-            </div>
-
-            {/* Action Buttons */}
-            <motion.button
-              onClick={handleAddToCart}
-              disabled={!selectedColor}
-              className={`flex items-center px-4 py-2 w-fit cursor-pointer text-white rounded-lg transition mt-4 ${
-                selectedColor
-                  ? "bg-gradient-to-br from-primary to-secondary hover:from-primary-500 hover:to-primary-500"
-                  : "bg-gray-400 cursor-not-allowed"
-              }`}
-              whileHover={selectedColor ? { scale: 1.05 } : {}}
-              whileTap={selectedColor ? { scale: 0.95 } : {}}
-            >
-              <ShoppingCart className="mr-2 h-5 w-5" />
-              {selectedColor ? "Add to Cart" : "Select a Color"}
-            </motion.button>
           </div>
         </div>
       </motion.div>

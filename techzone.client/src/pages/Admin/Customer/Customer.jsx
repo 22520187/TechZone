@@ -260,7 +260,7 @@ export default function Customers() {
             } else {
                 // Add new customer
                 await dispatch(addUser(userData)).unwrap();
-                message.success("Customer added successfully");
+                message.success("User added successfully");
             }
 
             setIsModalOpen(false);
@@ -275,7 +275,7 @@ export default function Customers() {
             // Display specific error message
             const errorMessage = typeof err === "string" 
                 ? err 
-                : err.message || `Unable to ${isEditMode ? "update" : "add"} customer. Please try again.`;
+                : err.message || `Unable to ${isEditMode ? "update" : "add"} user. Please try again.`;
             
             message.error(errorMessage);
 
@@ -370,7 +370,7 @@ export default function Customers() {
 
     return (
         <div className="space-y-4">
-            <h1 className="text-2xl font-semibold text-gray-800">Customers</h1>{" "}
+            <h1 className="text-2xl font-semibold text-gray-800">Users</h1>{" "}
             {/* Header */}
             
             {/* Bulk Action Bar - Show when items are selected */}
@@ -416,7 +416,7 @@ export default function Customers() {
                     <input
                         type="text"
                         className="pl-10 pr-4 py-2 w-full border rounded-full text-sm focus:outline-none focus:border-primary-600"
-                        placeholder="Search customer"
+                        placeholder="Search users..."
                         value={searchQuery}
                         onChange={(e) => {
                             setSearchQuery(e.target.value);
@@ -468,7 +468,7 @@ export default function Customers() {
                         onClick={showAddModal}
                     >
                         <Plus size={16} className="mr-1" />
-                        <span className="cursor-pointer">Add Customer</span>
+                        <span className="cursor-pointer">Add User</span>
                     </button>
                 </div>
             </div>
@@ -479,7 +479,7 @@ export default function Customers() {
                 </div>
             ) : error && error !== "Email already exists" ? (
                 <div className="text-red-500 text-center">
-                    Error loading customers: {error}
+                    Error loading users: {error}
                 </div>
             ) : (
                 <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
@@ -502,7 +502,7 @@ export default function Customers() {
                                                 onChange={toggleSelectAll}
                                             />
                                             <span className="ml-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                                                Customer Name
+                                                User Name
                                             </span>
                                             <ChevronDown
                                                 size={16}
@@ -783,7 +783,7 @@ export default function Customers() {
             )}
             {/* Add/Edit Customer Modal */}
             <Modal
-                title={isEditMode ? "Edit Customer" : "Add New Customer"}
+                title={isEditMode ? "Edit User" : "Add New User"}
                 open={isModalOpen}
                 onCancel={handleCancel}
                 footer={null}
@@ -913,8 +913,8 @@ export default function Customers() {
                                     ? "Updating..."
                                     : "Adding..."
                                 : isEditMode
-                                ? "Update Customer"
-                                : "Add Customer"}
+                                ? "Update User"
+                                : "Add User"}
                         </button>
                     </Form.Item>
                 </Form>
